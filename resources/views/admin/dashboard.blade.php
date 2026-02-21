@@ -16,9 +16,9 @@
                         <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
                     </svg>
                 </div>
-                <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-lg">↑ 3.2%</span>
+             
             </div>
-            <p class="num text-2xl font-bold text-gray-900">1,248</p>
+            <p class="num text-2xl font-bold text-gray-900">{{ $jmlhsiswa }}</p>
             <p class="text-xs text-gray-500 mt-0.5">Total Siswa</p>
         </div>
 
@@ -29,9 +29,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
-                <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg">↑ 1.1%</span>
             </div>
-            <p class="num text-2xl font-bold text-gray-900">94.7%</p>
+            <p class="num text-2xl font-bold text-gray-900">{{ $persenKehadiran }}%</p>
             <p class="text-xs text-gray-500 mt-0.5">Kehadiran Hari Ini</p>
         </div>
 
@@ -42,9 +41,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
-                <span class="text-xs font-medium text-orange-500 bg-orange-50 px-2 py-0.5 rounded-lg">↓ 0.5%</span>
             </div>
-            <p class="num text-2xl font-bold text-gray-900">66</p>
+            <p class="num text-2xl font-bold text-gray-900">{{ $jmlTerlambat }}</p>
             <p class="text-xs text-gray-500 mt-0.5">Terlambat</p>
         </div>
 
@@ -55,7 +53,6 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </div>
-                <span class="text-xs font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-lg">↑ 0.3%</span>
             </div>
             <p class="num text-2xl font-bold text-gray-900">42</p>
             <p class="text-xs text-gray-500 mt-0.5">Tidak Hadir</p>
