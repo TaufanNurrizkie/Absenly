@@ -1,12 +1,12 @@
 <?php
-
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\GuruController;
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\SiswaController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\KehadiranController;
+use App\Http\Controllers\Admin\RekapAbsensiController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\GuruController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SiswaController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
@@ -31,6 +31,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
     ## Absensi Management
     Route::get('/admin/kehadiran-hari-ini', [KehadiranController::class, 'kehadiranHariIni'])->name('admin.kehadiran');
     Route::get('/admin/kehadiran-hari-ini/data', [KehadiranController::class, 'kehadiranData'])->name('admin.kehadiran.data');
+
+    Route::get('/admin/rekap', [RekapAbsensiController::class, 'rekap'])->name('admin.rekap');
+    Route::get('/admin/rekap/export', [RekapAbsensiController::class, 'export'])
+        ->name('admin.rekap.export');
 
     ## User Management
     Route::get('/admin/users/siswa', [UserController::class, 'indexSiswa'])->name('admin.users.siswa');

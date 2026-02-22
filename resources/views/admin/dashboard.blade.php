@@ -54,7 +54,7 @@
                     </svg>
                 </div>
             </div>
-            <p class="num text-2xl font-bold text-gray-900">42</p>
+            <p class="num text-2xl font-bold text-gray-900">{{ $jmlBelumAbsen }}</p>
             <p class="text-xs text-gray-500 mt-0.5">Tidak Hadir</p>
         </div>
 

@@ -11,41 +11,44 @@ use Carbon\Carbon;
 class KehadiranController extends Controller
 {
     public function kehadiranHariIni()
-{
-    return view('admin.kehadiran.kehadiran-hari-ini');
-}
+    {
+        return view('admin.kehadiran.kehadiran-hari-ini');
+    }
 
-public function kehadiranData()
-{
-    $today = Carbon::today();
+    public function kehadiranData()
+    {
+        $today = Carbon::today();
 
-    $hadir = Absensi::with('user')
-        ->whereDate('tanggal', $today)
-        ->where('keterangan', 'hadir')
-        ->get();
+        $hadir = Absensi::with('user')
+            ->whereDate('tanggal', $today)
+            ->where('keterangan', 'hadir')
+            ->get();
 
-    $izin = Absensi::with('user')
-        ->whereDate('tanggal', $today)
-        ->where('keterangan', 'izin')
-        ->get();
+        $izin = Absensi::with('user')
+            ->whereDate('tanggal', $today)
+            ->where('keterangan', 'izin')
+            ->latest()
+            ->get();
 
-    $sakit = Absensi::with('user')
-        ->whereDate('tanggal', $today)
-        ->where('keterangan', 'sakit')
-        ->get();
+        $sakit = Absensi::with('user')
+            ->whereDate('tanggal', $today)
+            ->where('keterangan', 'sakit')
+            ->get();
 
-    $sudahAbsenUserIds = Absensi::whereDate('tanggal', $today)
-        ->pluck('user_id');
+        $sudahAbsenUserIds = Absensi::whereDate('tanggal', $today)
+            ->pluck('user_id');
 
-    $belumAbsen = User::where('usertype','siswa')
-        ->whereNotIn('id', $sudahAbsenUserIds)
-        ->get();
+        $belumAbsen = User::where('usertype', 'siswa')
+            ->whereNotIn('id', $sudahAbsenUserIds)
+            ->get();
 
-    return response()->json([
-        'hadir' => $hadir,
-        'izin' => $izin,
-        'sakit' => $sakit,
-        'belum' => $belumAbsen
-    ]);
-}
+        return response()->json([
+            'hadir' => $hadir,
+            'izin' => $izin,
+            'sakit' => $sakit,
+            'belum' => $belumAbsen
+        ]);
+    }
+
+    
 }
