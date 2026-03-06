@@ -1,7 +1,8 @@
 @extends('layouts.siswaNav')
+
 @section('content')
     <style>
-        /* Modal Animation */
+        /* Custom Animation & Effects */
         #absenModal {
             opacity: 0;
             transform: scale(0.95);
@@ -11,20 +12,6 @@
         #absenModal.show {
             opacity: 1;
             transform: scale(1);
-        }
-
-        /* Video Aspect Ratio */
-        .aspect-video {
-            aspect-ratio: 16 / 9;
-        }
-
-        /* Menu Item Hover */
-        .menu-item {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .menu-item:hover {
-            transform: translateY(-4px);
         }
 
         /* Ripple Button Animation */
@@ -41,47 +28,16 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(96, 165, 250, 0.3);
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 50%;
-            animation: ripple 2s infinite ease-out;
+            animation: ripple 2.5s infinite ease-out;
             z-index: 0;
-        }
-
-        .ripple-outer {
-            position: relative;
-            z-index: 1;
-        }
-
-        .ripple-outer::before {
-            content: '';
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.7);
-            background: rgba(191, 219, 254, 0.4);
-            border-radius: 9999px;
-            animation: ripple-outer 2.5s infinite ease-out;
-            z-index: -1;
-        }
-
-        @keyframes ripple-outer {
-            0% {
-                transform: translate(-50%, -50%) scale(0.7);
-                opacity: 0.7;
-            }
-
-            100% {
-                transform: translate(-50%, -50%) scale(2);
-                opacity: 0;
-            }
         }
 
         @keyframes ripple {
             0% {
                 transform: translate(-50%, -50%) scale(0);
-                opacity: 0.5;
+                opacity: 0.6;
             }
 
             100% {
@@ -90,246 +46,213 @@
             }
         }
 
-        /* Card Animation */
+        /* Card Entrance Animation */
         .attendance-card {
-            transform: translateY(20px);
             animation: slideUp 0.5s ease forwards;
         }
 
         @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
             to {
                 transform: translateY(0);
+                opacity: 1;
             }
-        }
-
-        @keyframes modalFade {
-            from {
-                transform: scale(0.95);
-            }
-
-            to {
-                transform: scale(1);
-            }
-        }
-
-        .animate-modal {
-            animation: modalFade 0.3s ease-out;
-        }
-
-        /* Gradient Background */
-        .gradient-bg {
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%);
-        }
-
-        /* Glass Effect */
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        /* Smooth Shadow */
-        .soft-shadow {
-            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1);
-        }
-
-        /* Time Badge */
-        .time-badge {
-            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
         }
 
         /* Face Detection Indicator */
         .face-indicator {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            z-index: 10;
+            transition: all 0.3s ease;
         }
 
-        .face-detected {
-            background: rgba(34, 197, 94, 0.9);
+        .face-indicator.detected {
+            background-color: rgba(34, 197, 94, 0.9);
         }
 
-        .face-not-detected {
-            background: rgba(239, 68, 68, 0.9);
+        .face-indicator.not-detected {
+            background-color: rgba(239, 68, 68, 0.9);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
         }
     </style>
 
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
+    <div class="min-h-screen bg-slate-50 pb-10">
 
         <!-- Header Section -->
-        <div class="gradient-bg rounded-b-[2rem] p-6 pt-4 pb-16 relative overflow-hidden">
-            <!-- Decorative Elements -->
-            <div class="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full -mr-32 -mt-32"></div>
-            <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/20 rounded-full -ml-24 -mb-24"></div>
+        <div
+            class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-b-[2.5rem] p-6 pt-8 pb-20 relative overflow-hidden shadow-lg">
+            <!-- Decorative Shapes -->
+            <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-2xl"></div>
+            <div class="absolute bottom-0 left-0 w-48 h-48 bg-indigo-400/20 rounded-full -ml-24 -mb-24 blur-xl"></div>
 
-            <div class="relative z-10">
+            <div class="relative z-10 max-w-lg mx-auto">
                 <!-- Top Bar -->
-                <div class="flex items-center justify-between mb-8">
-                    <div class="space-y-1">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
                         @php
                             $hour = now()->format('H');
-                            if ($hour >= 6 && $hour < 11) {
-                                $greeting = 'Morning';
-                                $emoji = '🌅';
+                            if ($hour >= 5 && $hour < 11) {
+                                $greeting = 'Good Morning';
                             } elseif ($hour >= 11 && $hour < 17) {
-                                $greeting = 'Afternoon';
-                                $emoji = '☀️';
+                                $greeting = 'Good Afternoon';
                             } elseif ($hour >= 17 && $hour < 21) {
-                                $greeting = 'Evening';
-                                $emoji = '🌆';
+                                $greeting = 'Good Evening';
                             } else {
-                                $greeting = 'Night';
-                                $emoji = '🌙';
+                                $greeting = 'Good Night';
                             }
                         @endphp
-                        <h2 class="text-sm text-blue-800 font-medium">Good {{ $greeting }} {{ $emoji }}</h2>
-                        <h1 class="text-2xl font-bold text-blue-900">{{ $user->name }}</h1>
-                        <p class="text-sm text-blue-700 font-medium">{{ $user->kelas }}</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <a href=""
-                            class="cursor-pointer p-2 bg-white/80 rounded-full hover:bg-white transition-all duration-300 soft-shadow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                class="text-blue-600">
-                                <path fill="currentColor" fill-rule="evenodd"
-                                    d="M13 3a1 1 0 1 0-2 0v.75h-.557A4.214 4.214 0 0 0 6.237 7.7l-.221 3.534a7.4 7.4 0 0 1-1.308 3.754a1.617 1.617 0 0 0 1.135 2.529l3.407.408V19a2.75 2.75 0 1 0 5.5 0v-1.075l3.407-.409a1.617 1.617 0 0 0 1.135-2.528a7.4 7.4 0 0 1-1.308-3.754l-.221-3.533a4.214 4.214 0 0 0-4.206-3.951H13zm-2.25 16a1.25 1.25 0 1 0 2.5 0v-.75h-2.5z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </a>
-                        <a href="{{ route('siswa.profile') }}" class="block">
-                            <img src="{{ asset('img/' . $user->foto) }}" alt="Profile"
-                                class="w-12 h-12 rounded-full border-3 border-white object-cover soft-shadow hover:scale-105 transition-transform duration-300">
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Streak Counter -->
-                <div class="flex items-center gap-2 bg-white/80 rounded-2xl px-4 py-3 w-fit soft-shadow mb-8">
-                    <img src="{{ asset('img/fire-3352_256.gif') }}" alt="Streak" class="w-8 h-8" />
-                    <div>
-                        <p class="text-xs text-blue-600 font-medium">Streak</p>
-                        <p class="text-xl font-bold text-blue-900">{{ $user->absen_streak }} days</p>
-                    </div>
-                </div>
-
-                <!-- Attendance Button -->
-                <div class="flex justify-center">
-                    <div onclick="startAbsensi()"
-                        class="ripple-outer relative w-44 h-44 rounded-full bg-white soft-shadow flex flex-col items-center justify-center text-center cursor-pointer hover:scale-105 transition-all duration-300">
-                        <div class="relative z-10">
-                            <div
-                                class="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mb-3 mx-auto">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
-                                    class="text-white">
-                                    <path fill="currentColor"
-                                        d="M9 1v2h6V1h2v2h4a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4V1h2zm11 9H4v9h16v-9zm-4.964 1.136l1.414 1.414l-4.95 4.95l-3.536-3.536L9.38 12.55l2.121 2.122l3.536-3.536z" />
-                                </svg>
-                            </div>
-                            <h1 class="text-xl font-bold text-blue-900">TAP TO</h1>
-                            <p class="text-sm font-semibold text-blue-600">CHECK IN</p>
+                        <p class="text-blue-100 text-sm font-medium tracking-wide">{{ $greeting }}</p>
+                        <h1 class="text-2xl font-bold text-white tracking-tight">{{ $user->name }}</h1>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                            <p class="text-xs text-blue-200 font-medium">{{ $user->kelas }}</p>
                         </div>
                     </div>
+                    <div class="flex items-center gap-3">
+                        <a href="{{ route('siswa.profile') }}" class="relative block">
+                            <img src="{{ asset('img/' . $user->foto) }}" alt="Profile"
+                                class="w-12 h-12 rounded-full border-2 border-white/30 object-cover shadow-md hover:scale-105 transition-transform duration-300">
+                            <span
+                                class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-indigo-600 rounded-full"></span>
+                        </a>
+                    </div>
                 </div>
 
-                <!-- Date Time Display -->
-                <div class="text-center mt-6 space-y-1">
-                    <div class="inline-block bg-white/80 rounded-xl px-6 py-3 soft-shadow">
-                        <h1 id="clock" class="text-2xl font-bold text-blue-900"></h1>
-                        <span
-                            class="block text-sm font-medium text-blue-600 mt-1">{{ \Carbon\Carbon::now()->format('D, d M Y') }}</span>
+                <!-- Stats Card (Streak) -->
+                <div
+                    class="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex items-center gap-4 w-full border border-white/20 shadow-xl">
+                    <div class="bg-white/20 p-3 rounded-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-300" viewBox="0 0 24 24"
+                            fill="currentColor">
+                            <path
+                                d="M12 23c-3.866 0-7-3.134-7-7 0-2.658 1.833-5.398 4.138-8.066.476-.556 1.162-.934 1.862-.934.702 0 1.389.377 1.862.934C15.166 10.602 17 13.342 17 16c0 3.866-3.134 7-7 7zm0-14.5c-.04 0-.21.07-.36.24C9.54 11.03 8 13.33 8 16c0 2.206 1.794 4 4 4s4-1.794 4-4c0-2.67-1.54-4.97-3.64-7.26-.15-.17-.32-.24-.36-.24z" />
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs text-blue-100 font-medium uppercase tracking-wider">Check-in Streak</p>
+                        <p class="text-2xl font-bold text-white">{{ $user->absen_streak }} <span
+                                class="text-sm font-normal opacity-80">Days</span></p>
+                    </div>
+                    <div class="bg-white/20 px-3 py-1 rounded-full text-xs font-semibold text-white">
+                        Active
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Attendance Modal -->
-        <div id="absenModal"
-            class="fixed inset-0 bg-blue-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden px-4">
-            <div class="bg-white rounded-3xl p-6 w-full max-w-md relative soft-shadow">
-                <button onclick="closeModal()"
-                    class="absolute top-4 right-4 text-gray-400 hover:text-blue-600 transition-colors duration-300">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-
-                <h2 class="text-2xl font-bold text-center mb-6 text-blue-900">Check In</h2>
-
-                <!-- Map -->
-                <div id="map" class="h-52 w-full rounded-2xl mb-4 overflow-hidden soft-shadow"></div>
-
-                <!-- Camera -->
-                <div class="aspect-video w-full bg-gray-900 rounded-2xl overflow-hidden soft-shadow relative">
-                    <video id="video" autoplay class="w-full h-full object-cover"></video>
-                    <div id="faceIndicator" class="face-indicator face-not-detected">
-                        <span id="faceStatus">😐 Detecting face...</span>
+        <!-- Main Action Button -->
+        <div class="px-6 -mt-12 relative z-20 flex justify-center mb-8">
+            <button onclick="startAbsensi()" class="relative group">
+                <div
+                    class="absolute inset-0 bg-blue-400 rounded-full blur-xl opacity-50 group-hover:opacity-80 transition-opacity duration-300 animate-pulse">
+                </div>
+                <div
+                    class="relative ripple-btn w-40 h-40 bg-white rounded-full shadow-2xl flex flex-col items-center justify-center border-4 border-blue-50 hover:border-blue-200 transition-all duration-300 hover:scale-105 active:scale-95">
+                    <div class="bg-blue-600 rounded-full p-4 mb-2 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                     </div>
+                    <span class="text-blue-900 font-bold text-sm tracking-wide">CHECK IN</span>
+                    <span id="clock" class="text-xs text-slate-500 font-medium mt-1"></span>
                 </div>
-                <canvas id="canvas" class="hidden"></canvas>
+            </button>
+        </div>
 
-                <!-- Buttons -->
-                <div class="flex flex-col gap-3 mt-6">
-                    <button id="submitBtn" onclick="captureAndSubmit()"
-                        class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3.5 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 soft-shadow disabled:opacity-50 disabled:cursor-not-allowed">
-                        📸 Capture & Check In
-                    </button>
-                    <button onclick="closeModal()"
-                        class="w-full bg-gray-100 text-gray-700 py-3.5 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-300">
-                        Cancel
-                    </button>
-                </div>
+        <!-- Date Display -->
+        <div class="text-center mb-8 px-6">
+            <div class="inline-flex items-center gap-2 bg-white px-5 py-2 rounded-full shadow-sm border border-slate-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span class="text-sm font-semibold text-slate-700">{{ \Carbon\Carbon::now()->format('l, d F Y') }}</span>
             </div>
         </div>
 
         <!-- Menu Grid -->
-        <div class="px-6 -mt-8 relative z-20">
+        <div class="px-6 mb-8">
             <div class="grid grid-cols-4 gap-4">
+                <!-- Attendance History -->
                 <div class="menu-item">
-                    <div class="bg-white rounded-2xl p-4 text-center soft-shadow">
-                        <div
-                            class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 rounded-xl flex items-center justify-center text-2xl mx-auto mb-2">
-                            📋
+                    <div
+                        class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col items-center hover:shadow-md hover:border-blue-200 transition-all duration-300 cursor-pointer">
+                        <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
                         </div>
-                        <p class="text-xs font-semibold text-gray-700">Attendance</p>
+                        <p class="text-xs font-semibold text-slate-600">History</p>
                     </div>
                 </div>
+
+                <!-- Permission -->
                 <div onclick="document.getElementById('izinModal').classList.remove('hidden')"
                     class="menu-item cursor-pointer">
-                    <div class="bg-white rounded-2xl p-4 text-center soft-shadow">
-                        <div
-                            class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center text-2xl mx-auto mb-2">
-                            🛑
+                    <div
+                        class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col items-center hover:shadow-md hover:border-orange-200 transition-all duration-300">
+                        <div class="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
                         </div>
-                        <p class="text-xs font-semibold text-gray-700">Permission</p>
+                        <p class="text-xs font-semibold text-slate-600">Permit</p>
                     </div>
                 </div>
+
+                <!-- Sick Leave -->
                 <div onclick="document.getElementById('sakitModal').classList.remove('hidden')"
                     class="menu-item cursor-pointer">
-                    <div class="bg-white rounded-2xl p-4 text-center soft-shadow">
-                        <div
-                            class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center text-2xl mx-auto mb-2">
-                            🏥
+                    <div
+                        class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col items-center hover:shadow-md hover:border-red-200 transition-all duration-300">
+                        <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
                         </div>
-                        <p class="text-xs font-semibold text-gray-700">Sick Leave</p>
+                        <p class="text-xs font-semibold text-slate-600">Sick</p>
                     </div>
                 </div>
+
+                <!-- Logout -->
                 <div class="menu-item">
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="w-full">
-                            <div class="bg-white rounded-2xl p-4 text-center soft-shadow">
-                                <div
-                                    class="w-12 h-12 bg-gradient-to-br from-red-400 to-red-500 rounded-xl flex items-center justify-center text-2xl mx-auto mb-2">
-                                    🚪
+                            <div
+                                class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col items-center hover:shadow-md hover:border-slate-200 transition-all duration-300">
+                                <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mb-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
                                 </div>
-                                <p class="text-xs font-semibold text-gray-700">Logout</p>
+                                <p class="text-xs font-semibold text-slate-600">Logout</p>
                             </div>
                         </button>
                     </form>
@@ -337,164 +260,224 @@
             </div>
         </div>
 
-        <!-- Modal Izin -->
-        <div id="izinModal"
-            class="fixed inset-0 bg-blue-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center">
-            <div class="bg-white rounded-3xl w-full max-w-md mx-4 p-6 soft-shadow">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-2xl font-bold text-blue-900">Permission Form</h2>
-                    <button type="button" onclick="document.getElementById('izinModal').classList.add('hidden')"
-                        class="text-gray-400 hover:text-blue-600 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                <form method="POST" action="{{ route('absensi.izin') }}" class="space-y-4">
-                    @csrf
-                    <input type="hidden" name="tipe" value="izin">
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Reason</label>
-                        <textarea name="alasan"
-                            class="w-full px-4 py-3 border-2 border-blue-100 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none transition-all duration-200 placeholder-gray-400"
-                            rows="4" placeholder="Enter your reason for permission..." required></textarea>
-                    </div>
-
-                    <div class="flex gap-3 pt-2">
-                        <button type="button" onclick="document.getElementById('izinModal').classList.add('hidden')"
-                            class="flex-1 px-6 py-3.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl font-semibold transition-all duration-200">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                            class="flex-1 px-6 py-3.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-semibold transition-all duration-200 soft-shadow">
-                            Submit
-                        </button>
-                    </div>
-                </form>
+        <!-- Attendance History List -->
+        <div class="px-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg text-slate-800">Recent Activity</h3>
+                <a href="#" class="text-sm text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1">
+                    View All
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
             </div>
-        </div>
 
-        <!-- Modal Sakit -->
-        <div id="sakitModal"
-            class="fixed inset-0 bg-blue-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center">
-            <div class="bg-white rounded-3xl w-full max-w-md mx-4 p-6 soft-shadow">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-2xl font-bold text-blue-900">Sick Leave Form</h2>
-                    <button type="button" onclick="document.getElementById('sakitModal').classList.add('hidden')"
-                        class="text-gray-400 hover:text-blue-600 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                <form method="POST" action="{{ route('absensi.izin') }}" enctype="multipart/form-data"
-                    onsubmit="return confirmIzinSakit()">
-                    @csrf
-                    <input type="hidden" name="tipe" value="sakit">
-
-                    <div class="mb-4">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Upload Medical Certificate</label>
-                        <div class="relative">
-                            <input type="file" name="surat" id="suratDokter" accept="image/*,application/pdf"
-                                class="w-full px-4 py-3 border-2 border-blue-100 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                required>
+            <div class="space-y-3">
+                @forelse ($absensis as $absen)
+                    <div
+                        class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex items-center gap-4 hover:shadow-md transition-all duration-300">
+                        <div class="w-16 h-16 rounded-xl overflow-hidden border border-slate-100 flex-shrink-0">
+                            <img src="{{ asset('storage/' . $absen->foto) }}" alt="Attendance Photo"
+                                class="w-full h-full object-cover">
                         </div>
-                        <div id="preview" class="mt-3 hidden">
-                            <p class="text-sm text-gray-600 mb-2 font-medium">Preview:</p>
-                            <img id="previewImage" class="w-full rounded-xl border-2 border-blue-100 soft-shadow"
-                                alt="Preview" />
-                        </div>
-                    </div>
 
-                    <div class="flex gap-3 mt-6">
-                        <button type="button" onclick="document.getElementById('sakitModal').classList.add('hidden')"
-                            class="flex-1 px-6 py-3.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl font-semibold transition-all duration-200">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                            class="flex-1 px-6 py-3.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-semibold transition-all duration-200 soft-shadow">
-                            Submit
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="text-sm font-bold text-slate-800">
+                                    {{ \Carbon\Carbon::parse($absen->created_at)->translatedFormat('D, d M Y') }}
+                                </h4>
+                                @php
+                                    $hour = \Carbon\Carbon::parse($absen->waktu)->hour;
+                                    $isLate = $hour >= 7; // Assuming 7 AM is the limit
+                                @endphp
+                                <span
+                                    class="text-xs font-bold px-2 py-1 rounded-full {{ $isLate ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600' }}">
+                                    {{ $isLate ? 'Late' : 'On Time' }}
+                                </span>
+                            </div>
 
-        <!-- Attendance History -->
-        <div class="mt-8 px-6 pb-8">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-xl text-blue-900">Recent Attendance</h3>
-                <a href="#" class="text-sm text-blue-600 font-semibold hover:text-blue-700">View All →</a>
-            </div>
-
-            @forelse ($absensis as $absen)
-                <div class="bg-white rounded-2xl soft-shadow p-5 mb-4 hover:shadow-lg transition-all duration-300">
-                    <div class="flex items-start gap-4">
-                        <img src="{{ asset('storage/' . $absen->foto) }}" alt="Attendance Photo"
-                            class="w-20 h-20 object-cover rounded-xl border-2 border-blue-100">
-
-                        <div class="flex-1">
-                            <h4 class="text-sm font-bold text-blue-900 mb-3">
-                                {{ \Carbon\Carbon::parse($absen->created_at)->translatedFormat('D, d M Y') }}
-                            </h4>
-
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <p class="text-xs text-gray-500 mb-1">Check In Time</p>
-                                    @php
-                                        $hour = \Carbon\Carbon::parse($absen->waktu)->hour;
-                                        $bgColor = $hour >= 5 && $hour < 7 ? 'bg-green-50' : 'bg-red-50';
-                                        $textColor = $hour >= 5 && $hour < 7 ? 'text-green-600' : 'text-red-600';
-                                    @endphp
-                                    <div
-                                        class="flex items-center gap-1.5 {{ $bgColor }} {{ $textColor }} px-3 py-1.5 rounded-lg w-fit">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd"
-                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                        <span
-                                            class="text-sm font-bold">{{ \Carbon\Carbon::parse($absen->waktu)->format('H:i') }}</span>
-                                    </div>
+                            <div class="flex items-center gap-4 text-xs text-slate-500">
+                                <div class="flex items-center gap-1.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span
+                                        class="font-medium">{{ \Carbon\Carbon::parse($absen->waktu)->format('H:i') }}</span>
                                 </div>
-
-                                <div>
-                                    <p class="text-xs text-gray-500 mb-1">Location</p>
-                                    <div class="flex items-center gap-1.5 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd"
-                                                d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                        <span class="text-xs font-semibold">{{ round($absen->latitude, 3) }},
-                                            {{ round($absen->longitude, 3) }}</span>
-                                    </div>
+                                <div class="flex items-center gap-1.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <span class="truncate w-24">{{ round($absen->latitude, 4) }},
+                                        {{ round($absen->longitude, 4) }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            @empty
-                <div class="text-center py-12">
-                    <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-10 h-10 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                @empty
+                    <div class="text-center py-10 bg-white rounded-2xl border border-dashed border-slate-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-slate-300 mb-3"
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                         </svg>
+                        <p class="text-sm text-slate-400 font-medium">No attendance records yet</p>
                     </div>
-                    <p class="text-sm text-gray-400 font-medium">No attendance records yet</p>
+                @endforelse
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Modal -->
+    <div id="absenModal"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden px-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-md relative shadow-2xl">
+            <button onclick="closeModal()"
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors duration-300 bg-slate-100 rounded-full p-1.5">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+            <div class="text-center mb-5">
+                <h2 class="text-xl font-bold text-slate-800">Confirm Check In</h2>
+                <p class="text-sm text-slate-500">Position your face in the frame</p>
+            </div>
+
+            <!-- Camera -->
+            <div class="aspect-video w-full bg-slate-900 rounded-2xl overflow-hidden shadow-inner relative mb-4">
+                <video id="video" autoplay class="w-full h-full object-cover transform -scale-x-100"></video>
+                <div id="faceIndicator"
+                    class="face-indicator absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold text-white flex items-center gap-1.5 not-detected">
+                    <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                    <span id="faceStatus">Waiting...</span>
                 </div>
-            @endforelse
+            </div>
+
+            <!-- Map -->
+            <div id="map" class="h-32 w-full rounded-xl overflow-hidden border border-slate-100"></div>
+
+            <canvas id="canvas" class="hidden"></canvas>
+
+            <!-- Buttons -->
+            <div class="flex flex-col gap-3 mt-6">
+                <button id="submitBtn" onclick="captureAndSubmit()"
+                    class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Capture & Submit
+                </button>
+                <button onclick="closeModal()"
+                    class="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-semibold hover:bg-slate-200 transition-all duration-300">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Izin (Permission) -->
+    <div id="izinModal"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center px-4">
+        <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-slate-800">Request Permission</h2>
+                <button type="button" onclick="document.getElementById('izinModal').classList.add('hidden')"
+                    class="text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full p-1.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form method="POST" action="{{ route('absensi.izin') }}" class="space-y-4">
+                @csrf
+                <input type="hidden" name="tipe" value="izin">
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Reason</label>
+                    <textarea name="alasan" rows="4"
+                        class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all duration-200 text-sm"
+                        placeholder="Explain your reason here..." required></textarea>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="document.getElementById('izinModal').classList.add('hidden')"
+                        class="flex-1 px-6 py-3 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl font-semibold transition-all duration-200 text-sm">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-blue-500/30 text-sm">
+                        Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Sakit (Sick) -->
+    <div id="sakitModal"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center px-4">
+        <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-slate-800">Sick Leave Form</h2>
+                <button type="button" onclick="document.getElementById('sakitModal').classList.add('hidden')"
+                    class="text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full p-1.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form method="POST" action="{{ route('absensi.izin') }}" enctype="multipart/form-data"
+                onsubmit="return confirmIzinSakit()">
+                @csrf
+                <input type="hidden" name="tipe" value="sakit">
+
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Medical Certificate</label>
+                    <div
+                        class="relative border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-blue-400 transition-colors">
+                        <input type="file" name="surat" id="suratDokter" accept="image/*,application/pdf"
+                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto text-slate-400 mb-2"
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p class="text-xs text-slate-500">Click to upload or drag and drop</p>
+                        <p class="text-xs text-slate-400">PNG, JPG, PDF up to 10MB</p>
+                    </div>
+                    <div id="preview" class="mt-3 hidden">
+                        <img id="previewImage" class="w-full rounded-xl border border-slate-100" alt="Preview" />
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="document.getElementById('sakitModal').classList.add('hidden')"
+                        class="flex-1 px-6 py-3 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl font-semibold transition-all duration-200 text-sm">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-red-500/30 text-sm">
+                        Submit Sick Leave
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
-
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -504,100 +487,84 @@
         let faceDetectionInterval = null;
         let isFaceDetected = false;
 
-        console.log('🚀 Face detection script loaded');
-        console.log('📁 Models should be in: /models/');
-        console.log('💡 Make sure you have tiny_face_detector model files in public/models/');
-
-
-        // Load face detection model
         async function loadFaceModel() {
             try {
-                console.log('🔄 Loading face detection model...');
-                await faceapi.nets.tinyFaceDetector.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights');
+                await faceapi.nets.tinyFaceDetector.loadFromUri(
+                    'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights');
                 faceReady = true;
-                console.log('✅ Face detection model loaded successfully');
+                console.log('Model loaded');
             } catch (e) {
-                console.error('❌ Failed to load face detection model:', e);
-                faceReady = false;
+                console.error('Model load error', e);
             }
         }
 
-        // Start face detection
         async function detectFace() {
             const video = document.getElementById('video');
             const indicator = document.getElementById('faceIndicator');
             const statusText = document.getElementById('faceStatus');
             const submitBtn = document.getElementById('submitBtn');
 
-            if (!video || !video.videoWidth || !video.videoHeight) {
-                console.log('⏳ Video not ready yet...');
-                return;
-            }
+            if (!video || !video.videoWidth) return;
 
             if (!faceReady) {
-                console.log('⏳ Face model not ready yet...');
-                statusText.textContent = '⏳ Loading face detection...';
+                statusText.textContent = 'Loading AI...';
                 return;
             }
 
             try {
                 const detection = await faceapi.detectSingleFace(
                     video,
-                    new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 })
+                    new faceapi.TinyFaceDetectorOptions({
+                        inputSize: 224,
+                        scoreThreshold: 0.5
+                    })
                 );
 
                 if (detection) {
                     isFaceDetected = true;
-                    indicator.className = 'face-indicator face-detected';
-                    statusText.textContent = '✅ Face detected!';
+                    indicator.classList.remove('not-detected');
+                    indicator.classList.add('detected');
+                    statusText.textContent = 'Face Detected';
                     submitBtn.disabled = false;
                     submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    console.log('✅ Face detected! Score:', detection.score);
                 } else {
                     isFaceDetected = false;
-                    indicator.className = 'face-indicator face-not-detected';
-                    statusText.textContent = '❌ Please show your face';
+                    indicator.classList.remove('detected');
+                    indicator.classList.add('not-detected');
+                    statusText.textContent = 'No Face';
                     submitBtn.disabled = true;
                     submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                    console.log('❌ No face detected');
                 }
             } catch (error) {
-                console.error('Face detection error:', error);
-                statusText.textContent = '⚠️ Detection error';
+                console.error('Detection error', error);
             }
         }
 
-        // Initialize on page load
         loadFaceModel();
 
-        // Clock update
         function updateClock() {
             const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            const timeString = `${hours}:${minutes}:${seconds}`;
+            const timeString = now.toLocaleTimeString('en-US', {
+                hour12: false
+            });
             document.getElementById('clock').textContent = timeString;
         }
 
         updateClock();
         setInterval(updateClock, 1000);
 
-        // Location settings
         const allowedLat = -6.949648486282659;
         const allowedLng = 107.685995;
-        const allowedRadius = 100000;
-
+        const allowedRadius = 10000;
         let map, marker, circle;
 
         function startAbsensi() {
             const modal = document.getElementById('absenModal');
             const submitBtn = document.getElementById('submitBtn');
-            
+
             modal.classList.remove('hidden');
             setTimeout(() => modal.classList.add('show'), 10);
-            
-            // Disable submit button initially
+
             submitBtn.disabled = true;
             submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
 
@@ -605,57 +572,38 @@
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
 
-                // Initialize map
-                map = L.map('map').setView([lat, lng], 17);
+                map = L.map('map').setView([lat, lng], 15);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
                 marker = L.marker([lat, lng]).addTo(map).bindPopup("Your Location").openPopup();
                 circle = L.circle([allowedLat, allowedLng], {
                     radius: allowedRadius,
-                    color: '#3b82f6',
+                    color: '#2563eb',
                     fillOpacity: 0.1
                 }).addTo(map);
 
-                // Start camera
                 const video = document.getElementById('video');
                 navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'user', width: 640, height: 480 }
+                    video: {
+                        facingMode: 'user',
+                        width: 640,
+                        height: 480
+                    }
                 }).then(stream => {
                     video.srcObject = stream;
-                    console.log('📹 Camera started');
-                    
-                    // Wait for video to be ready, then start face detection
                     video.onloadedmetadata = () => {
                         video.play();
-                        console.log('▶️ Video playing, size:', video.videoWidth, 'x', video.videoHeight);
-                        
-                        // Give a moment for video to stabilize
                         setTimeout(() => {
-                            console.log('🔍 Starting face detection...');
-                            // Start periodic face detection (check every 300ms for responsiveness)
                             faceDetectionInterval = setInterval(detectFace, 300);
-                            
-                            // Run first detection immediately
                             detectFace();
                         }, 500);
                     };
                 }).catch(err => {
-                    console.error('Camera error:', err);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Camera Error',
-                        text: 'Failed to access camera: ' + err.message,
-                        confirmButtonColor: '#3b82f6'
-                    });
+                    Swal.fire('Error', 'Could not access camera: ' + err.message, 'error');
                 });
 
             }, function(error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Location Error',
-                    text: 'Failed to get location: ' + error.message,
-                    confirmButtonColor: '#3b82f6'
-                });
+                Swal.fire('Error', 'Location access denied: ' + error.message, 'error');
             });
         }
 
@@ -663,53 +611,26 @@
             const modal = document.getElementById('absenModal');
             modal.classList.remove('show');
             setTimeout(() => modal.classList.add('hidden'), 300);
-            
-            // Stop face detection
-            if (faceDetectionInterval) {
-                clearInterval(faceDetectionInterval);
-                faceDetectionInterval = null;
-            }
-            
-            // Clean up map
+
+            if (faceDetectionInterval) clearInterval(faceDetectionInterval);
             if (map) map.remove();
-            
-            // Stop camera
+
             const video = document.getElementById('video');
             if (video.srcObject) {
                 video.srcObject.getTracks().forEach(track => track.stop());
             }
-            
-            // Reset face detection status
             isFaceDetected = false;
         }
 
         async function captureAndSubmit() {
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
-            
-            // Validate video is ready
-            if (!video.videoWidth || !video.videoHeight) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Camera Not Ready',
-                    text: 'Please wait for the camera to initialize',
-                    confirmButtonColor: '#3b82f6'
-                });
-                return;
-            }
 
-            // MANDATORY: Check if face is detected
             if (!isFaceDetected) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'No Face Detected!',
-                    text: 'Please position your face in front of the camera to check in.',
-                    confirmButtonColor: '#3b82f6'
-                });
+                Swal.fire('Warning', 'Please position your face correctly.', 'warning');
                 return;
             }
 
-            // Capture image
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
@@ -718,28 +639,17 @@
             const latlng = marker.getLatLng();
             const distance = map.distance([latlng.lat, latlng.lng], [allowedLat, allowedLng]);
 
-            // Check distance
             if (distance > allowedRadius) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Out of Range',
-                    text: `You are ${Math.round(distance)}m away. Must be within ${allowedRadius}m!`,
-                    confirmButtonColor: '#3b82f6'
-                });
+                Swal.fire('Out of Range', `You are ${Math.round(distance)}m away from school.`, 'error');
                 return;
             }
 
-            // Show loading
             Swal.fire({
                 title: 'Processing...',
-                text: 'Submitting your attendance',
                 allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
+                didOpen: () => Swal.showLoading()
             });
 
-            // Submit attendance
             fetch('/siswa/absen', {
                     method: 'POST',
                     headers: {
@@ -752,44 +662,24 @@
                         lng: latlng.lng
                     })
                 })
-                .then(res => {
+                .then(async res => {
                     if (!res.ok) {
-                        return res.json().then(err => {
-                            throw new Error(err.message || 'Failed to check in');
-                        });
+                        const text = await res.text();
+                        throw new Error(text);
                     }
                     return res.json();
                 })
                 .then(data => {
-                    if (data.status === 'error') {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Already Checked In!',
-                            text: data.message,
-                            confirmButtonColor: '#3b82f6'
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: data.message || 'Attendance recorded successfully.',
-                            confirmButtonColor: '#3b82f6'
-                        });
-                        closeModal();
-                        setTimeout(() => location.reload(), 1500);
-                    }
+                    Swal.fire('Success', data.message || 'Check-in successful!', 'success');
+                    closeModal();
+                    setTimeout(() => location.reload(), 1500);
                 })
                 .catch(error => {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops!',
-                        text: error.message || 'An error occurred.',
-                        confirmButtonColor: '#3b82f6'
-                    });
+                    console.log(error);
+                    Swal.fire('Error', 'Failed to submit attendance.', 'error');
                 });
         }
 
-        // File preview for sick leave
         document.getElementById('suratDokter').addEventListener('change', function(e) {
             const file = e.target.files[0];
             const preview = document.getElementById('preview');
@@ -803,7 +693,6 @@
                 };
                 reader.readAsDataURL(file);
             } else {
-                img.src = '';
                 preview.classList.add('hidden');
             }
         });
@@ -811,13 +700,12 @@
         function confirmIzinSakit() {
             Swal.fire({
                 title: 'Submit Sick Leave?',
-                text: "Make sure the medical certificate is correct.",
+                text: "Ensure the document is correct.",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonText: 'Yes, Submit',
+                confirmButtonText: 'Yes, submit',
                 cancelButtonText: 'Cancel',
-                confirmButtonColor: '#3b82f6',
-                cancelButtonColor: '#6b7280'
+                confirmButtonColor: '#2563eb'
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.querySelector('#sakitModal form').submit();
@@ -834,8 +722,7 @@
                 title: 'Success',
                 text: '{{ session('success') }}',
                 timer: 2000,
-                showConfirmButton: false,
-                confirmButtonColor: '#3b82f6'
+                showConfirmButton: false
             });
         </script>
     @endif
@@ -844,10 +731,8 @@
         <script>
             Swal.fire({
                 icon: 'error',
-                title: 'Failed',
-                text: '{{ session('error') }}',
-                showConfirmButton: true,
-                confirmButtonColor: '#3b82f6'
+                title: 'Oops',
+                text: '{{ session('error') }}'
             });
         </script>
     @endif

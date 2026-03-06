@@ -12,11 +12,10 @@
         <div class="stat-card fade-up d1 col-span-2 lg:col-span-1">
             <div class="flex items-start justify-between mb-3">
                 <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                    <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <sveg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
                     </svg>
                 </div>
-             
             </div>
             <p class="num text-2xl font-bold text-gray-900">{{ $jmlhsiswa }}</p>
             <p class="text-xs text-gray-500 mt-0.5">Total Siswa</p>
@@ -67,12 +66,8 @@
         <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-200 p-5 fade-up d5">
             <div class="flex flex-wrap items-center justify-between gap-2 mb-5">
                 <div>
-                    <h2 class="text-sm font-semibold text-gray-800">Grafik Kehadiran Mingguan</h2>
+                    <h2 class="text-sm font-semibold text-gray-800">Grafik Kehadiran 7 Hari Terakhir</h2>
                     <p class="text-xs text-gray-400 mt-0.5">Jumlah siswa hadir per hari</p>
-                </div>
-                <div class="flex gap-1.5">
-                    <button type="button" class="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium">Mingguan</button>
-                    <button type="button" class="text-xs px-3 py-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition">Bulanan</button>
                 </div>
             </div>
             <div class="chart-wrap" style="position:relative; height:240px;">
@@ -84,52 +79,36 @@
         <div class="bg-white rounded-2xl border border-gray-200 p-5 fade-up d6">
             <div class="flex items-center justify-between mb-5">
                 <h2 class="text-sm font-semibold text-gray-800">Aktivitas Terbaru</h2>
-                <span class="text-xs text-blue-600 cursor-pointer hover:underline">Lihat semua</span>
+                <span class="text-xs text-gray-400 num">{{ now()->format('H:i') }} WIB</span>
             </div>
-            <div class="space-y-4">
-                <div class="flex gap-3">
-                    <div class="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-1.5"></div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-800">Budi Santoso masuk kelas XII IPA 1</p>
-                        <p class="text-[11px] text-gray-400 mt-0.5 num">07:12 WIB</p>
-                    </div>
+
+            @if($aktivitas->isEmpty())
+                <p class="text-xs text-gray-400 text-center py-8">Belum ada aktivitas hari ini</p>
+            @else
+                <div class="space-y-4">
+                    @php
+                        $warnaMap = [
+                            'blue'   => 'bg-blue-500',
+                            'orange' => 'bg-orange-400',
+                            'red'    => 'bg-red-400',
+                            'emerald'=> 'bg-emerald-500',
+                            'yellow' => 'bg-yellow-400',
+                            'purple' => 'bg-purple-500',
+                            'gray'   => 'bg-gray-400',
+                        ];
+                    @endphp
+
+                    @foreach($aktivitas as $item)
+                        <div class="flex gap-3">
+                            <div class="w-2 h-2 rounded-full {{ $warnaMap[$item['warna']] ?? 'bg-gray-400' }} shrink-0 mt-1.5"></div>
+                            <div>
+                                <p class="text-xs font-medium text-gray-800">{{ $item['pesan'] }}</p>
+                                <p class="text-[11px] text-gray-400 mt-0.5 num">{{ $item['waktu'] }}</p>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
-                <div class="flex gap-3">
-                    <div class="w-2 h-2 rounded-full bg-orange-400 shrink-0 mt-1.5"></div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-800">Ani Rahayu terlambat — XI IPS 2</p>
-                        <p class="text-[11px] text-gray-400 mt-0.5 num">07:48 WIB</p>
-                    </div>
-                </div>
-                <div class="flex gap-3">
-                    <div class="w-2 h-2 rounded-full bg-red-400 shrink-0 mt-1.5"></div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-800">3 siswa X IPA 2 tidak hadir tanpa ket.</p>
-                        <p class="text-[11px] text-gray-400 mt-0.5 num">08:00 WIB</p>
-                    </div>
-                </div>
-                <div class="flex gap-3">
-                    <div class="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1.5"></div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-800">Laporan XI IPA 1 dikirim ke orang tua</p>
-                        <p class="text-[11px] text-gray-400 mt-0.5 num">08:30 WIB</p>
-                    </div>
-                </div>
-                <div class="flex gap-3">
-                    <div class="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-1.5"></div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-800">Admin memperbarui data XII IPS 3</p>
-                        <p class="text-[11px] text-gray-400 mt-0.5 num">09:05 WIB</p>
-                    </div>
-                </div>
-                <div class="flex gap-3">
-                    <div class="w-2 h-2 rounded-full bg-purple-500 shrink-0 mt-1.5"></div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-800">Guru baru ditambahkan ke sistem</p>
-                        <p class="text-[11px] text-gray-400 mt-0.5 num">10:22 WIB</p>
-                    </div>
-                </div>
-            </div>
+            @endif
         </div>
 
     </div>
@@ -138,118 +117,104 @@
     <div class="bg-white rounded-2xl border border-gray-200 fade-up d7">
         <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-gray-100">
             <h2 class="text-sm font-semibold text-gray-800">Rekap Kelas Hari Ini</h2>
-            <span class="text-xs text-blue-600 cursor-pointer hover:underline font-medium">Lihat detail →</span>
+            <span class="text-xs text-gray-400">{{ $rekapKelas->count() }} kelas</span>
         </div>
 
-        {{-- Mobile: cards --}}
-        <div class="md:hidden divide-y divide-gray-100">
-            <div class="px-5 py-3.5 flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-800">XII IPA 1</p>
-                    <p class="text-xs text-gray-400">Wali: Pak Hendra</p>
-                </div>
-                <div class="text-right">
-                    <p class="num text-sm font-semibold text-gray-800">36 / 38</p>
-                    <span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg">94.7%</span>
-                </div>
-            </div>
-            <div class="px-5 py-3.5 flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-800">XI IPS 2</p>
-                    <p class="text-xs text-gray-400">Wali: Bu Sari</p>
-                </div>
-                <div class="text-right">
-                    <p class="num text-sm font-semibold text-gray-800">30 / 36</p>
-                    <span class="text-[11px] font-semibold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-lg">83.3%</span>
-                </div>
-            </div>
-            <div class="px-5 py-3.5 flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-800">X IPA 2</p>
-                    <p class="text-xs text-gray-400">Wali: Pak Bimo</p>
-                </div>
-                <div class="text-right">
-                    <p class="num text-sm font-semibold text-gray-800">33 / 40</p>
-                    <span class="text-[11px] font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-lg">82.5%</span>
-                </div>
-            </div>
-        </div>
+        @if($rekapKelas->isEmpty())
+            <p class="text-xs text-gray-400 text-center py-10">Belum ada data kelas</p>
+        @else
 
-        {{-- Desktop: table --}}
-        <div class="hidden md:block overflow-x-auto">
-            <table class="min-w-full text-sm">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Kelas</th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Wali Kelas</th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Hadir</th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Terlambat</th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Tidak Hadir</th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">% Kehadiran</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-5 py-3 font-semibold text-gray-800">XII IPA 1</td>
-                        <td class="px-5 py-3 text-gray-600">Pak Hendra</td>
-                        <td class="px-5 py-3 num font-medium text-gray-800">36</td>
-                        <td class="px-5 py-3 num text-orange-500">2</td>
-                        <td class="px-5 py-3 num text-red-500">0</td>
-                        <td class="px-5 py-3"><span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg">94.7%</span></td>
-                    </tr>
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-5 py-3 font-semibold text-gray-800">XI IPS 2</td>
-                        <td class="px-5 py-3 text-gray-600">Bu Sari</td>
-                        <td class="px-5 py-3 num font-medium text-gray-800">30</td>
-                        <td class="px-5 py-3 num text-orange-500">4</td>
-                        <td class="px-5 py-3 num text-red-500">2</td>
-                        <td class="px-5 py-3"><span class="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">83.3%</span></td>
-                    </tr>
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-5 py-3 font-semibold text-gray-800">X IPA 2</td>
-                        <td class="px-5 py-3 text-gray-600">Pak Bimo</td>
-                        <td class="px-5 py-3 num font-medium text-gray-800">33</td>
-                        <td class="px-5 py-3 num text-orange-500">3</td>
-                        <td class="px-5 py-3 num text-red-500">4</td>
-                        <td class="px-5 py-3"><span class="text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded-lg">82.5%</span></td>
-                    </tr>
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-5 py-3 font-semibold text-gray-800">XI IPA 3</td>
-                        <td class="px-5 py-3 text-gray-600">Bu Dewi</td>
-                        <td class="px-5 py-3 num font-medium text-gray-800">38</td>
-                        <td class="px-5 py-3 num text-orange-500">1</td>
-                        <td class="px-5 py-3 num text-red-500">0</td>
-                        <td class="px-5 py-3"><span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg">97.4%</span></td>
-                    </tr>
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-5 py-3 font-semibold text-gray-800">XII IPS 3</td>
-                        <td class="px-5 py-3 text-gray-600">Pak Agus</td>
-                        <td class="px-5 py-3 num font-medium text-gray-800">28</td>
-                        <td class="px-5 py-3 num text-orange-500">5</td>
-                        <td class="px-5 py-3 num text-red-500">3</td>
-                        <td class="px-5 py-3"><span class="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">77.8%</span></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+            {{-- Mobile: cards --}}
+            <div class="md:hidden divide-y divide-gray-100">
+                @foreach($rekapKelas as $k)
+                    @php
+                        $warna = $k['persen'] >= 90 ? 'emerald' : ($k['persen'] >= 80 ? 'orange' : 'red');
+                        $badgeClass = [
+                            'emerald' => 'text-emerald-600 bg-emerald-50',
+                            'orange'  => 'text-orange-500 bg-orange-50',
+                            'red'     => 'text-red-500 bg-red-50',
+                        ][$warna];
+                    @endphp
+                    <div class="px-5 py-3.5 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">{{ $k['kelas'] }}</p>
+                            <p class="text-xs text-gray-400">{{ $k['hadir'] }} hadir dari {{ $k['total'] }} siswa</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="num text-sm font-semibold text-gray-800">{{ $k['hadir'] }} / {{ $k['total'] }}</p>
+                            <span class="text-[11px] font-semibold {{ $badgeClass }} px-2 py-0.5 rounded-lg">{{ $k['persen'] }}%</span>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            {{-- Desktop: table --}}
+            <div class="hidden md:block overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Kelas</th>
+                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Siswa</th>
+                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Hadir</th>
+                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Terlambat</th>
+                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Tidak Hadir</th>
+                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">% Kehadiran</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach($rekapKelas as $k)
+                            @php
+                                $warna = $k['persen'] >= 90 ? 'emerald' : ($k['persen'] >= 80 ? 'orange' : 'red');
+                                $badgeClass = [
+                                    'emerald' => 'text-emerald-700 bg-emerald-50',
+                                    'orange'  => 'text-orange-600 bg-orange-50',
+                                    'red'     => 'text-red-600 bg-red-50',
+                                ][$warna];
+                            @endphp
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="px-5 py-3 font-semibold text-gray-800">{{ $k['kelas'] }}</td>
+                                <td class="px-5 py-3 num text-gray-500">{{ $k['total'] }}</td>
+                                <td class="px-5 py-3 num font-medium text-gray-800">{{ $k['hadir'] }}</td>
+                                <td class="px-5 py-3 num text-orange-500">{{ $k['terlambat'] }}</td>
+                                <td class="px-5 py-3 num text-red-500">{{ $k['tidak_hadir'] }}</td>
+                                <td class="px-5 py-3">
+                                    <span class="text-xs font-semibold {{ $badgeClass }} px-2 py-1 rounded-lg">
+                                        {{ $k['persen'] }}%
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+        @endif
     </div>
 
 @endsection
 
 @push('scripts')
 <script>
-    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    const ctx      = document.getElementById('attendanceChart').getContext('2d');
     const gradient = ctx.createLinearGradient(0, 0, 0, 240);
     gradient.addColorStop(0, 'rgba(37,99,235,0.18)');
     gradient.addColorStop(1, 'rgba(37,99,235,0)');
 
+    const labels = @json($grafikLabels);
+    const data   = @json($grafikData);
+
+    // Hitung min/max yang wajar untuk skala Y
+    const maxVal  = Math.max(...data, 1);
+    const minVal  = Math.max(0, Math.min(...data) - Math.ceil(maxVal * 0.15));
+    const yMax    = maxVal + Math.ceil(maxVal * 0.1);
+
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'],
+            labels,
             datasets: [{
                 label: 'Kehadiran',
-                data: [920, 1050, 1100, 980, 1150, 1080],
+                data,
                 borderColor: '#2563EB',
                 backgroundColor: gradient,
                 borderWidth: 2.5,
@@ -282,9 +247,13 @@
             scales: {
                 y: {
                     beginAtZero: false,
-                    min: 800,
-                    max: 1200,
-                    ticks: { stepSize: 100, color: '#94A3B8', font: { size: 11, family: 'DM Mono' } },
+                    min: minVal,
+                    max: yMax,
+                    ticks: {
+                        stepSize: Math.ceil((yMax - minVal) / 4),
+                        color: '#94A3B8',
+                        font: { size: 11, family: 'DM Mono' }
+                    },
                     grid: { color: '#F1F5F9', drawBorder: false }
                 },
                 x: {

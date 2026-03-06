@@ -7,10 +7,12 @@ use App\Models\Jadwal;
 use App\Models\Absensi;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class SiswaController extends Controller
 {
@@ -40,7 +42,7 @@ class SiswaController extends Controller
             ->get();
 
         return view('siswa.home', [
-            
+
             'berita' => $berita,
             'stat' => $stat,
             'jadwal' => $jadwal,
@@ -58,11 +60,9 @@ class SiswaController extends Controller
                 $query->where('status', $status);
             })
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(10); // ganti ini
 
-        
-
-    return view('siswa.request', compact('requests'));
+        return view('siswa.request', compact('requests'));
     }
 
     public function dashboard()
@@ -84,20 +84,20 @@ class SiswaController extends Controller
         $today = Carbon::today();
         $todayStr = $today->toDateString();
         $yesterday = Carbon::yesterday()->toDateString();
-    
+
         // 1. Cek apakah user sudah absen hari ini
         $sudahAbsen = DB::table('absensis')
             ->where('user_id', $user->id)
             ->whereDate('created_at', $today)
             ->exists();
-    
+
         if ($sudahAbsen) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Kamu sudah absen hari ini.'
             ], 400);
         }
-    
+
         // 2. Cek streak hanya jika berhasil absen
         if ($user->last_absen_date === $yesterday) {
             $user->absen_streak += 1;
@@ -106,15 +106,21 @@ class SiswaController extends Controller
         }
         $user->last_absen_date = $todayStr;
         $user->save();
-    
-        // 3. Simpan foto
+
+
+        // 3. Proses foto
         $imageData = $request->photo;
-        $imageName = 'absen_' . time() . '.png';
+        $imageName = 'absen_' . time() . '.jpg';
         $imagePath = 'absen_photos/' . $imageName;
-    
-        $imageData = explode(',', $imageData)[1];
-        Storage::disk('public')->put($imagePath, base64_decode($imageData));
-    
+
+        $image = base64_decode(explode(',', $imageData)[1]);
+
+        $manager = new ImageManager(new Driver());
+        $img = $manager->read($image)
+            ->scale(width: 400) // resize max 400px
+            ->toJpeg(70); // compress 70%
+
+        Storage::disk('public')->put($imagePath, $img);
         // 4. Simpan ke database absensi
         Absensi::create([
             'user_id'      => $user->id,
@@ -127,122 +133,120 @@ class SiswaController extends Controller
             'keterangan'   => 'hadir',
             'status'       => 'approved'
         ]);
-    
+
         return response()->json([
             'status' => 'success',
             'message' => 'Berhasil absen!',
             'streak' => $user->absen_streak
         ]);
-    }    
-
-
-
-// Halaman awal
-public function berita(Request $request)
-{
-    $beritas = Berita::orderBy('created_at', 'desc')->paginate(5);
-    return view('siswa.berita', compact('beritas'));
-}
-
-// Untuk AJAX search realtime
-public function search(Request $request)
-{
-    $search = $request->input('search');
-
-    $beritas = Berita::where('judul', 'like', '%' . $search . '%')
-                    ->orWhere('konten', 'like', '%' . $search . '%')
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-    return response()->json($beritas);
-}
-    
-
-public function profile()
-{
-    $user = Auth::user();
-    return view('siswa.profile', compact('user'));
-}
-
-public function update(Request $request)
-{
-    $user = \App\Models\User::find(Auth::id());
-
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'nohp' => 'nullable|string|max:20',
-        'alamat' => 'nullable|string',
-        'foto' => 'nullable|image|mimes:jpg,png,jpeg|max:2048',
-    ]);
-
-    if ($request->hasFile('foto')) {
-        $file = $request->file('foto');
-        $filename = time() . '_' . $file->getClientOriginalName();
-        $file->move(public_path('img'), $filename);
-        $user->foto = $filename;
     }
 
-    $user->name = $request->name;
-    $user->nohp = $request->nohp;
-    $user->alamat = $request->alamat;
-    $user->save();
-
-    return redirect()->back()->with('success', 'Profil berhasil diperbarui!');
-}
 
 
-public function izin(Request $request)
-{
-    $request->validate([
-        'tipe' => 'required|in:izin,sakit',
-        'alasan' => 'nullable|string',
-        'surat' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048'
-    ]);
-
-    $user = \App\Models\User::find(Auth::id());
-
-    // Cek apakah sudah pernah izin atau sakit hari ini
-    $today = Carbon::today();
-    $sudahAda = Absensi::where('user_id', $user->id)
-        ->whereDate('tanggal', $today)
-        ->whereIn('keterangan', ['izin', 'sakit'])
-        ->exists();
-
-    if ($sudahAda) {
-        return redirect()->back()->with('error', 'Kamu sudah mengajukan izin atau sakit hari ini.');
+    // Halaman awal
+    public function berita(Request $request)
+    {
+        $beritas = Berita::orderBy('created_at', 'desc')->paginate(5);
+        return view('siswa.berita', compact('beritas'));
     }
 
-    if ($request->hasFile('surat')) {
-        $file = $request->file('surat');
-        $imageName = 'surat_' . time() . '.' . $file->getClientOriginalExtension();
-        $imagePath = 'surat_dokter/' . $imageName;
-        Storage::disk('public')->putFileAs('surat_dokter', $file, $imageName);
-        $imageData = $imagePath;
-    } else {
-        $imageData = null;
+    // Untuk AJAX search realtime
+    public function search(Request $request)
+    {
+        $search = $request->input('search');
+
+        $beritas = Berita::where('judul', 'like', '%' . $search . '%')
+            ->orWhere('konten', 'like', '%' . $search . '%')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($beritas);
     }
 
-    $data = [
-        'user_id'      => $user->id,
-        'nama'         => $user->name,
-        'kelas'        => $user->kelas,
-        'jk'           => $user->jenis_kelamin,
-        'jurusan'      => $user->jurusan,
-        'tanggal'      => Carbon::now()->toDateString(),
-        'waktu'        => now()->toTimeString(),
-        'latitude'     => 0,
-        'longitude'    => 0,
-        'lokasi_valid' => true,
-        'foto'         => $imageData,
-        'status'       => 'pending',
-        'keterangan'   => $request->tipe,
-        'alasan'       => $request->alasan,
-    ];
 
-    \App\Models\Absensi::create($data);
+    public function profile()
+    {
+        $user = Auth::user();
+        return view('siswa.profile', compact('user'));
+    }
 
-    return redirect()->back()->with('success', 'Request berhasil dikirim.');
-}
+    public function update(Request $request)
+    {
+        $user = \App\Models\User::find(Auth::id());
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'nohp' => 'nullable|string|max:20',
+            'alamat' => 'nullable|string',
+            'foto' => 'nullable|image|mimes:jpg,png,jpeg|max:2048',
+        ]);
+
+        if ($request->hasFile('foto')) {
+            $file = $request->file('foto');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('img'), $filename);
+            $user->foto = $filename;
+        }
+
+        $user->name = $request->name;
+        $user->nohp = $request->nohp;
+        $user->alamat = $request->alamat;
+        $user->save();
+
+        return redirect()->back()->with('success', 'Profil berhasil diperbarui!');
+    }
 
 
+    public function izin(Request $request)
+    {
+        $request->validate([
+            'tipe' => 'required|in:izin,sakit',
+            'alasan' => 'nullable|string',
+            'surat' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048'
+        ]);
+
+        $user = \App\Models\User::find(Auth::id());
+
+        // Cek apakah sudah pernah izin atau sakit hari ini
+        $today = Carbon::today();
+        $sudahAda = Absensi::where('user_id', $user->id)
+            ->whereDate('tanggal', $today)
+            ->whereIn('keterangan', ['izin', 'sakit', 'hadir']) // Cek juga jika sudah absen hadir
+            ->exists();
+
+        if ($sudahAda) {
+            return redirect()->back()->with('error', 'Kamu sudah mengajukan izin atau sakit hari ini.');
+        }
+
+        if ($request->hasFile('surat')) {
+            $file = $request->file('surat');
+            $imageName = 'surat_' . time() . '.' . $file->getClientOriginalExtension();
+            $imagePath = 'surat_dokter/' . $imageName;
+            Storage::disk('public')->putFileAs('surat_dokter', $file, $imageName);
+            $imageData = $imagePath;
+        } else {
+            $imageData = null;
+        }
+
+        $data = [
+            'user_id'      => $user->id,
+            'nama'         => $user->name,
+            'kelas'        => $user->kelas,
+            'jk'           => $user->jenis_kelamin,
+            'jurusan'      => $user->jurusan,
+            'tanggal'      => Carbon::now()->toDateString(),
+            'waktu'        => now()->toTimeString(),
+            'latitude'     => 0,
+            'longitude'    => 0,
+            'lokasi_valid' => true,
+            'foto'         => $imageData,
+            'status'       => 'pending',
+            'keterangan'   => $request->tipe,
+            'alasan'       => $request->alasan,
+        ];
+
+        \App\Models\Absensi::create($data);
+
+        return redirect()->back()->with('success', 'Request berhasil dikirim.');
+    }
 }

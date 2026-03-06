@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\Absensi;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 
 class KehadiranController extends Controller
@@ -50,5 +51,11 @@ class KehadiranController extends Controller
         ]);
     }
 
-    
+    public function updateApproval(Request $request, $id)
+    {
+        $request->validate(['status' => 'required|in:approved,rejected']);
+        $kehadiran = Absensi::findOrFail($id);
+        $kehadiran->update(['status' => $request->status]);
+        return response()->json(['message' => 'Status berhasil diperbarui']);
+    }
 }

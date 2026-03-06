@@ -1,4 +1,6 @@
 <?php
+
+use App\Http\Controllers\Admin\BeritaController;
 use App\Http\Controllers\Admin\KehadiranController;
 use App\Http\Controllers\Admin\RekapAbsensiController;
 use App\Http\Controllers\Admin\UserController;
@@ -9,12 +11,10 @@ use App\Http\Controllers\SiswaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('auth.login');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -31,8 +31,20 @@ Route::middleware(['auth', 'admin'])->group(function () {
     ## Absensi Management
     Route::get('/admin/kehadiran-hari-ini', [KehadiranController::class, 'kehadiranHariIni'])->name('admin.kehadiran');
     Route::get('/admin/kehadiran-hari-ini/data', [KehadiranController::class, 'kehadiranData'])->name('admin.kehadiran.data');
+    Route::patch('admin/kehadiran/{id}/approval', [KehadiranController::class, 'updateApproval'])->name('admin.kehadiran.approval');
 
-    Route::get('/admin/rekap', [RekapAbsensiController::class, 'rekap'])->name('admin.rekap');
+    ## Berita Management
+    Route::get('/admin/berita', [BeritaController::class, 'index'])
+        ->name('admin.berita.index');
+    Route::post('/admin/berita', [BeritaController::class, 'store'])
+        ->name('admin.berita.store');
+    Route::get('/admin/berita/{berita}/edit', [BeritaController::class, 'edit'])
+        ->name('admin.berita.edit');
+    Route::put('/admin/berita/{berita}', [BeritaController::class, 'update'])
+        ->name('admin.berita.update');
+    Route::delete('/admin/berita/{berita}', [BeritaController::class, 'destroy'])
+        ->name('admin.berita.destroy');
+    Route::get('/admin/rekap', [RekapAbsensiController::class, 'index'])->name('admin.rekap');
     Route::get('/admin/rekap/export', [RekapAbsensiController::class, 'export'])
         ->name('admin.rekap.export');
 

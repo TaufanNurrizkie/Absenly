@@ -11,3 +11,4 @@ Artisan::command('inspire', function () {
 
 
 Schedule::command('auto:alpha')->dailyAt('15:00');
+Schedule::command('absensi:delete-old-photos')->daily();

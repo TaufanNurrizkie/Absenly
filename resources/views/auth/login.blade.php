@@ -1,57 +1,80 @@
 @vite('resources/css/app.css')
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<div class="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 px-4 py-6 sm:px-6 lg:px-8">
-    <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 sm:p-8">
-        <div class="text-center mb-6">
-            <img src="{{ asset('img/Shiny Happy - Standing.png') }}" alt="Logo Sekolah"
-                class="w-28 h-28 sm:w-40 sm:h-40 mx-auto mb-4 object-contain">
-            <h1 class="text-xl sm:text-4xl font-bold text-[#1a3581]">Absenly</h1>
-            <p class="text-sm text-gray-500">Silakan login menggunakan NIS Anda</p>
+<div class="min-h-screen flex items-center justify-center bg-[#EAF4FF] px-4 py-8">
+    <div class="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
+
+        {{-- Kolom Kiri: Branding / Gambar --}}
+        <div class="md:w-1/2 flex flex-col items-center justify-center p-10 text-white relative overflow-hidden"
+            style="background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 60%, #BAE6FD 100%);">
+            {{-- Dekorasi lingkaran latar --}}
+            <div class="absolute -top-16 -left-16 w-64 h-64 bg-white/20 rounded-full"></div>
+            <div class="absolute -bottom-20 -right-12 w-72 h-72 bg-white/20 rounded-full"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/10 rounded-full"></div>
+
+            <div class="relative z-10 flex flex-col items-center text-center gap-4">
+                <img src="{{ asset('img/Shiny Happy - Standing.png') }}" alt="Logo Absenly"
+                    class="w-40 h-40 sm:w-52 sm:h-52 object-contain drop-shadow-lg">
+                <h1 class="text-3xl sm:text-4xl font-bold tracking-tight drop-shadow">Absenly</h1>
+                <p class="text-white/90 text-sm sm:text-base max-w-xs leading-relaxed">
+                    Sistem absensi digital yang mudah, cepat, dan terpercaya untuk sekolah Anda.
+                </p>
+            </div>
         </div>
 
-        <!-- Session Status -->
-        <x-auth-session-status class="mb-4" :status="session('status')" />
-
-        <form method="POST" action="{{ route('login') }}">
-            @csrf
-
-            <!-- NIS -->
-            <div class="mb-4">
-                <x-input-label for="nis" :value="__('NIS')" />
-                <x-text-input id="nis" class="block mt-1 w-full" type="text" name="nis" :value="old('nis')" required autofocus />
-                <x-input-error :messages="$errors->get('nis')" class="mt-2" />
+        {{-- Kolom Kanan: Form Login --}}
+        <div class="md:w-1/2 flex flex-col justify-center p-8 sm:p-10 bg-white">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-[#1D4ED8]">Selamat Datang </h2>
+                <p class="text-sm text-[#60A5FA] mt-1">Silakan login menggunakan NIS Anda</p>
             </div>
 
-            <!-- Password -->
-            <div class="mb-4">
-                <x-input-label for="password" :value="__('Password')" />
-                <x-text-input id="password" class="block mt-1 w-full"
-                    type="password"
-                    name="password"
-                    required autocomplete="current-password" />
-                <x-input-error :messages="$errors->get('password')" class="mt-2" />
-            </div>
+            {{-- Session Status --}}
+            <x-auth-session-status class="mb-4" :status="session('status')" />
 
-            <!-- Remember Me -->
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-                <label for="remember_me" class="inline-flex items-center">
-                    <input id="remember_me" type="checkbox"
-                        class="rounded border-gray-300 text-[#1E3A8A] shadow-sm focus:ring-[#1E3A8A]"
-                        name="remember">
-                    <span class="ml-2 text-sm text-gray-600">{{ __('Ingat saya') }}</span>
-                </label>
+            <form method="POST" action="{{ route('login') }}" class="space-y-4">
+                @csrf
 
-                @if (Route::has('password.request'))
-                    <a class="text-sm text-[#1E3A8A] hover:underline" href="{{ route('password.request') }}">
-                        {{ __('Lupa password?') }}
-                    </a>
-                @endif
-            </div>
+                {{-- NIS --}}
+                <div>
+                    <x-input-label for="nis" :value="__('NIS')" class="text-[#1D4ED8]" />
+                    <x-text-input id="nis" class="block mt-1 w-full border-[#BAE6FD] focus:border-[#3B82F6] focus:ring-[#3B82F6]"
+                        type="text" name="nis" :value="old('nis')" required autofocus />
+                    <x-input-error :messages="$errors->get('nis')" class="mt-2" />
+                </div>
 
-            <button class="w-full h-12 justify-center bg-[#1E3A8A] hover:bg-[#1c2f74] rounded-full text-white font-semibold  ">
-                {{ __('Login') }}
-            </button>
-        </form>
+                {{-- Password --}}
+                <div>
+                    <x-input-label for="password" :value="__('Password')" class="text-[#1D4ED8]" />
+                    <x-text-input id="password" class="block mt-1 w-full border-[#BAE6FD] focus:border-[#3B82F6] focus:ring-[#3B82F6]"
+                        type="password" name="password" required autocomplete="current-password" />
+                    <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                </div>
+
+                {{-- Remember Me & Lupa Password --}}
+                <div class="flex items-center justify-between">
+                    <label for="remember_me" class="inline-flex items-center">
+                        <input id="remember_me" type="checkbox"
+                            class="rounded border-[#BAE6FD] text-[#3B82F6] shadow-sm focus:ring-[#3B82F6]"
+                            name="remember">
+                        <span class="ml-2 text-sm text-[#60A5FA]">{{ __('Ingat saya') }}</span>
+                    </label>
+
+                    @if (Route::has('password.request'))
+                        <a class="text-sm text-[#3B82F6] hover:text-[#1D4ED8] hover:underline font-medium"
+                            href="{{ route('password.request') }}">
+                            {{ __('Lupa password?') }}
+                        </a>
+                    @endif
+                </div>
+
+                {{-- Tombol Login --}}
+                <button type="submit"
+                    class="w-full h-12 bg-[#3B82F6] hover:bg-[#2563EB] active:bg-[#1D4ED8] transition-colors duration-200 rounded-full text-white font-semibold text-sm tracking-wide shadow-md">
+                    {{ __('Login') }}
+                </button>
+            </form>
+        </div>
+
     </div>
 </div>
