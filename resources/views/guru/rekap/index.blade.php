@@ -1,4 +1,4 @@
-@extends('layouts.adminNav')
+@extends('layouts.guruNav')
 
 @section('title', 'Rekap Absensi')
 @section('page-title', 'Rekap Absensi')
@@ -82,22 +82,6 @@
                     placeholder="Cari Nama / NIS..."
                     class="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
             </div>
-
-            <select name="kelas" onchange="this.form.submit()"
-                class="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
-                <option value="">Semua Kelas</option>
-                @foreach($kelasList as $k)
-                    <option value="{{ $k }}" {{ $kelas == $k ? 'selected' : '' }}>{{ $k }}</option>
-                @endforeach
-            </select>
-
-            <select name="jurusan" onchange="this.form.submit()"
-                class="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
-                <option value="">Semua Jurusan</option>
-                @foreach($jurusanList as $j)
-                    <option value="{{ $j }}" {{ $jurusan == $j ? 'selected' : '' }}>{{ $j }}</option>
-                @endforeach
-            </select>
         </div>
 
         {{-- Reset --}}

@@ -23,20 +23,32 @@ class KehadiranController extends Controller
         $hadir = Absensi::with('user')
             ->whereDate('tanggal', $today)
             ->where('keterangan', 'hadir')
+            ->whereHas('user', function ($q) {
+                $q->where('usertype', 'siswa');
+            })
             ->get();
 
         $izin = Absensi::with('user')
             ->whereDate('tanggal', $today)
             ->where('keterangan', 'izin')
+            ->whereHas('user', function ($q) {
+                $q->where('usertype', 'siswa');
+            })
             ->latest()
             ->get();
 
         $sakit = Absensi::with('user')
             ->whereDate('tanggal', $today)
             ->where('keterangan', 'sakit')
+            ->whereHas('user', function ($q) {
+                $q->where('usertype', 'siswa');
+            })
             ->get();
 
         $sudahAbsenUserIds = Absensi::whereDate('tanggal', $today)
+            ->whereHas('user', function ($q) {
+                $q->where('usertype', 'siswa');
+            })
             ->pluck('user_id');
 
         $belumAbsen = User::where('usertype', 'siswa')

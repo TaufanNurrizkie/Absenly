@@ -37,15 +37,11 @@ class SiswaController extends Controller
 
         $hariIni = Carbon::now()->locale('id')->translatedFormat('l'); // contoh hasil: 'Senin'
 
-        $jadwal = Jadwal::where('hari', $hariIni)
-            ->orderBy('jam_mulai')
-            ->get();
 
         return view('siswa.home', [
 
             'berita' => $berita,
             'stat' => $stat,
-            'jadwal' => $jadwal,
             'motivasi' => $motivasiList[array_rand($motivasiList)]
         ]);
     }
@@ -70,7 +66,7 @@ class SiswaController extends Controller
 
         $user = \App\Models\User::find(Auth::id());
         $absensis = Absensi::where('user_id', $user->id)
-            ->where('keterangan', 'hadir')
+            ->whereIn('keterangan', ['hadir', 'izin', 'sakit', 'alpha'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
@@ -78,68 +74,79 @@ class SiswaController extends Controller
     }
 
 
-    public function store(Request $request)
-    {
-        $user = \App\Models\User::find(Auth::id());
-        $today = Carbon::today();
-        $todayStr = $today->toDateString();
-        $yesterday = Carbon::yesterday()->toDateString();
+public function store(Request $request)
+{
+    $user = \App\Models\User::find(Auth::id());
+    $now = Carbon::now();
 
-        // 1. Cek apakah user sudah absen hari ini
-        $sudahAbsen = DB::table('absensis')
-            ->where('user_id', $user->id)
-            ->whereDate('created_at', $today)
-            ->exists();
-
-        if ($sudahAbsen) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Kamu sudah absen hari ini.'
-            ], 400);
-        }
-
-        // 2. Cek streak hanya jika berhasil absen
-        if ($user->last_absen_date === $yesterday) {
-            $user->absen_streak += 1;
-        } else {
-            $user->absen_streak = 1;
-        }
-        $user->last_absen_date = $todayStr;
-        $user->save();
-
-
-        // 3. Proses foto
-        $imageData = $request->photo;
-        $imageName = 'absen_' . time() . '.jpg';
-        $imagePath = 'absen_photos/' . $imageName;
-
-        $image = base64_decode(explode(',', $imageData)[1]);
-
-        $manager = new ImageManager(new Driver());
-        $img = $manager->read($image)
-            ->scale(width: 400) // resize max 400px
-            ->toJpeg(70); // compress 70%
-
-        Storage::disk('public')->put($imagePath, $img);
-        // 4. Simpan ke database absensi
-        Absensi::create([
-            'user_id'      => $user->id,
-            'tanggal'      => $todayStr,
-            'waktu'        => now()->toTimeString(),
-            'latitude'     => $request->lat,
-            'longitude'    => $request->lng,
-            'lokasi_valid' => true,
-            'foto'         => $imagePath,
-            'keterangan'   => 'hadir',
-            'status'       => 'approved'
-        ]);
-
+    // Batasi absensi maksimal jam 15:00
+    if ($now->format('H:i') > '23:00') {
         return response()->json([
-            'status' => 'success',
-            'message' => 'Berhasil absen!',
-            'streak' => $user->absen_streak
-        ]);
+            'status' => 'error',
+            'message' => 'Absensi sudah ditutup. Maksimal sampai jam 15:00.'
+        ], 400);
     }
+
+    $today = Carbon::today();
+    $todayStr = $today->toDateString();
+    $yesterday = Carbon::yesterday()->toDateString();
+
+    // 1. Cek apakah user sudah absen hari ini
+    $sudahAbsen = DB::table('absensis')
+        ->where('user_id', $user->id)
+        ->whereDate('created_at', $today)
+        ->exists();
+
+    if ($sudahAbsen) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Kamu sudah absen hari ini.'
+        ], 400);
+    }
+
+    // 2. Cek streak hanya jika berhasil absen
+    if ($user->last_absen_date === $yesterday) {
+        $user->absen_streak += 1;
+    } else {
+        $user->absen_streak = 1;
+    }
+
+    $user->last_absen_date = $todayStr;
+    $user->save();
+
+    // 3. Proses foto
+    $imageData = $request->photo;
+    $imageName = 'absen_' . time() . '.jpg';
+    $imagePath = 'absen_photos/' . $imageName;
+
+    $image = base64_decode(explode(',', $imageData)[1]);
+
+    $manager = new ImageManager(new Driver());
+    $img = $manager->read($image)
+        ->scale(width: 400)
+        ->toJpeg(70);
+
+    Storage::disk('public')->put($imagePath, $img);
+
+    // 4. Simpan ke database
+    Absensi::create([
+        'user_id'      => $user->id,
+        'tanggal'      => $todayStr,
+        'waktu'        => now()->toTimeString(),
+        'latitude'     => $request->lat,
+        'longitude'    => $request->lng,
+        'lokasi_valid' => true,
+        'foto'         => $imagePath,
+        'keterangan'   => 'hadir',
+        'status'       => 'approved'
+    ]);
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Berhasil absen!',
+        'streak' => $user->absen_streak
+    ]);
+}
 
 
 

@@ -1,18 +1,21 @@
 <?php
 
 use App\Http\Controllers\Admin\BeritaController;
+use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\Admin\KehadiranController;
 use App\Http\Controllers\Admin\RekapAbsensiController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\GuruController;
+use App\Http\Controllers\Guru\GuruAbsenController;
+use App\Http\Controllers\Guru\GuruController;
+use App\Http\Controllers\Guru\GuruSiswaController;
+use App\Http\Controllers\Guru\RekapGuruController;
+use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiswaController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('auth.login');
-});
+Route::get('/', [LoginController::class, 'showLogin'])->name('login');
 
 
 
@@ -24,6 +27,8 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__ . '/auth.php';
 
+
+## Admin Routes
 Route::middleware(['auth', 'admin'])->group(function () {
 
     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
@@ -48,6 +53,13 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/rekap/export', [RekapAbsensiController::class, 'export'])
         ->name('admin.rekap.export');
 
+    ##jadwal management
+    Route::get('admin/jadwal',[JadwalController::class, 'index'])->name('admin.jadwal.index');
+    Route::post('admin/jadwal',[JadwalController::class, 'store'])->name('admin.jadwal.store');
+    Route::put('admin/jadwal/{jadwal}',[JadwalController::class, 'update'])->name('admin.jadwal.update');
+    Route::delete('admin/jadwal/{jadwal}',[JadwalController::class, 'destroy'])->name('admin.jadwal.delete');
+
+
     ## User Management
     Route::get('/admin/users/siswa', [UserController::class, 'indexSiswa'])->name('admin.users.siswa');
     Route::get('/admin/users/guru', [UserController::class, 'indexGuru'])->name('admin.users.guru');
@@ -64,7 +76,7 @@ Route::middleware(['auth', 'guru'])->group(function () {
 
 
 
-
+## Siswa Routes
 Route::middleware(['auth', 'siswa'])->group(function () {
     //ROUTE HOME
     Route::get('/siswa/home', [SiswaController::class, 'home'])->name('siswa.home');
@@ -86,4 +98,22 @@ Route::middleware(['auth', 'siswa'])->group(function () {
     //ROUTE PROFILE
     Route::get('/siswa/profile', [SiswaController::class, 'profile'])->name('siswa.profile');
     Route::put('siswa/update', [SiswaController::class, 'update'])->name('siswa.update');
+});
+
+## Guru Routes
+Route::middleware(['auth', 'guru'])->group(function () {
+    Route::get('/guru/dashboard', [GuruController::class, 'index'])->name('guru.dashboard');
+    Route::get('/guru/rekap', [GuruController::class, 'rekap'])->name('guru.rekap');
+    Route::post('/guru/absensi/{id}/approve', [GuruController::class, 'approve'])->name('guru.absensi.approve');
+    Route::post('/guru/absensi/{id}/reject',  [GuruController::class, 'reject'])->name('guru.absensi.reject');
+
+    Route::get('/guru/absen', [GuruAbsenController::class, 'absen'])->name('guru.absen');
+    Route::post('/guru/absen', [GuruAbsenController::class, 'store'])->name('guru.absen.store');
+
+    Route::get('/guru/siswa', [GuruSiswaController::class, 'index'])
+        ->name('guru.siswa');
+
+    Route::get('/guru/rekap', [RekapGuruController::class, 'index'])->name('guru.rekap');
+    Route::get('/guru/rekap/export', [RekapGuruController::class, 'export'])
+        ->name('guru.rekap.export');
 });

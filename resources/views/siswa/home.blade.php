@@ -106,28 +106,7 @@
             <span class="text-xs text-slate-400 font-medium">{{ \Carbon\Carbon::now()->format('d M Y') }}</span>
         </div>
 
-        <div class="divide-y divide-slate-100">
-            @forelse ($jadwal as $item)
-                <div class="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                    <div class="flex items-center gap-3">
-                        <div class="w-1 h-10 rounded-full bg-indigo-500"></div>
-                        <div>
-                            <p class="font-semibold text-slate-800 text-sm">{{ $item->mapel }}</p>
-                            <p class="text-xs text-slate-500">{{ $item->kelas }}</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm font-medium text-slate-700 tabular-nums">{{ \Carbon\Carbon::parse($item->jam_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($item->jam_selesai)->format('H:i') }}</p>
-                        <p class="text-xs text-slate-400">{{ $item->hari }}</p>
-                    </div>
-                </div>
-            @empty
-                <div class="p-8 text-center">
-                    <svg class="w-10 h-10 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    <p class="text-sm text-slate-400 font-medium">Tidak ada jadwal hari ini.</p>
-                </div>
-            @endforelse
-        </div>
+
     </div>
 
     <!-- Berita -->

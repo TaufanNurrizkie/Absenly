@@ -250,8 +250,8 @@
                 <p class="px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Menu Utama</p>
 
                 {{-- Dashboard --}}
-                <a href="{{ route('admin.dashboard') }}"
-                    class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                <a href="{{ route('guru.dashboard') }}"
+                    class="nav-link {{ request()->routeIs('guru.dashboard') ? 'active' : '' }}">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path
                             d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
@@ -260,66 +260,37 @@
                 </a>
 
                 {{-- Kehadiran --}}
-                <a href="{{ route('admin.kehadiran') }}"
-                    class="nav-link {{ request()->routeIs('admin.kehadiran') ? 'active' : '' }}">
+                <a href="{{ route('guru.absen') }}"
+                    class="nav-link {{ request()->routeIs('guru.absen') ? 'active' : '' }}">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path
                             d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                     </svg>
-                    Kehadiran Siswa
+                    Absen
                 </a>
 
-
-                {{-- Data Guru --}}
-                <a href="javascript:void(0)" class="nav-link opacity-50 cursor-not-allowed">
+                {{-- Rekap Absensi --}}
+                <a href="{{ route('guru.rekap') }}"
+                    class="nav-link {{ request()->routeIs('guru.rekap') ? 'active' : '' }}">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                            clip-rule="evenodd" />
+                        <path
+                            d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                     </svg>
-                    Kehadiran Guru
-                    <span class="ml-auto text-[9px] text-gray-300 font-medium">Soon</span>
+                    Rekap Absensi Siswa
                 </a>
 
-                <div class="my-3 border-t border-gray-100"></div>
-                <p class="px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Informasi</p>
-
-                {{-- Informasi Sekolah --}}
-                <a href="{{ route('admin.berita.index') }}" 
-                   class="nav-link {{ request()->routeIs('admin.berita.*') ? 'active' : '' }}">
-                    <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/>
-                        <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"/>
-                    </svg>
-                    Kelola Berita
-                </a>
-                <a href="{{ route('admin.jadwal.index') }}" 
-                   class="nav-link {{ request()->routeIs('admin.jadwal.*') ? 'active' : '' }}">
-                    <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/>
-                        <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"/>
-                    </svg>
-                    Kelola Jadwal
-                </a>
 
                 <div class="my-3 border-t border-gray-100"></div>
                 <p class="px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Manajemen User</p>
 
                 {{-- Manajemen User --}}
-                <a href="{{ route('admin.users.siswa') }}"
-                    class="nav-link {{ request()->routeIs('admin.users.siswa') ? 'active' : '' }}">
+                <a href="{{ route('guru.siswa') }}"
+                    class="nav-link {{ request()->routeIs('guru.siswa') ? 'active' : '' }}">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
                             clip-rule="evenodd" />
                     </svg>
                     Data Siswa
-                </a>
-                <a href="{{ route('admin.users.guru') }}"
-                    class="nav-link {{ request()->routeIs('admin.users.guru') ? 'active' : '' }}">
-                    <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                            clip-rule="evenodd" />
-                    </svg>
-                    Data Guru
                 </a>
             </nav>
 
