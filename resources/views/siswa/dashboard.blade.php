@@ -193,7 +193,7 @@
         <div class="px-6 mb-8">
             <div class="grid grid-cols-4 gap-4">
 
-                {{-- History --}}
+                {{-- Jamkos --}}
                 <div
                     class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col items-center hover:shadow-md hover:border-blue-200 transition-all duration-300 cursor-pointer">
                     <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mb-2">
@@ -203,7 +203,7 @@
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                     </div>
-                    <p class="text-xs font-semibold text-slate-600">History</p>
+                    <p class="text-xs font-semibold text-slate-600">Jamkos</p>
                 </div>
 
                 {{-- Permit --}}

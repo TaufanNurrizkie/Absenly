@@ -54,10 +54,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
         ->name('admin.rekap.export');
 
     ##jadwal management
-    Route::get('admin/jadwal',[JadwalController::class, 'index'])->name('admin.jadwal.index');
-    Route::post('admin/jadwal',[JadwalController::class, 'store'])->name('admin.jadwal.store');
-    Route::put('admin/jadwal/{jadwal}',[JadwalController::class, 'update'])->name('admin.jadwal.update');
-    Route::delete('admin/jadwal/{jadwal}',[JadwalController::class, 'destroy'])->name('admin.jadwal.delete');
+    Route::get('admin/jadwal', [JadwalController::class, 'index'])->name('admin.jadwal.index');
+    Route::post('admin/jadwal', [JadwalController::class, 'store'])->name('admin.jadwal.store');
+    Route::put('admin/jadwal/{jadwal}', [JadwalController::class, 'update'])->name('admin.jadwal.update');
+    Route::delete('admin/jadwal/{jadwal}', [JadwalController::class, 'destroy'])->name('admin.jadwal.delete');
 
 
     ## User Management
@@ -117,3 +117,24 @@ Route::middleware(['auth', 'guru'])->group(function () {
     Route::get('/guru/rekap/export', [RekapGuruController::class, 'export'])
         ->name('guru.rekap.export');
 });
+
+
+// routes/web.php
+
+// Mark single notifikasi sebagai dibaca
+Route::post('/notifikasi/{id}/read', function ($id) {
+    auth()->user()->notifications()->findOrFail($id)->markAsRead();
+    return response()->json(['ok' => true]);
+})->middleware('auth')->name('notifikasi.read');
+
+// Mark semua dibaca
+Route::post('/notifikasi/read-all', function () {
+    auth()->user()->unreadNotifications->markAsRead();
+    return back();
+})->middleware('auth')->name('notifikasi.readAll');
+
+// routes/web.php
+Route::delete('/notifikasi/{id}', function ($id) {
+    auth()->user()->notifications()->findOrFail($id)->delete();
+    return response()->json(['ok' => true]);
+})->middleware('auth')->name('notifikasi.delete');

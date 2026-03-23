@@ -210,15 +210,15 @@ class SiswaController extends Controller
     public function izin(Request $request)
     {
         $request->validate([
-            'tipe' => 'required|in:izin,sakit',
+            'tipe'   => 'required|in:izin,sakit',
             'alasan' => 'nullable|string',
-            'surat' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048'
+            'surat'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048'
         ]);
 
-        $user = \App\Models\User::find(Auth::id());
-
-        // Cek apakah sudah pernah izin atau sakit hari ini
+        $user  = \App\Models\User::find(Auth::id());
         $today = Carbon::today();
+
+        // Cek sudah absen hari ini
         $sudahAda = Absensi::where('user_id', $user->id)
             ->whereDate('tanggal', $today)
             ->whereIn('keterangan', ['izin', 'sakit', 'hadir'])
@@ -231,7 +231,7 @@ class SiswaController extends Controller
         }
 
         if ($request->hasFile('surat')) {
-            $file = $request->file('surat');
+            $file      = $request->file('surat');
             $imageName = 'surat_' . time() . '.' . $file->getClientOriginalExtension();
             $imagePath = 'surat_sakitIzin/' . $imageName;
             Storage::disk('public')->putFileAs('surat_sakitIzin', $file, $imageName);
@@ -258,6 +258,28 @@ class SiswaController extends Controller
         ];
 
         \App\Models\Absensi::create($data);
+
+        // ── Kirim Notifikasi ──
+        $suratUrl = $imageData ? asset('storage/' . $imageData) : null;
+
+        $admins = \App\Models\User::where('usertype', 'admin')->get();
+        $gurus  = \App\Models\User::where('usertype', 'guru')
+            ->where('kelas', $user->kelas)
+            ->get();
+
+        $penerima = $admins->merge($gurus);
+
+        if ($penerima->isNotEmpty()) {
+            \Illuminate\Support\Facades\Notification::send(
+                $penerima,
+                new \App\Notifications\IzinSakitNotification(
+                    $user,
+                    $request->tipe,
+                    $request->alasan ?? '-',
+                    $suratUrl
+                )
+            );
+        }
 
         return response()->json([
             'message' => 'Request berhasil dikirim.'
