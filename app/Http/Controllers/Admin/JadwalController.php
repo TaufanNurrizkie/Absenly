@@ -19,7 +19,7 @@ class JadwalController extends Controller
     {
         $request->validate([
             'judul'  => 'required|string|max:100',
-            'gambar' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'gambar' => 'required|file|mimes:jpg,jpeg,png,webp,pdf,xlsx,xls|max:10240',
         ]);
 
         $path = $request->file('gambar')->store('jadwal', 'public');
@@ -37,7 +37,7 @@ class JadwalController extends Controller
     {
         $request->validate([
             'judul'  => 'required|string|max:100',
-            'gambar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'gambar' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf,xlsx,xls|max:10240',
         ]);
 
         $jadwal->judul = $request->judul;

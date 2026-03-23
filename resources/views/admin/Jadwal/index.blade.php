@@ -7,7 +7,7 @@
     <div class="flex items-center justify-between mb-6">
         <div>
             <h3 class="text-2xl font-bold text-gray-800">Kelola Jadwal Pelajaran</h3>
-            <p class="text-sm text-gray-500 mt-1">Upload dan kelola gambar jadwal pelajaran</p>
+            <p class="text-sm text-gray-500 mt-1">Upload dan kelola jadwal pelajaran (Gambar, PDF, Excel)</p>
         </div>
         <button onclick="document.getElementById('tambahModal').classList.remove('hidden')"
                 class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
@@ -46,7 +46,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
             <h5 class="text-gray-400 font-medium">Belum ada jadwal</h5>
-            <p class="text-gray-400 text-sm mt-1">Klik tombol "Tambah Jadwal" untuk mulai upload gambar jadwal.</p>
+            <p class="text-gray-400 text-sm mt-1">Klik tombol "Tambah Jadwal" untuk mulai upload.</p>
         </div>
 
     @else
@@ -54,24 +54,75 @@
     {{-- GRID JADWAL --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         @foreach ($jadwals as $jadwal)
+        @php
+            $ext  = strtolower(pathinfo($jadwal->gambar, PATHINFO_EXTENSION));
+            $tipe = match($ext) {
+                'pdf'         => 'pdf',
+                'xlsx', 'xls' => 'excel',
+                default       => 'gambar',
+            };
+            $fileUrl = asset('storage/' . $jadwal->gambar);
+            $badge = match($tipe) {
+                'pdf'   => ['bg' => 'bg-red-100',   'text' => 'text-red-600',   'label' => 'PDF'],
+                'excel' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'label' => 'Excel'],
+                default => ['bg' => 'bg-blue-100',  'text' => 'text-blue-700',  'label' => 'Gambar'],
+            };
+        @endphp
+
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
 
-            {{-- Gambar --}}
-            <a href="{{ asset('storage/' . $jadwal->gambar) }}" target="_blank" class="block overflow-hidden">
-                <img src="{{ asset('storage/' . $jadwal->gambar) }}"
-                     class="w-full h-52 object-cover hover:scale-105 transition-transform duration-300"
-                     alt="{{ $jadwal->judul }}">
-            </a>
+            {{-- Preview area --}}
+            @if($tipe === 'gambar')
+                <a href="{{ $fileUrl }}" target="_blank" class="block overflow-hidden">
+                    <img src="{{ $fileUrl }}"
+                         class="w-full h-52 object-cover hover:scale-105 transition-transform duration-300"
+                         alt="{{ $jadwal->judul }}">
+                </a>
 
-            {{-- Judul --}}
-            <div class="px-4 pt-3 pb-1">
-                <h6 class="font-semibold text-gray-800 text-sm truncate">{{ $jadwal->judul }}</h6>
+            @elseif($tipe === 'pdf')
+                <a href="{{ $fileUrl }}" target="_blank"
+                   class="flex flex-col items-center justify-center h-52 bg-red-50 hover:bg-red-100 transition-colors gap-3">
+                    <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm font-semibold text-red-600">File PDF</p>
+                        <p class="text-xs text-red-400 mt-0.5">Klik untuk buka di tab baru</p>
+                    </div>
+                </a>
+
+            @elseif($tipe === 'excel')
+                <div class="flex flex-col items-center justify-center h-52 bg-green-50 gap-3">
+                    <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18M10 3v18M3 3h18v18H3z"/>
+                        </svg>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm font-semibold text-green-700">File Excel</p>
+                        <a href="{{ $fileUrl }}" download
+                           class="inline-flex items-center gap-1.5 mt-1 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Unduh
+                        </a>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Judul + badge tipe --}}
+            <div class="px-4 pt-3 pb-1 flex items-center gap-2">
+                <h6 class="font-semibold text-gray-800 text-sm truncate flex-1">{{ $jadwal->judul }}</h6>
+                <span class="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-md {{ $badge['bg'] }} {{ $badge['text'] }}">
+                    {{ $badge['label'] }}
+                </span>
             </div>
 
             {{-- Actions --}}
             <div class="flex gap-2 p-3 mt-auto">
-
-                {{-- GANTI --}}
                 <button onclick="document.getElementById('editModal{{ $jadwal->id }}').classList.remove('hidden')"
                         class="flex-1 flex items-center justify-center gap-1 bg-yellow-400 hover:bg-yellow-500 text-white text-sm font-medium py-2 rounded-lg transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -79,8 +130,6 @@
                     </svg>
                     Edit
                 </button>
-
-                {{-- HAPUS --}}
                 <form action="{{ route('admin.jadwal.delete', $jadwal->id) }}" method="POST" class="flex-1"
                       onsubmit="return confirm('Yakin ingin menghapus jadwal ini?')">
                     @csrf
@@ -93,7 +142,6 @@
                         Hapus
                     </button>
                 </form>
-
             </div>
         </div>
 
@@ -119,7 +167,7 @@
 
                     <div class="px-6 py-4 space-y-4">
 
-                        {{-- Input Judul --}}
+                        {{-- Judul --}}
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 Judul <span class="text-red-500">*</span>
@@ -129,22 +177,59 @@
                                    placeholder="Contoh: Jadwal Semester Ganjil 2024" required>
                         </div>
 
-                        {{-- Gambar saat ini --}}
+                        {{-- File saat ini --}}
                         <div>
-                            <p class="text-xs text-gray-500 mb-1">Gambar saat ini:</p>
-                            <img src="{{ asset('storage/' . $jadwal->gambar) }}"
-                                 class="w-full max-h-48 object-contain rounded-lg border border-gray-200">
+                            <p class="text-xs text-gray-500 mb-2">File saat ini:
+                                <span class="font-semibold {{ $badge['text'] }}">{{ $badge['label'] }}</span>
+                            </p>
+                            @if($tipe === 'gambar')
+                                <img src="{{ $fileUrl }}"
+                                     class="w-full max-h-40 object-contain rounded-lg border border-gray-200">
+                            @elseif($tipe === 'pdf')
+                                <div class="flex items-center gap-3 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                    </svg>
+                                    <span class="text-sm text-gray-600 truncate flex-1">{{ basename($jadwal->gambar) }}</span>
+                                    <a href="{{ $fileUrl }}" target="_blank"
+                                       class="text-xs text-red-500 font-semibold hover:underline flex-shrink-0">Buka</a>
+                                </div>
+                            @elseif($tipe === 'excel')
+                                <div class="flex items-center gap-3 bg-green-50 border border-green-100 rounded-lg px-4 py-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18M10 3v18M3 3h18v18H3z"/>
+                                    </svg>
+                                    <span class="text-sm text-gray-600 truncate flex-1">{{ basename($jadwal->gambar) }}</span>
+                                    <a href="{{ $fileUrl }}" download
+                                       class="text-xs text-green-600 font-semibold hover:underline flex-shrink-0">Unduh</a>
+                                </div>
+                            @endif
                         </div>
 
-                        {{-- Ganti Gambar (opsional) --}}
+                        {{-- Ganti File --}}
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Ganti Gambar <span class="text-gray-400 font-normal">(opsional)</span>
+                                Ganti File <span class="text-gray-400 font-normal">(opsional)</span>
                             </label>
-                            <input type="file" name="gambar"
+                            <input type="file" name="gambar" id="editFileInput{{ $jadwal->id }}"
+                                   onchange="handleEditPreview(this, {{ $jadwal->id }})"
                                    class="w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-600 file:font-medium hover:file:bg-blue-100 border border-gray-200 rounded-lg cursor-pointer"
-                                   accept="image/jpg,image/jpeg,image/png,image/webp">
-                            <p class="text-xs text-gray-400 mt-1">Format: JPG, PNG, WEBP. Maks 5MB.</p>
+                                   accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf,.xlsx,.xls">
+                            <p class="text-xs text-gray-400 mt-1">Format: JPG, PNG, WEBP, PDF, XLSX, XLS. Maks 10MB.</p>
+
+                            {{-- Preview baru --}}
+                            <div id="editPreview{{ $jadwal->id }}" class="hidden mt-3">
+                                <p class="text-xs text-gray-500 mb-1">Preview file baru:</p>
+                                <img id="editPreviewImg{{ $jadwal->id }}" src="#"
+                                     class="w-full max-h-40 object-contain rounded-lg border border-gray-200 hidden">
+                                <div id="editPreviewFile{{ $jadwal->id }}"
+                                     class="hidden items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                    </svg>
+                                    <span id="editPreviewFileName{{ $jadwal->id }}" class="text-sm text-gray-600 truncate"></span>
+                                </div>
+                            </div>
                         </div>
 
                     </div>
@@ -190,7 +275,7 @@
 
             <div class="px-6 py-4 space-y-4">
 
-                {{-- Input Judul --}}
+                {{-- Judul --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         Judul <span class="text-red-500">*</span>
@@ -200,22 +285,35 @@
                            placeholder="Contoh: Jadwal Semester Ganjil 2024" required>
                 </div>
 
-                {{-- Upload Gambar --}}
+                {{-- Upload File --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Gambar Jadwal <span class="text-red-500">*</span>
+                        File Jadwal <span class="text-red-500">*</span>
                     </label>
-                    <input type="file" name="gambar" id="previewInput"
+                    <input type="file" name="gambar" id="tambahFileInput"
+                           onchange="handleTambahPreview(this)"
                            class="w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-600 file:font-medium hover:file:bg-blue-100 border border-gray-200 rounded-lg cursor-pointer"
-                           accept="image/jpg,image/jpeg,image/png,image/webp" required>
-                    <p class="text-xs text-gray-400 mt-1">Format: JPG, PNG, WEBP. Maks 5MB.</p>
+                           accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf,.xlsx,.xls"
+                           required>
+                    <p class="text-xs text-gray-400 mt-1">Format: JPG, PNG, WEBP, PDF, XLSX, XLS. Maks 10MB.</p>
                 </div>
 
                 {{-- Preview --}}
-                <div id="previewWrapper" class="hidden">
+                <div id="tambahPreview" class="hidden">
                     <p class="text-xs text-gray-500 mb-1">Preview:</p>
-                    <img id="previewImg" src="#"
-                         class="w-full max-h-48 object-contain rounded-lg border border-gray-200">
+                    {{-- Gambar --}}
+                    <img id="tambahPreviewImg" src="#"
+                         class="w-full max-h-48 object-contain rounded-lg border border-gray-200 hidden">
+                    {{-- PDF / Excel --}}
+                    <div id="tambahPreviewFile"
+                         class="hidden items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        <span id="tambahPreviewFileName" class="text-sm text-gray-600 truncate flex-1"></span>
+                        <span id="tambahPreviewFileBadge"
+                              class="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-md"></span>
+                    </div>
                 </div>
 
             </div>
@@ -237,19 +335,83 @@
 
 @push('scripts')
 <script>
-    document.getElementById('previewInput').addEventListener('change', function (e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function (ev) {
-            document.getElementById('previewImg').src = ev.target.result;
-            document.getElementById('previewWrapper').classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
-    });
+    // ── Deteksi tipe file dari ekstensi ──
+    function getFileTipe(file) {
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (['xlsx', 'xls'].includes(ext)) return 'excel';
+        if (ext === 'pdf') return 'pdf';
+        return 'gambar';
+    }
 
+    // ── Preview modal Tambah ──
+    function handleTambahPreview(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const tipe = getFileTipe(file);
+        const previewWrap = document.getElementById('tambahPreview');
+        const previewImg  = document.getElementById('tambahPreviewImg');
+        const previewFile = document.getElementById('tambahPreviewFile');
+        const previewName = document.getElementById('tambahPreviewFileName');
+        const previewBadge = document.getElementById('tambahPreviewFileBadge');
+
+        previewWrap.classList.remove('hidden');
+
+        if (tipe === 'gambar') {
+            const reader = new FileReader();
+            reader.onload = ev => { previewImg.src = ev.target.result; };
+            reader.readAsDataURL(file);
+            previewImg.classList.remove('hidden');
+            previewFile.classList.add('hidden');
+            previewFile.classList.remove('flex');
+        } else {
+            previewImg.classList.add('hidden');
+            previewName.textContent = file.name;
+
+            if (tipe === 'pdf') {
+                previewBadge.textContent = 'PDF';
+                previewBadge.className = 'flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-100 text-red-600';
+            } else {
+                previewBadge.textContent = 'Excel';
+                previewBadge.className = 'flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-md bg-green-100 text-green-700';
+            }
+
+            previewFile.classList.remove('hidden');
+            previewFile.classList.add('flex');
+        }
+    }
+
+    // ── Preview modal Edit ──
+    function handleEditPreview(input, id) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const tipe = getFileTipe(file);
+        const previewWrap = document.getElementById('editPreview' + id);
+        const previewImg  = document.getElementById('editPreviewImg' + id);
+        const previewFile = document.getElementById('editPreviewFile' + id);
+        const previewName = document.getElementById('editPreviewFileName' + id);
+
+        previewWrap.classList.remove('hidden');
+
+        if (tipe === 'gambar') {
+            const reader = new FileReader();
+            reader.onload = ev => { previewImg.src = ev.target.result; };
+            reader.readAsDataURL(file);
+            previewImg.classList.remove('hidden');
+            previewFile.classList.add('hidden');
+            previewFile.classList.remove('flex');
+        } else {
+            previewImg.classList.add('hidden');
+            previewName.textContent = file.name;
+            previewFile.classList.remove('hidden');
+            previewFile.classList.add('flex');
+        }
+    }
+
+    // ── Tutup modal klik backdrop ──
     document.querySelectorAll('[id^="editModal"], #tambahModal').forEach(modal => {
-        modal.addEventListener('click', function (e) {
+        modal.addEventListener('click', function(e) {
             if (e.target === this) this.classList.add('hidden');
         });
     });
