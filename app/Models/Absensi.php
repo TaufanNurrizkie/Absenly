@@ -15,7 +15,8 @@ class Absensi extends Model
         'lokasi_valid',
         'foto',
         'keterangan',
-        'status'
+        'status',
+        'alasan',
     ];
 
     public function user()

@@ -259,25 +259,22 @@ class SiswaController extends Controller
 
         \App\Models\Absensi::create($data);
 
-        // ── Kirim Notifikasi ──
+        // ── Kirim Notifikasi hanya ke guru ──
         $suratUrl = $imageData ? asset('storage/' . $imageData) : null;
 
-        $admins = \App\Models\User::where('usertype', 'admin')->get();
-        $gurus  = \App\Models\User::where('usertype', 'guru')
+        $gurus = \App\Models\User::where('usertype', 'guru')
             ->where('kelas', $user->kelas)
             ->get();
 
-        $penerima = $admins->merge($gurus);
-
-        if ($penerima->isNotEmpty()) {
+        if ($gurus->isNotEmpty()) {
             \Illuminate\Support\Facades\Notification::send(
-                $penerima,
-                new \App\Notifications\IzinSakitNotification(
-                    $user,
-                    $request->tipe,
-                    $request->alasan ?? '-',
-                    $suratUrl
-                )
+            $gurus,
+            new \App\Notifications\IzinSakitNotification(
+                $user,
+                $request->tipe,
+                $request->alasan ?? '-',
+                $suratUrl
+            )
             );
         }
 

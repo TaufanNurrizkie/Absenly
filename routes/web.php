@@ -13,6 +13,8 @@ use App\Http\Controllers\Guru\RekapGuruController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiswaController;
+use App\Models\User;
+use App\Notifications\JamkosNotification;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LoginController::class, 'showLogin'])->name('login');
@@ -122,8 +124,9 @@ Route::middleware(['auth', 'guru'])->group(function () {
 // routes/web.php
 
 // Mark single notifikasi sebagai dibaca
+// Mark single notifikasi sebagai dibaca → langsung hapus
 Route::post('/notifikasi/{id}/read', function ($id) {
-    auth()->user()->notifications()->findOrFail($id)->markAsRead();
+    auth()->user()->notifications()->findOrFail($id)->delete();
     return response()->json(['ok' => true]);
 })->middleware('auth')->name('notifikasi.read');
 
@@ -138,3 +141,18 @@ Route::delete('/notifikasi/{id}', function ($id) {
     auth()->user()->notifications()->findOrFail($id)->delete();
     return response()->json(['ok' => true]);
 })->middleware('auth')->name('notifikasi.delete');
+
+Route::post('/siswa/jamkos/kirim', function () {
+    $siswa = auth()->user();
+ 
+    // Kirim notif ke semua admin
+    User::where('role', 'admin')->each(function ($admin) use ($siswa) {
+        $admin->notify(new JamkosNotification(
+            siswa_nama: $siswa->name,
+            kelas:      $siswa->kelas    ?? '-',
+            jurusan:    $siswa->jurusan  ?? '-',
+        ));
+    });
+ 
+    return response()->json(['ok' => true]);
+})->middleware('auth')->name('siswa.jamkos.kirim');

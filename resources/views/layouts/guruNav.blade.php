@@ -20,7 +20,9 @@
             --surface: #F8FAFC;
         }
 
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -52,11 +54,19 @@
                 height: 100vh;
                 flex-shrink: 0;
             }
-            #mobileMenuBtn { display: none; }
-            #mobileOverlay { display: none !important; }
+
+            #mobileMenuBtn {
+                display: none;
+            }
+
+            #mobileOverlay {
+                display: none !important;
+            }
         }
 
-        #sidebar.open { transform: translateX(0); }
+        #sidebar.open {
+            transform: translateX(0);
+        }
 
         .app-shell {
             display: flex;
@@ -109,7 +119,9 @@
             font-weight: 600;
         }
 
-        .nav-link.active svg { color: var(--blue-brand); }
+        .nav-link.active svg {
+            color: var(--blue-brand);
+        }
 
         .stat-card {
             background: #fff;
@@ -124,29 +136,73 @@
             transform: translateY(-2px);
         }
 
-        .num { font-family: 'DM Mono', monospace; }
-
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
+        .num {
+            font-family: 'DM Mono', monospace;
         }
 
-        .fade-up  { animation: fadeUp 0.4s ease both; }
-        .delay-1  { animation-delay: 0.05s; }
-        .delay-2  { animation-delay: 0.10s; }
-        .delay-3  { animation-delay: 0.15s; }
-        .delay-4  { animation-delay: 0.20s; }
-        .delay-5  { animation-delay: 0.25s; }
-        .delay-6  { animation-delay: 0.30s; }
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
 
-        #sidebar::-webkit-scrollbar       { width: 4px; }
-        #sidebar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 2px; }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-        .badge-pulse { animation: pulse 2s infinite; }
+        .fade-up {
+            animation: fadeUp 0.4s ease both;
+        }
+
+        .delay-1 {
+            animation-delay: 0.05s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.10s;
+        }
+
+        .delay-3 {
+            animation-delay: 0.15s;
+        }
+
+        .delay-4 {
+            animation-delay: 0.20s;
+        }
+
+        .delay-5 {
+            animation-delay: 0.25s;
+        }
+
+        .delay-6 {
+            animation-delay: 0.30s;
+        }
+
+        #sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #sidebar::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 2px;
+        }
+
+        .badge-pulse {
+            animation: pulse 2s infinite;
+        }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50%       { opacity: 0.7; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
         }
     </style>
 </head>
@@ -157,7 +213,7 @@
     <button id="mobileMenuBtn"
         class="lg:hidden fixed top-3 left-3 z-50 bg-white p-2 rounded-xl shadow-md border border-gray-200 hover:bg-gray-50 transition">
         <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
     </button>
 
@@ -174,7 +230,8 @@
                 <div class="flex items-center gap-2.5">
                     <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
                         <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
+                            <path
+                                d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
                         </svg>
                     </div>
                     <span class="text-lg font-bold text-gray-900 tracking-tight">Absenly</span>
@@ -182,7 +239,8 @@
                 <button id="closeSidebarBtn"
                     class="lg:hidden text-gray-400 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -194,7 +252,8 @@
                 <a href="{{ route('guru.dashboard') }}"
                     class="nav-link {{ request()->routeIs('guru.dashboard') ? 'active' : '' }}">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                        <path
+                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                     </svg>
                     Dashboard
                 </a>
@@ -202,7 +261,8 @@
                 <a href="{{ route('guru.absen') }}"
                     class="nav-link {{ request()->routeIs('guru.absen') ? 'active' : '' }}">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                        <path
+                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                     </svg>
                     Absen
                 </a>
@@ -210,18 +270,21 @@
                 <a href="{{ route('guru.rekap') }}"
                     class="nav-link {{ request()->routeIs('guru.rekap') ? 'active' : '' }}">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                        <path
+                            d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                     </svg>
                     Rekap Absensi Siswa
                 </a>
 
                 <div class="my-3 border-t border-gray-100"></div>
-                <p class="px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Manajemen User</p>
+                <p class="px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Manajemen User
+                </p>
 
                 <a href="{{ route('guru.siswa') }}"
                     class="nav-link {{ request()->routeIs('guru.siswa') ? 'active' : '' }}">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                            clip-rule="evenodd" />
                     </svg>
                     Data Siswa
                 </a>
@@ -236,7 +299,8 @@
                         {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
                     </a>
                     <div class="min-w-0 flex-1">
-                        <p class="text-sm font-semibold text-gray-800 truncate leading-tight">{{ auth()->user()->name }}</p>
+                        <p class="text-sm font-semibold text-gray-800 truncate leading-tight">
+                            {{ auth()->user()->name }}</p>
                         <p class="text-xs text-gray-400 truncate">{{ auth()->user()->email }}</p>
                     </div>
                     <form method="POST" action="{{ route('logout') }}">
@@ -244,7 +308,7 @@
                         <x-danger-button type="submit" title="Keluar" class="!p-1.5 text-red-500">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                             </svg>
                         </x-danger-button>
                     </form>
@@ -265,30 +329,30 @@
 
                 {{-- ── Bell Notification ── --}}
                 @php
-                    $unread   = auth()->user()->unreadNotifications->count();
-                    $hasRead  = auth()->user()->notifications()->whereNotNull('read_at')->exists();
-                    $notifs   = auth()->user()->notifications()->latest()->take(15)->get();
+                    $unread = auth()->user()->unreadNotifications->count();
+                    $hasRead = auth()->user()->notifications()->whereNotNull('read_at')->exists();
+                    $notifs = auth()->user()->notifications()->latest()->take(15)->get();
                 @endphp
 
                 <div class="relative" id="notifWrapper">
 
                     {{-- Tombol bell --}}
                     <button onclick="toggleNotif()" id="notifBtn"
-                            class="relative p-2 text-slate-500 hover:text-slate-700 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        class="relative p-2 text-slate-500 hover:text-slate-700 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
-                        @if($unread > 0)
+                        @if ($unread > 0)
                             <span id="notifBadge"
-                                  class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px]
+                                class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px]
                                          font-bold rounded-full flex items-center justify-center">
                                 {{ $unread > 9 ? '9+' : $unread }}
                             </span>
                         @else
                             <span id="notifBadge"
-                                  class="hidden absolute top-1 right-1 w-4 h-4 bg-red-500 text-white
+                                class="hidden absolute top-1 right-1 w-4 h-4 bg-red-500 text-white
                                          text-[10px] font-bold rounded-full flex items-center justify-center">
                             </span>
                         @endif
@@ -296,25 +360,25 @@
 
                     {{-- Dropdown --}}
                     <div id="notifDropdown"
-                         class="hidden absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl
+                        class="hidden absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl
                                 border border-slate-100 z-50 overflow-hidden">
 
                         {{-- Header dropdown --}}
                         <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
                             <span class="text-sm font-bold text-slate-800">Notifikasi</span>
                             <div class="flex items-center gap-3">
-                                @if($unread > 0)
+                                @if ($unread > 0)
                                     <form action="{{ route('notifikasi.readAll') }}" method="POST">
                                         @csrf
                                         <button type="submit"
-                                                class="text-xs text-blue-500 hover:underline font-medium">
+                                            class="text-xs text-blue-500 hover:underline font-medium">
                                             Baca semua
                                         </button>
                                     </form>
                                 @endif
-                                @if($hasRead)
+                                @if ($hasRead)
                                     <button onclick="deleteAllRead()"
-                                            class="text-xs text-red-400 hover:text-red-500 hover:underline font-medium">
+                                        class="text-xs text-red-400 hover:text-red-500 hover:underline font-medium">
                                         Hapus dibaca
                                     </button>
                                 @endif
@@ -325,32 +389,32 @@
                         <div class="max-h-80 overflow-y-auto divide-y divide-slate-50" id="notifList">
                             @forelse($notifs as $notif)
                                 @php
-                                    $data    = $notif->data;
-                                    $isRead  = $notif->read_at !== null;
-                                    $tipe    = $data['tipe'] ?? 'izin';
-                                    $badgeBg = $tipe === 'sakit'
-                                        ? 'bg-red-50 text-red-600'
-                                        : 'bg-amber-50 text-amber-600';
+                                    $data = $notif->data;
+                                    $isRead = $notif->read_at !== null;
+                                    $tipe = $data['tipe'] ?? 'izin';
+                                    $badgeBg =
+                                        $tipe === 'sakit' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600';
                                 @endphp
                                 <div id="notif-{{ $notif->id }}"
-                                     class="flex items-start gap-3 px-4 py-3 hover:bg-slate-50
+                                    class="flex items-start gap-3 px-4 py-3 hover:bg-slate-50
                                             transition-colors {{ $isRead ? 'bg-white' : 'bg-blue-50/40' }}">
 
                                     {{-- Avatar --}}
                                     <div class="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center
                                                 flex-shrink-0 text-xs font-bold text-slate-600 cursor-pointer"
-                                         onclick="markRead('{{ $notif->id }}')">
+                                        onclick="markRead('{{ $notif->id }}')">
                                         {{ strtoupper(substr($data['siswa_nama'] ?? '?', 0, 1)) }}
                                     </div>
 
                                     {{-- Konten --}}
                                     <div class="flex-1 min-w-0 cursor-pointer"
-                                         onclick="markRead('{{ $notif->id }}')">
+                                        onclick="markRead('{{ $notif->id }}')">
                                         <div class="flex items-center gap-1.5 mb-0.5">
                                             <span class="text-xs font-bold text-slate-800 truncate">
                                                 {{ $data['siswa_nama'] ?? '-' }}
                                             </span>
-                                            <span class="flex-shrink-0 text-[10px] font-bold px-1.5 py-0.5
+                                            <span
+                                                class="flex-shrink-0 text-[10px] font-bold px-1.5 py-0.5
                                                          rounded-md {{ $badgeBg }}">
                                                 {{ strtoupper($tipe) }}
                                             </span>
@@ -364,19 +428,19 @@
 
                                     {{-- Kanan: dot + tombol hapus --}}
                                     <div class="flex flex-col items-center gap-1.5 flex-shrink-0 pt-0.5">
-                                        @if(!$isRead)
+                                        @if (!$isRead)
                                             <div id="dot-{{ $notif->id }}"
-                                                 class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                                class="w-2 h-2 bg-blue-500 rounded-full"></div>
                                         @endif
                                         <button onclick="deleteNotif('{{ $notif->id }}')"
-                                                id="del-{{ $notif->id }}"
-                                                title="Hapus notifikasi"
-                                                class="{{ $isRead ? '' : 'hidden' }} text-slate-300
+                                            id="del-{{ $notif->id }}" title="Hapus notifikasi"
+                                            class="{{ $isRead ? '' : 'hidden' }} text-slate-300
                                                        hover:text-red-400 transition-colors p-0.5">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5"
-                                                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                                stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round"
-                                                      d="M6 18L18 6M6 6l12 12"/>
+                                                    d="M6 18L18 6M6 6l12 12" />
                                             </svg>
                                         </button>
                                     </div>
@@ -384,9 +448,9 @@
                             @empty
                                 <div id="notifEmpty" class="flex flex-col items-center justify-center py-10 gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-200"
-                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                     </svg>
                                     <p class="text-xs text-slate-400">Belum ada notifikasi</p>
                                 </div>
@@ -409,10 +473,10 @@
 
     <script>
         // ── Sidebar mobile ──
-        const mobileMenuBtn   = document.getElementById('mobileMenuBtn');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const closeSidebarBtn = document.getElementById('closeSidebarBtn');
-        const sidebar         = document.getElementById('sidebar');
-        const mobileOverlay   = document.getElementById('mobileOverlay');
+        const sidebar = document.getElementById('sidebar');
+        const mobileOverlay = document.getElementById('mobileOverlay');
 
         function openSidebar() {
             sidebar.classList.add('open');
@@ -473,12 +537,10 @@
         }
 
         // ── Mark single notif as read ──
+        // ── Mark single notif as read, then remove it ──
         function markRead(id) {
-            const el     = document.getElementById('notif-' + id);
-            const dot    = document.getElementById('dot-' + id);
-            const delBtn = document.getElementById('del-' + id);
-
-            if (!el || !dot) return; // sudah dibaca, skip
+            const el = document.getElementById('notif-' + id);
+            if (!el) return;
 
             fetch(`/notifikasi/${id}/read`, {
                 method: 'POST',
@@ -487,14 +549,18 @@
                     'Content-Type': 'application/json'
                 }
             }).then(res => {
-                if (!res.ok) return;
+                // Tetap hapus dari DOM meskipun sudah dibaca sebelumnya
+                const dot = document.getElementById('dot-' + id);
+                if (dot) updateBadge(-1);
 
-                el.classList.remove('bg-blue-50/40');
-                dot.remove();
+                el.style.transition = 'opacity 0.2s, transform 0.2s';
+                el.style.opacity = '0';
+                el.style.transform = 'translateX(8px)';
 
-                if (delBtn) delBtn.classList.remove('hidden');
-
-                updateBadge(-1);
+                setTimeout(() => {
+                    el.remove();
+                    checkEmptyList();
+                }, 200);
             });
         }
 
@@ -513,8 +579,8 @@
                 if (!el) return;
 
                 el.style.transition = 'opacity 0.2s, transform 0.2s';
-                el.style.opacity    = '0';
-                el.style.transform  = 'translateX(8px)';
+                el.style.opacity = '0';
+                el.style.transform = 'translateX(8px)';
 
                 setTimeout(() => {
                     el.remove();
@@ -542,8 +608,8 @@
                     const dot = el.querySelector('[id^="dot-"]');
                     if (!dot) {
                         el.style.transition = 'opacity 0.15s, transform 0.15s';
-                        el.style.opacity    = '0';
-                        el.style.transform  = 'translateX(8px)';
+                        el.style.opacity = '0';
+                        el.style.transform = 'translateX(8px)';
                         setTimeout(() => el.remove(), 150);
                     }
                 });
@@ -558,7 +624,7 @@
             if (!badge) return;
 
             const current = parseInt(badge.textContent) || 0;
-            const next    = current + delta;
+            const next = current + delta;
 
             if (next <= 0) {
                 badge.classList.add('hidden');
@@ -573,4 +639,5 @@
     @stack('scripts')
 
 </body>
+
 </html>
