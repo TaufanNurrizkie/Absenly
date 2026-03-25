@@ -141,26 +141,68 @@
         }
 
         @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .fade-up  { animation: fadeUp 0.4s ease both; }
-        .delay-1  { animation-delay: 0.05s; }
-        .delay-2  { animation-delay: 0.10s; }
-        .delay-3  { animation-delay: 0.15s; }
-        .delay-4  { animation-delay: 0.20s; }
-        .delay-5  { animation-delay: 0.25s; }
-        .delay-6  { animation-delay: 0.30s; }
+        .fade-up {
+            animation: fadeUp 0.4s ease both;
+        }
 
-        #sidebar::-webkit-scrollbar       { width: 4px; }
-        #sidebar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 2px; }
+        .delay-1 {
+            animation-delay: 0.05s;
+        }
 
-        .badge-pulse { animation: pulse 2s infinite; }
+        .delay-2 {
+            animation-delay: 0.10s;
+        }
+
+        .delay-3 {
+            animation-delay: 0.15s;
+        }
+
+        .delay-4 {
+            animation-delay: 0.20s;
+        }
+
+        .delay-5 {
+            animation-delay: 0.25s;
+        }
+
+        .delay-6 {
+            animation-delay: 0.30s;
+        }
+
+        #sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #sidebar::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 2px;
+        }
+
+        .badge-pulse {
+            animation: pulse 2s infinite;
+        }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50%       { opacity: 0.7; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
         }
     </style>
 </head>
@@ -188,7 +230,8 @@
                 <div class="flex items-center gap-2.5">
                     <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
                         <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                            <path
+                                d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
                         </svg>
                     </div>
                     <span class="text-lg font-bold text-gray-900 tracking-tight">Absenly</span>
@@ -196,7 +239,8 @@
                 <button id="closeSidebarBtn"
                     class="lg:hidden text-gray-400 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -208,7 +252,8 @@
                 <a href="{{ route('admin.dashboard') }}"
                     class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                        <path
+                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                     </svg>
                     Dashboard
                 </a>
@@ -216,14 +261,16 @@
                 <a href="{{ route('admin.kehadiran') }}"
                     class="nav-link {{ request()->routeIs('admin.kehadiran') ? 'active' : '' }}">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                        <path
+                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                     </svg>
                     Kehadiran Siswa
                 </a>
 
                 <a href="javascript:void(0)" class="nav-link opacity-50 cursor-not-allowed">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                            clip-rule="evenodd" />
                     </svg>
                     Kehadiran Guru
                     <span class="ml-auto text-[9px] text-gray-300 font-medium">Soon</span>
@@ -233,29 +280,34 @@
                 <p class="px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Informasi</p>
 
                 <a href="{{ route('admin.berita.index') }}"
-                   class="nav-link {{ request()->routeIs('admin.berita.*') ? 'active' : '' }}">
+                    class="nav-link {{ request()->routeIs('admin.berita.*') ? 'active' : '' }}">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/>
-                        <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"/>
+                        <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+                        <path
+                            d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
                     </svg>
                     Kelola Berita
                 </a>
 
                 <a href="{{ route('admin.jadwal.index') }}"
-                   class="nav-link {{ request()->routeIs('admin.jadwal.*') ? 'active' : '' }}">
+                    class="nav-link {{ request()->routeIs('admin.jadwal.*') ? 'active' : '' }}">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                        <path fill-rule="evenodd"
+                            d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                            clip-rule="evenodd" />
                     </svg>
                     Kelola Jadwal
                 </a>
 
                 <div class="my-3 border-t border-gray-100"></div>
-                <p class="px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Manajemen User</p>
+                <p class="px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Manajemen User
+                </p>
 
                 <a href="{{ route('admin.users.siswa') }}"
                     class="nav-link {{ request()->routeIs('admin.users.siswa') ? 'active' : '' }}">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                            clip-rule="evenodd" />
                     </svg>
                     Data Siswa
                 </a>
@@ -263,7 +315,8 @@
                 <a href="{{ route('admin.users.guru') }}"
                     class="nav-link {{ request()->routeIs('admin.users.guru') ? 'active' : '' }}">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                            clip-rule="evenodd" />
                     </svg>
                     Data Guru
                 </a>
@@ -278,7 +331,8 @@
                         {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
                     </a>
                     <div class="min-w-0 flex-1">
-                        <p class="text-sm font-semibold text-gray-800 truncate leading-tight">{{ auth()->user()->name }}</p>
+                        <p class="text-sm font-semibold text-gray-800 truncate leading-tight">
+                            {{ auth()->user()->name }}</p>
                         <p class="text-xs text-gray-400 truncate">{{ auth()->user()->email }}</p>
                     </div>
                     <form method="POST" action="{{ route('logout') }}">
@@ -304,34 +358,51 @@
                 <div class="flex-1 min-w-0">
                     <h1 class="text-sm font-semibold text-gray-800 truncate">@yield('page-title', 'Dashboard')</h1>
                 </div>
+                @php
+                    $notifs = auth()->user()->notifications()->latest()->take(5)->get();
+                @endphp
 
                 {{-- ── Bell Notification ── --}}
                 <div class="relative" id="notifWrapper">
 
                     <button onclick="toggleNotif()" id="notifBtn"
-                            class="relative p-2 text-slate-500 hover:text-slate-700 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        class="relative p-2 text-slate-500 hover:text-slate-700 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
                     </button>
 
                     <div id="notifDropdown"
-                         class="hidden absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl
+                        class="hidden absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl
                                 border border-slate-100 z-50 overflow-hidden">
 
-                        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                            <span class="text-sm font-bold text-slate-800">Notifikasi</span>
-                        </div>
+                        <div class="max-h-80 overflow-y-auto">
 
-                        <div class="flex flex-col items-center justify-center py-10 gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-200"
-                                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                            </svg>
-                            <p class="text-xs text-slate-400">Belum ada notifikasi</p>
+                            @forelse ($notifs as $notif)
+                                <div class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition">
+
+                                    @if ($notif->data['tipe'] === 'jamkos')
+                                        <p class="text-sm font-semibold text-slate-700">
+                                            Jamkos!
+                                        </p>
+
+                                        <p class="text-xs text-slate-500 mt-1">
+                                            {{ $notif->data['siswa_nama'] }} {{ $notif->data['kelas'] }} {{ $notif->data['jurusan'] }} melaporkan kelas kosong
+                                        </p>
+                                    @endif
+
+                                    <p class="text-[10px] text-slate-400 mt-1">
+                                        {{ $notif->created_at->diffForHumans() }}
+                                    </p>
+                                </div>
+                            @empty
+                                <div class="flex flex-col items-center justify-center py-10 gap-2">
+                                    <p class="text-xs text-slate-400">Belum ada notifikasi</p>
+                                </div>
+                            @endforelse
+
                         </div>
 
                     </div>
@@ -350,10 +421,10 @@
 
     <script>
         // ── Sidebar mobile ──
-        const mobileMenuBtn   = document.getElementById('mobileMenuBtn');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const closeSidebarBtn = document.getElementById('closeSidebarBtn');
-        const sidebar         = document.getElementById('sidebar');
-        const mobileOverlay   = document.getElementById('mobileOverlay');
+        const sidebar = document.getElementById('sidebar');
+        const mobileOverlay = document.getElementById('mobileOverlay');
 
         function openSidebar() {
             sidebar.classList.add('open');
@@ -395,4 +466,5 @@
     @stack('scripts')
 
 </body>
+
 </html>

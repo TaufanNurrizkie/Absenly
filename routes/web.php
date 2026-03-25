@@ -143,16 +143,25 @@ Route::delete('/notifikasi/{id}', function ($id) {
 })->middleware('auth')->name('notifikasi.delete');
 
 Route::post('/siswa/jamkos/kirim', function () {
-    $siswa = auth()->user();
- 
-    // Kirim notif ke semua admin
-    User::where('role', 'admin')->each(function ($admin) use ($siswa) {
-        $admin->notify(new JamkosNotification(
-            siswa_nama: $siswa->name,
-            kelas:      $siswa->kelas    ?? '-',
-            jurusan:    $siswa->jurusan  ?? '-',
-        ));
-    });
- 
-    return response()->json(['ok' => true]);
+    $siswa = request()->user();
+
+    if (!$siswa) {
+        return response()->json(['message' => 'Unauthorized'], 401);
+    }
+
+    try {
+        User::where('usertype', 'admin')->each(function ($admin) use ($siswa) {
+            $admin->notify(new JamkosNotification(
+                siswa_nama: $siswa->name ?? 'Unknown',
+                kelas: $siswa->kelas ?? '-',
+                jurusan: $siswa->jurusan ?? '-',
+            ));
+        });
+
+        return response()->json(['ok' => true]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'message' => $e->getMessage()
+        ], 500);
+    }
 })->middleware('auth')->name('siswa.jamkos.kirim');
