@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Absensi;
 use App\Models\Berita;
 use App\Models\Jadwal;
-use App\Models\Absensi;
+use Carbon\Carbon;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
+use Log;
 
 class SiswaController extends Controller
 {
@@ -82,6 +84,14 @@ class SiswaController extends Controller
         $user = \App\Models\User::find(Auth::id());
         $now = Carbon::now();
 
+        // Batasi absensi hanya di hari kerja
+        if ($now->isWeekend()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tidak ada absensi di hari weekend.'
+            ], 400);
+        }
+
         // Batasi absensi maksimal jam 15:00
         if ($now->format('H:i') > '23:00') {
             return response()->json([
@@ -92,12 +102,11 @@ class SiswaController extends Controller
 
         $today = Carbon::today();
         $todayStr = $today->toDateString();
-        $yesterday = Carbon::yesterday()->toDateString();
 
         // 1. Cek apakah user sudah absen hari ini
         $sudahAbsen = DB::table('absensis')
             ->where('user_id', $user->id)
-            ->whereDate('created_at', $today)
+            ->where('created_at', $todayStr)
             ->exists();
 
         if ($sudahAbsen) {
@@ -107,8 +116,21 @@ class SiswaController extends Controller
             ], 400);
         }
 
-        // 2. Cek streak hanya jika berhasil absen
-        if ($user->last_absen_date === $yesterday) {
+        // 2. Cek streak - skip weekend
+        $lastWorkingDay = Carbon::today();
+
+        do {
+            $lastWorkingDay->subDay();
+        } while ($lastWorkingDay->isWeekend());
+
+        $lastWorkingDayStr = $lastWorkingDay->toDateString();
+
+        // Normalize last_absen_date ke string
+        $lastAbsenDate = $user->last_absen_date instanceof \Carbon\Carbon
+            ? $user->last_absen_date->toDateString()
+            : $user->last_absen_date;
+
+        if ($lastAbsenDate === $lastWorkingDayStr) {
             $user->absen_streak += 1;
         } else {
             $user->absen_streak = 1;
@@ -143,6 +165,11 @@ class SiswaController extends Controller
             'keterangan'   => 'hadir',
             'status'       => 'approved'
         ]);
+
+        $lastAbsenDate = $user->last_absen_date instanceof \Carbon\Carbon
+            ? $user->last_absen_date->toDateString()
+            : $user->last_absen_date;
+
 
         return response()->json([
             'status' => 'success',
@@ -204,6 +231,24 @@ class SiswaController extends Controller
         $user->save();
 
         return redirect()->back()->with('success', 'Profil berhasil diperbarui!');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'current_password'      => ['required'],
+            'new_password'          => ['required', 'min:8', 'confirmed'],
+        ]);
+
+        if (!Hash::check($request->current_password, Auth::user()->password)) {
+            return back()->withErrors(['current_password' => 'Current password is incorrect.']);
+        }
+
+        Auth::user()->update([
+            'password' => Hash::make($request->new_password),
+        ]);
+
+        return back()->with('success', 'Password updated successfully.');
     }
 
 
@@ -268,13 +313,13 @@ class SiswaController extends Controller
 
         if ($gurus->isNotEmpty()) {
             \Illuminate\Support\Facades\Notification::send(
-            $gurus,
-            new \App\Notifications\IzinSakitNotification(
-                $user,
-                $request->tipe,
-                $request->alasan ?? '-',
-                $suratUrl
-            )
+                $gurus,
+                new \App\Notifications\IzinSakitNotification(
+                    $user,
+                    $request->tipe,
+                    $request->alasan ?? '-',
+                    $suratUrl
+                )
             );
         }
 

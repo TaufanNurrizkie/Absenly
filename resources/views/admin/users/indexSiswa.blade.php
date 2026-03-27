@@ -6,12 +6,61 @@
     <div class="p-4 md:p-6">
 
         <!-- Header -->
+        <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
             <h1 class="text-2xl font-bold">Manajemen User</h1>
-            <button onclick="openCreateModal()"
-                class="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 text-center">
-                + Tambah User
-            </button>
+            <div class="flex flex-wrap gap-2">
+
+                {{-- Import Button --}}
+                <button onclick="document.getElementById('importArea').classList.toggle('hidden')"
+                    class="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 text-center text-sm">
+                    Import Excel
+                </button>
+
+                <button onclick="openCreateModal()"
+                    class="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 text-center text-sm">
+                    + Tambah User
+                </button>
+            </div>
+        </div>
+
+        {{-- Import Form --}}
+        <div id="importArea" class="hidden mb-6 bg-white rounded-2xl shadow p-5">
+            <h2 class="font-semibold text-gray-700 mb-3">Import User dari Excel</h2>
+
+            @if (session('import_result'))
+                <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700">
+                    {{ session('import_result')['message'] }}
+                </div>
+                @if (count(session('import_result')['errors']))
+                    <ul
+                        class="mb-3 text-xs text-red-600 list-disc list-inside bg-red-50 border border-red-200 rounded-xl p-3">
+                        @foreach (session('import_result')['errors'] as $err)
+                            <li>{{ $err }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+            @endif
+
+            <form action="{{ route('admin.users.import') }}" method="POST" enctype="multipart/form-data"
+                class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                @csrf
+                <input type="file" name="file" accept=".xlsx,.xls" required
+                    class="border rounded-xl p-2 text-sm file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0
+                   file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 flex-1">
+                <button type="submit"
+                    class="bg-indigo-600 text-white px-5 py-2 rounded-xl hover:bg-indigo-700 text-sm whitespace-nowrap">
+                    Upload & Import
+                </button>
+            </form>
+            <p class="mt-2 text-xs text-gray-400">* Password otomatis diset sama dengan NIS masing-masing user. Format:
+                .xlsx</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mb-4">
+            <input type="text" id="searchInput" placeholder="Cari nama, email, NIS, atau kelas..."
+                class="w-full sm:w-80 border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm">
         </div>
 
         <!-- Desktop Table -->
@@ -29,7 +78,8 @@
                 </thead>
                 <tbody>
                     @foreach ($users as $user)
-                        <tr class="border-t hover:bg-gray-50 transition">
+                        <tr class="border-t hover:bg-gray-50 transition"
+                            data-search="{{ strtolower($user->name . ' ' . $user->email . ' ' . $user->nis . ' ' . $user->kelas . ' ' . $user->usertype) }}">
                             <td class="p-3 font-medium">{{ $user->name }}</td>
                             <td class="p-3 text-gray-600">{{ $user->email }}</td>
                             <td class="p-3">{{ $user->nis }}</td>
@@ -61,7 +111,8 @@
         <!-- Mobile Card List -->
         <div class="md:hidden space-y-3">
             @foreach ($users as $user)
-                <div class="bg-white rounded-2xl shadow p-4">
+                <div class="bg-white rounded-2xl shadow p-4"
+                    data-search="{{ strtolower($user->name . ' ' . $user->email . ' ' . $user->nis . ' ' . $user->kelas . ' ' . $user->usertype) }}">
                     <div class="flex justify-between items-start mb-2">
                         <div>
                             <p class="font-semibold text-gray-800">{{ $user->name }}</p>
@@ -96,7 +147,8 @@
 
         <!-- Modal Overlay -->
         <div id="userModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
-            <div class="bg-white w-full max-w-2xl rounded-2xl shadow-xl relative animate-fadeIn
+            <div
+                class="bg-white w-full max-w-2xl rounded-2xl shadow-xl relative animate-fadeIn
                         max-h-[90vh] overflow-y-auto">
 
                 <!-- Modal Header -->
@@ -273,8 +325,41 @@
         }
 
         // Close modal on backdrop click
-        modal.addEventListener('click', function (e) {
+        modal.addEventListener('click', function(e) {
             if (e.target === modal) closeModal();
+        });
+
+
+        const searchInput = document.getElementById('searchInput');
+
+        searchInput.addEventListener('input', function() {
+            const keyword = this.value.toLowerCase().trim();
+
+            // Filter tabel desktop
+            document.querySelectorAll('table tbody tr').forEach(row => {
+                const text = row.getAttribute('data-search') ?? '';
+                row.style.display = text.includes(keyword) ? '' : 'none';
+            });
+
+            // Filter mobile cards
+            document.querySelectorAll('.md\\:hidden .bg-white').forEach(card => {
+                const text = card.getAttribute('data-search') ?? '';
+                card.style.display = text.includes(keyword) ? '' : 'none';
+            });
+
+            // Tampilkan pesan jika tidak ada hasil
+            const visibleRows = document.querySelectorAll('table tbody tr:not([style*="none"])');
+            const visibleCards = document.querySelectorAll('.md\\:hidden .bg-white:not([style*="none"])');
+
+            let emptyMsg = document.getElementById('emptySearch');
+            if (!emptyMsg) {
+                emptyMsg = document.createElement('tr');
+                emptyMsg.id = 'emptySearch';
+                emptyMsg.innerHTML =
+                    '<td colspan="6" class="text-center text-gray-400 py-6 text-sm">Tidak ada user yang cocok.</td>';
+                document.querySelector('table tbody').appendChild(emptyMsg);
+            }
+            emptyMsg.style.display = visibleRows.length === 0 ? '' : 'none';
         });
     </script>
 

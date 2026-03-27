@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class UserController extends Controller
 {
@@ -17,8 +18,8 @@ class UserController extends Controller
 
     public function indexGuru()
     {
-        $users = User::where('usertype', 'guru')->latest()->get();
-        return view('admin.users.indexGuru', compact('users'));
+        $gurus = User::where('usertype', 'guru')->latest()->get();
+        return view('admin.users.indexGuru', compact('gurus'));
     }
 
     public function store(Request $request)
@@ -95,5 +96,132 @@ class UserController extends Controller
     {
         User::findOrFail($id)->delete();
         return back()->with('success', 'User deleted successfully');
+    }
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls|max:2048',
+        ]);
+
+        $file = $request->file('file');
+        $spreadsheet = IOFactory::load($file->getPathname());
+        $sheet = $spreadsheet->getActiveSheet();
+        $rows = $sheet->toArray(null, true, true, true);
+
+        $imported = 0;
+        $skipped  = 0;
+        $errors   = [];
+
+        foreach ($rows as $i => $row) {
+            if ($i === 1) continue; // skip header
+
+            $name  = trim($row['A'] ?? '');
+            $email = trim($row['B'] ?? '');
+            $nis   = trim($row['C'] ?? '');
+
+            // Skip baris kosong atau baris contoh
+            if (!$name || !$email || !$nis) {
+                $skipped++;
+                continue;
+            }
+
+            // Skip jika email atau NIS sudah ada
+            if (\App\Models\User::where('email', $email)->orWhere('nis', $nis)->exists()) {
+                $errors[] = "Baris $i: email/NIS sudah terdaftar ($email / $nis)";
+                $skipped++;
+                continue;
+            }
+
+            try {
+                \App\Models\User::create([
+                    'name'          => $name,
+                    'email'         => $email,
+                    'nis'           => $nis,
+                    'nohp'          => $row['D'] ?? null,
+                    'tempat_lahir'  => $row['E'] ?? null,
+                    'tanggal_lahir' => $row['F'] ?? null,
+                    'jenis_kelamin' => $row['G'] ?? 'L',
+                    'kelas'         => $row['H'] ?? null,
+                    'jurusan'       => $row['I'] ?? null,
+                    'usertype'      => $row['J'] ?? 'siswa',
+                    'Point'         => $row['K'] ?? 0,
+                    'alamat'        => $row['L'] ?? null,
+                    'password'      => Hash::make($nis), // password = NIS, di-hash
+                ]);
+                $imported++;
+            } catch (\Exception $e) {
+                $errors[] = "Baris $i: " . $e->getMessage();
+            }
+        }
+
+        $msg = "Berhasil import $imported user.";
+        if ($skipped) $msg .= " $skipped dilewati.";
+        if ($errors)  $msg .= " Lihat detail error di bawah.";
+
+        return back()->with('import_result', [
+            'message' => $msg,
+            'errors'  => $errors,
+        ]);
+    }
+
+    public function importGuru(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls|max:2048',
+        ]);
+
+        $spreadsheet = IOFactory::load($request->file('file')->getPathname());
+        $rows = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+
+        $imported = 0;
+        $skipped  = 0;
+        $errors   = [];
+
+        foreach ($rows as $i => $row) {
+            if ($i === 1) continue;
+
+            $name  = trim($row['A'] ?? '');
+            $email = trim($row['B'] ?? '');
+            $nis   = trim($row['C'] ?? '');
+
+            if (!$name || !$email || !$nis) {
+                $skipped++;
+                continue;
+            }
+
+            if (User::where('email', $email)->orWhere('nis', $nis)->exists()) {
+                $errors[] = "Baris $i: email/nis sudah terdaftar ($email / $nis)";
+                $skipped++;
+                continue;
+            }
+
+            try {
+                User::create([
+                    'name'           => $name,
+                    'email'          => $email,
+                    'nis'            => $nis,
+                    'nohp'           => $row['D'] ?? null,
+                    'mata_pelajaran' => $row['E'] ?? null,
+                    'tempat_lahir'   => $row['F'] ?? null,
+                    'tanggal_lahir'  => $row['G'] ?? null,
+                    'jenis_kelamin'  => $row['H'] ?? 'L',
+                    'alamat'         => $row['I'] ?? null,
+                    'usertype'       => 'guru',
+                    'password'       => Hash::make($nis),
+                ]);
+                $imported++;
+            } catch (\Exception $e) {
+                $errors[] = "Baris $i: " . $e->getMessage();
+            }
+        }
+
+        $msg = "Berhasil import $imported guru.";
+        if ($skipped) $msg .= " $skipped dilewati.";
+        if ($errors)  $msg .= " Lihat detail error di bawah.";
+
+        return back()->with('import_result', [
+            'message' => $msg,
+            'errors'  => $errors,
+        ]);
     }
 }

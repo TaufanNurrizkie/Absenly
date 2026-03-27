@@ -5,7 +5,6 @@
 
     <!-- Header Section -->
     <div class="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-6 rounded-2xl shadow-lg mb-6 relative overflow-hidden">
-        <!-- Decorative Elements -->
         <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20 blur-2xl"></div>
         <div class="absolute bottom-0 left-0 w-24 h-24 bg-indigo-500/20 rounded-full -ml-12 -mb-12 blur-xl"></div>
         
@@ -21,6 +20,24 @@
             </div>
         </div>
     </div>
+
+    <!-- Flash Messages -->
+    @if(session('success'))
+        <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl flex items-center gap-3">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center gap-3">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {{ session('error') }}
+        </div>
+    @endif
 
     <!-- Profile Card -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:flex gap-8 items-start hover:shadow-md transition-all duration-300">
@@ -134,14 +151,31 @@
                 </div>
             </div>
 
-            <!-- Action Button -->
-            <div class="border-t border-slate-100 pt-6 flex justify-end">
-                <button id="openModalBtn" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-blue-500/20 transition-all duration-300 active:scale-95">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                    Edit Profile
-                </button>
+            <!-- Action Buttons -->
+            <div class="border-t border-slate-100 pt-6 flex justify-between items-center gap-3">
+                <div>
+                    <button type="button" id="backBtn" onclick="window.history.back()" class="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl font-semibold transition-all duration-300 active:scale-95 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Kembali
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button id="openPasswordModalBtn" class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-semibold transition-all duration-300 active:scale-95 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        Change Password
+                    </button>
+                    <button id="openModalBtn" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-blue-500/20 transition-all duration-300 active:scale-95 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        Edit Profile
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -228,7 +262,127 @@
     </div>
 </div>
 
+<!-- Modal Ganti Password -->
+<div id="passwordModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 hidden px-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md transform transition-all duration-300 scale-95 opacity-0 password-modal-content relative shadow-2xl">
+
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-100 p-2 rounded-xl">
+                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800">Change Password</h2>
+            </div>
+            <button type="button" id="closePasswordModalBtn" class="text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full p-1.5 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Validation errors for password form -->
+        @if($errors->has('current_password') || $errors->has('new_password') || $errors->has('new_password_confirmation'))
+            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                <ul class="list-disc list-inside space-y-1">
+                    @foreach($errors->get('current_password') as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                    @foreach($errors->get('new_password') as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                    @foreach($errors->get('new_password_confirmation') as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form action="{{ route('siswa.password.update') }}" method="POST">
+            @csrf
+            @method('PUT')
+
+            <!-- Password Saat Ini -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-600 mb-1">Current Password</label>
+                <div class="relative">
+                    <input type="password" name="current_password" id="currentPassword"
+                           class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 pr-12 focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-sm"
+                           placeholder="Enter current password" required>
+                    <button type="button" onclick="togglePassword('currentPassword', 'eyeCurrent')"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                        <svg id="eyeCurrent" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Password Baru -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-600 mb-1">New Password</label>
+                <div class="relative">
+                    <input type="password" name="new_password" id="newPassword"
+                           class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 pr-12 focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-sm"
+                           placeholder="Minimum 8 characters" required minlength="8"
+                           oninput="checkStrength(this.value)">
+                    <button type="button" onclick="togglePassword('newPassword', 'eyeNew')"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                        <svg id="eyeNew" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Password Strength Indicator -->
+                <div class="mt-2">
+                    <div class="flex gap-1 mb-1">
+                        <div id="bar1" class="h-1 flex-1 rounded-full bg-slate-200 transition-colors duration-300"></div>
+                        <div id="bar2" class="h-1 flex-1 rounded-full bg-slate-200 transition-colors duration-300"></div>
+                        <div id="bar3" class="h-1 flex-1 rounded-full bg-slate-200 transition-colors duration-300"></div>
+                        <div id="bar4" class="h-1 flex-1 rounded-full bg-slate-200 transition-colors duration-300"></div>
+                    </div>
+                    <p id="strengthLabel" class="text-xs text-slate-400"></p>
+                </div>
+            </div>
+
+            <!-- Konfirmasi Password Baru -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-slate-600 mb-1">Confirm New Password</label>
+                <div class="relative">
+                    <input type="password" name="new_password_confirmation" id="confirmPassword"
+                           class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 pr-12 focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-sm"
+                           placeholder="Repeat new password" required
+                           oninput="checkMatch()">
+                    <button type="button" onclick="togglePassword('confirmPassword', 'eyeConfirm')"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                        <svg id="eyeConfirm" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
+                <p id="matchLabel" class="text-xs mt-1 hidden"></p>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex gap-3">
+                <button type="button" id="closePasswordModalBtnFooter" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm">
+                    Cancel
+                </button>
+                <button type="submit" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-lg shadow-amber-500/20 text-sm">
+                    Update Password
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
+    // ─── Edit Profile Modal ───────────────────────────────────────────────────
     const modal = document.getElementById('editModal');
     const modalContent = modal.querySelector('.modal-content');
     const openBtn = document.getElementById('openModalBtn');
@@ -246,28 +400,103 @@
     function closeModal() {
         modalContent.classList.remove('opacity-100', 'scale-100');
         modalContent.classList.add('opacity-0', 'scale-95');
-        setTimeout(() => {
-            modal.classList.add('hidden');
-        }, 300);
+        setTimeout(() => modal.classList.add('hidden'), 300);
     }
 
     openBtn.addEventListener('click', openModal);
     closeBtn.addEventListener('click', closeModal);
     closeBtnFooter.addEventListener('click', closeModal);
-    
-    // Close modal on backdrop click
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeModal();
-        }
-    });
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
     function previewFoto(event) {
         const foto = event.target.files[0];
         const preview = document.getElementById('fotoPreview');
+        if (foto) preview.src = URL.createObjectURL(foto);
+    }
 
-        if (foto) {
-            preview.src = URL.createObjectURL(foto);
+    // ─── Change Password Modal ────────────────────────────────────────────────
+    const passwordModal = document.getElementById('passwordModal');
+    const passwordModalContent = passwordModal.querySelector('.password-modal-content');
+    const openPasswordBtn = document.getElementById('openPasswordModalBtn');
+    const closePasswordBtn = document.getElementById('closePasswordModalBtn');
+    const closePasswordBtnFooter = document.getElementById('closePasswordModalBtnFooter');
+
+    function openPasswordModal() {
+        passwordModal.classList.remove('hidden');
+        setTimeout(() => {
+            passwordModalContent.classList.remove('opacity-0', 'scale-95');
+            passwordModalContent.classList.add('opacity-100', 'scale-100');
+        }, 10);
+    }
+
+    function closePasswordModal() {
+        passwordModalContent.classList.remove('opacity-100', 'scale-100');
+        passwordModalContent.classList.add('opacity-0', 'scale-95');
+        setTimeout(() => passwordModal.classList.add('hidden'), 300);
+    }
+
+    openPasswordBtn.addEventListener('click', openPasswordModal);
+    closePasswordBtn.addEventListener('click', closePasswordModal);
+    closePasswordBtnFooter.addEventListener('click', closePasswordModal);
+    passwordModal.addEventListener('click', (e) => { if (e.target === passwordModal) closePasswordModal(); });
+
+    // Auto-open password modal if there are password validation errors
+    @if($errors->has('current_password') || $errors->has('new_password') || $errors->has('new_password_confirmation'))
+        document.addEventListener('DOMContentLoaded', openPasswordModal);
+    @endif
+
+    // ─── Toggle Password Visibility ───────────────────────────────────────────
+    function togglePassword(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        icon.innerHTML = isHidden
+            ? `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />`
+            : `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
+    }
+
+    // ─── Password Strength Checker ────────────────────────────────────────────
+    function checkStrength(value) {
+        const bars = [document.getElementById('bar1'), document.getElementById('bar2'), document.getElementById('bar3'), document.getElementById('bar4')];
+        const label = document.getElementById('strengthLabel');
+        
+        let score = 0;
+        if (value.length >= 8) score++;
+        if (/[A-Z]/.test(value)) score++;
+        if (/[0-9]/.test(value)) score++;
+        if (/[^A-Za-z0-9]/.test(value)) score++;
+
+        const colors = ['bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-green-500'];
+        const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+        const textColors = ['', 'text-red-500', 'text-orange-500', 'text-yellow-600', 'text-green-600'];
+
+        bars.forEach((bar, i) => {
+            bar.className = 'h-1 flex-1 rounded-full transition-colors duration-300 ' + (i < score ? colors[score - 1] : 'bg-slate-200');
+        });
+
+        label.textContent = value.length > 0 ? labels[score] : '';
+        label.className = 'text-xs mt-0 ' + (value.length > 0 ? textColors[score] : 'text-slate-400');
+    }
+
+    // ─── Password Match Checker ───────────────────────────────────────────────
+    function checkMatch() {
+        const newPass = document.getElementById('newPassword').value;
+        const confirmPass = document.getElementById('confirmPassword').value;
+        const label = document.getElementById('matchLabel');
+
+        if (confirmPass.length === 0) {
+            label.classList.add('hidden');
+            return;
+        }
+
+        label.classList.remove('hidden');
+        if (newPass === confirmPass) {
+            label.textContent = '✓ Passwords match';
+            label.className = 'text-xs mt-1 text-green-600';
+        } else {
+            label.textContent = '✗ Passwords do not match';
+            label.className = 'text-xs mt-1 text-red-500';
         }
     }
 </script>
