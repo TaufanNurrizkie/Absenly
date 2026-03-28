@@ -89,7 +89,22 @@
                 opacity: 0.3;
             }
         }
+
+        /* Notif dropdown animasi tanpa Alpine */
+        #notifDropdown {
+            display: none;
+            transform-origin: top right;
+        }
+
+        #notifDropdown.open {
+            display: block;
+        }
     </style>
+
+    @php
+        $notifUnread = auth()->user()->unreadNotifications()->take(5)->get();
+        $notifCount  = auth()->user()->unreadNotifications()->count();
+    @endphp
 
     <div class="min-h-screen bg-slate-50 pb-10">
 
@@ -100,7 +115,10 @@
             <div class="absolute bottom-0 left-0 w-48 h-48 bg-indigo-400/20 rounded-full -ml-24 -mb-24 blur-xl"></div>
 
             <div class="relative z-10 max-w-lg mx-auto">
-                <div class="flex items-center justify-between mb-6">
+
+                {{-- ── Top Row: Greeting + Avatar + Bell ── --}}
+                <div class="flex items-start justify-between mb-6">
+                    {{-- Greeting & Name --}}
                     <div>
                         @php
                             $hour = now()->format('H');
@@ -121,31 +139,136 @@
                             <p class="text-xs text-blue-200 font-medium">{{ $user->kelas }}</p>
                         </div>
                     </div>
-                    <a href="{{ route('siswa.profile') }}" class="relative block">
-                        <img src="{{ asset('img/' . $user->foto) }}" alt="Profile"
-                            class="w-12 h-12 rounded-full border-2 border-white/30 object-cover shadow-md hover:scale-105 transition-transform duration-300">
-                        <span
-                            class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-indigo-600 rounded-full"></span>
-                    </a>
+
+                    {{-- Avatar + Bell (pojok kanan atas) --}}
+                    <div class="flex items-center gap-2 flex-shrink-0">
+
+                        {{-- Bell Notifikasi --}}
+                        <div class="relative">
+                            <button onclick="toggleNotif()"
+                                class="relative p-2 bg-white/10 rounded-xl border border-white/20 hover:bg-white/20 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                </svg>
+                                @if ($notifCount > 0)
+                                    <span
+                                        class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                                        {{ $notifCount > 9 ? '9+' : $notifCount }}
+                                    </span>
+                                @endif
+                            </button>
+
+                            {{-- Dropdown Notif --}}
+                            <div id="notifDropdown"
+                                class="absolute right-0 top-12 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50">
+                                <div
+                                    class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                                    <h4 class="text-sm font-bold text-slate-800">Notifikasi Poin</h4>
+                                    @if ($notifCount > 0)
+                                        <a href="{{ route('siswa.notif.readAll') }}"
+                                            class="text-xs text-blue-500 font-semibold hover:underline">
+                                            Tandai semua dibaca
+                                        </a>
+                                    @endif
+                                </div>
+
+                                <div class="divide-y divide-slate-50 max-h-72 overflow-y-auto">
+                                    @forelse($notifUnread as $notif)
+                                        @php
+                                            $d      = $notif->data;
+                                            $change = $d['point_change'] ?? 0;
+                                            $sign   = $change >= 0 ? '+' : '';
+                                            $color  = $change > 0
+                                                ? 'text-green-600'
+                                                : ($change < 0 ? 'text-red-500' : 'text-slate-500');
+                                        @endphp
+                                        <div class="px-4 py-3 hover:bg-slate-50 transition cursor-default">
+                                            <div class="flex items-start gap-3">
+                                                <div
+                                                    class="w-8 h-8 rounded-xl {{ $change > 0 ? 'bg-green-50' : ($change < 0 ? 'bg-red-50' : 'bg-slate-100') }} flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                    <span class="text-base">
+                                                        {{ $change > 0 ? '🎉' : ($change < 0 ? '⚠️' : 'ℹ️') }}
+                                                    </span>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-xs font-bold text-slate-700">
+                                                        {{ $d['title'] ?? 'Update Poin' }}
+                                                    </p>
+                                                    <p class="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                                                        {{ $d['reason'] ?? '-' }}
+                                                    </p>
+                                                    <div class="flex items-center justify-between mt-1">
+                                                        <span class="text-[10px] text-slate-400">
+                                                            {{ $notif->created_at->diffForHumans() }}
+                                                        </span>
+                                                        <span class="text-xs font-bold {{ $color }}">
+                                                            {{ $sign }}{{ $change }} poin
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="px-4 py-8 text-center">
+                                            <p class="text-xs text-slate-400">Belum ada notifikasi poin.</p>
+                                        </div>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Avatar --}}
+                        <a href="{{ route('siswa.profile') }}" class="relative block">
+                            <img src="{{ asset('img/' . $user->foto) }}" alt="Profile"
+                                class="w-11 h-11 rounded-full border-2 border-white/30 object-cover shadow-md hover:scale-105 transition-transform duration-300">
+                            <span
+                                class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-indigo-600 rounded-full"></span>
+                        </a>
+                    </div>
                 </div>
 
-                {{-- Streak Card --}}
-                <div
-                    class="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex items-center gap-4 w-full border border-white/20 shadow-xl">
-                    <div class="bg-white/20 p-3 rounded-xl">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-300" viewBox="0 0 24 24"
-                            fill="currentColor">
-                            <path
-                                d="M12 23c-3.866 0-7-3.134-7-7 0-2.658 1.833-5.398 4.138-8.066.476-.556 1.162-.934 1.862-.934.702 0 1.389.377 1.862.934C15.166 10.602 17 13.342 17 16c0 3.866-3.134 7-7 7zm0-14.5c-.04 0-.21.07-.36.24C9.54 11.03 8 13.33 8 16c0 2.206 1.794 4 4 4s4-1.794 4-4c0-2.67-1.54-4.97-3.64-7.26-.15-.17-.32-.24-.36-.24z" />
-                        </svg>
+                {{-- ── Streak + Poin Row ── --}}
+                <div class="flex gap-3">
+                    {{-- Streak Card --}}
+                    <div
+                        class="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex items-center gap-3 flex-1 border border-white/20 shadow-xl">
+                        <div class="bg-white/20 p-2.5 rounded-xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-300"
+                                viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M12 23c-3.866 0-7-3.134-7-7 0-2.658 1.833-5.398 4.138-8.066.476-.556 1.162-.934 1.862-.934.702 0 1.389.377 1.862.934C15.166 10.602 17 13.342 17 16c0 3.866-3.134 7-7 7z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-blue-100 font-medium uppercase tracking-wider">Streak</p>
+                            <p class="text-xl font-bold text-white leading-none">
+                                {{ $user->absen_streak }}
+                                <span class="text-xs font-normal opacity-80">Hari</span>
+                            </p>
+                        </div>
                     </div>
-                    <div class="flex-1">
-                        <p class="text-xs text-blue-100 font-medium uppercase tracking-wider">Check-in Streak</p>
-                        <p class="text-2xl font-bold text-white">{{ $user->absen_streak }} <span
-                                class="text-sm font-normal opacity-80">Days</span></p>
+
+                    {{-- Poin Card --}}
+                    <div
+                        class="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex items-center gap-3 flex-1 border border-white/20 shadow-xl">
+                        <div class="bg-white/20 p-2.5 rounded-xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300"
+                                viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-blue-100 font-medium uppercase tracking-wider">Poin</p>
+                            <p class="text-xl font-bold text-white leading-none">
+                                {{ number_format($user->Point) }}
+                            </p>
+                        </div>
                     </div>
-                    <div class="bg-white/20 px-3 py-1 rounded-full text-xs font-semibold text-white">Active</div>
                 </div>
+
             </div>
         </div>
 
@@ -172,13 +295,15 @@
 
         {{-- ── Date Display ── --}}
         <div class="text-center mb-8 px-6">
-            <div class="inline-flex items-center gap-2 bg-white px-5 py-2 rounded-full shadow-sm border border-slate-100">
+            <div
+                class="inline-flex items-center gap-2 bg-white px-5 py-2 rounded-full shadow-sm border border-slate-100">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <span class="text-sm font-semibold text-slate-700">{{ \Carbon\Carbon::now()->format('l, d F Y') }}</span>
+                <span
+                    class="text-sm font-semibold text-slate-700">{{ \Carbon\Carbon::now()->format('l, d F Y') }}</span>
             </div>
         </div>
 
@@ -258,36 +383,34 @@
                     $statItems = [
                         [
                             'label' => 'Hadir',
-                            'val' => $statsKehadiran['hadir'],
-                            'bg' => 'bg-green-50',
-                            'ic' => 'text-green-500',
-                            'path' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+                            'val'   => $statsKehadiran['hadir'],
+                            'bg'    => 'bg-green-50',
+                            'ic'    => 'text-green-500',
+                            'path'  => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
                         ],
                         [
                             'label' => 'Izin',
-                            'val' => $statsKehadiran['izin'],
-                            'bg' => 'bg-amber-50',
-                            'ic' => 'text-amber-500',
-                            'path' =>
-                                'M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z',
+                            'val'   => $statsKehadiran['izin'],
+                            'bg'    => 'bg-amber-50',
+                            'ic'    => 'text-amber-500',
+                            'path'  => 'M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z',
                         ],
                         [
                             'label' => 'Sakit',
-                            'val' => $statsKehadiran['sakit'],
-                            'bg' => 'bg-red-50',
-                            'ic' => 'text-red-500',
-                            'path' =>
-                                'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z',
+                            'val'   => $statsKehadiran['sakit'],
+                            'bg'    => 'bg-red-50',
+                            'ic'    => 'text-red-500',
+                            'path'  => 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z',
                         ],
                         [
                             'label' => 'Alpha',
-                            'val' => $statsKehadiran['alpha'],
-                            'bg' => 'bg-slate-100',
-                            'ic' => 'text-slate-400',
-                            'path' => 'M6 18L18 6M6 6l12 12',
+                            'val'   => $statsKehadiran['alpha'],
+                            'bg'    => 'bg-slate-100',
+                            'ic'    => 'text-slate-400',
+                            'path'  => 'M6 18L18 6M6 6l12 12',
                         ],
                     ];
-                    $total = array_sum($statsKehadiran) ?: 1;
+                    $total    = array_sum($statsKehadiran) ?: 1;
                     $hadirPct = round(($statsKehadiran['hadir'] / $total) * 100);
                 @endphp
 
@@ -320,7 +443,7 @@
                         @php
                             $legends = [
                                 ['label' => 'Hadir', 'val' => $statsKehadiran['hadir'], 'color' => '#22c55e'],
-                                ['label' => 'Izin', 'val' => $statsKehadiran['izin'], 'color' => '#f59e0b'],
+                                ['label' => 'Izin',  'val' => $statsKehadiran['izin'],  'color' => '#f59e0b'],
                                 ['label' => 'Sakit', 'val' => $statsKehadiran['sakit'], 'color' => '#ef4444'],
                                 ['label' => 'Alpha', 'val' => $statsKehadiran['alpha'], 'color' => '#94a3b8'],
                             ];
@@ -328,8 +451,8 @@
                         @foreach ($legends as $l)
                             @php $pct = round(($l['val'] / $total) * 100); @endphp
                             <div class="flex items-center gap-2">
-                                <div class="w-2.5 h-2.5 rounded-sm flex-shrink-0" style="background:{{ $l['color'] }}">
-                                </div>
+                                <div class="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                                    style="background:{{ $l['color'] }}"></div>
                                 <span class="text-xs text-slate-500 w-10">{{ $l['label'] }}</span>
                                 <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                     <div class="h-full rounded-full"
@@ -416,23 +539,22 @@
                     style="-webkit-overflow-scrolling:touch;scrollbar-width:none;">
                     @foreach ($jadwals as $jadwal)
                         @php
-                            $ext = strtolower(pathinfo($jadwal->gambar, PATHINFO_EXTENSION));
-                            $tipe = match ($ext) {
-                                'pdf' => 'pdf',
-                                'xlsx', 'xls' => 'excel',
-                                default => 'gambar',
+                            $ext     = strtolower(pathinfo($jadwal->gambar, PATHINFO_EXTENSION));
+                            $tipe    = match ($ext) {
+                                'pdf'        => 'pdf',
+                                'xlsx','xls' => 'excel',
+                                default      => 'gambar',
                             };
                             $fileUrl = asset('storage/' . $jadwal->gambar);
-                            $badge = match ($tipe) {
-                                'pdf' => ['bg' => 'bg-red-50', 'text' => 'text-red-500', 'label' => 'PDF'],
+                            $badge   = match ($tipe) {
+                                'pdf'   => ['bg' => 'bg-red-50',   'text' => 'text-red-500',   'label' => 'PDF'],
                                 'excel' => ['bg' => 'bg-green-50', 'text' => 'text-green-600', 'label' => 'Excel'],
-                                default => ['bg' => 'bg-blue-50', 'text' => 'text-blue-600', 'label' => 'Gambar'],
+                                default => ['bg' => 'bg-blue-50',  'text' => 'text-blue-600',  'label' => 'Gambar'],
                             };
                         @endphp
 
                         <div
                             class="flex-shrink-0 w-72 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden snap-start transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
-
                             <div class="flex items-center justify-between px-3 py-2.5 border-b border-slate-50">
                                 <div class="flex items-center gap-2 min-w-0">
                                     <div
@@ -462,8 +584,8 @@
                                     </div>
                                     <div class="min-w-0">
                                         <p class="text-xs font-bold text-slate-800 truncate">{{ $jadwal->judul }}</p>
-                                        <p class="text-[10px] text-slate-400">{{ $jadwal->updated_at->diffForHumans() }}
-                                        </p>
+                                        <p class="text-[10px] text-slate-400">
+                                            {{ $jadwal->updated_at->diffForHumans() }}</p>
                                     </div>
                                 </div>
 
@@ -567,37 +689,37 @@
                 @forelse ($absensis as $absen)
                     @php
                         $keterangan = strtolower($absen->keterangan ?? '');
-                        $status = strtolower($absen->status ?? 'pending');
-                        $waktu = \Carbon\Carbon::parse($absen->waktu);
-                        $tanggal = \Carbon\Carbon::parse($absen->created_at);
-                        $isLate = $waktu->hour >= 7;
+                        $status     = strtolower($absen->status ?? 'pending');
+                        $waktu      = \Carbon\Carbon::parse($absen->waktu);
+                        $tanggal    = \Carbon\Carbon::parse($absen->created_at);
+                        $isLate     = $waktu->hour >= 7;
 
                         $borderAccent = 'border-l-slate-200';
-                        $badgeClass = 'bg-slate-100 text-slate-700';
+                        $badgeClass   = 'bg-slate-100 text-slate-700';
                         switch ($keterangan) {
                             case 'hadir':
                                 $borderAccent = 'border-l-green-500';
-                                $badgeClass = 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20';
+                                $badgeClass   = 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20';
                                 break;
                             case 'izin':
                                 $borderAccent = 'border-l-amber-500';
-                                $badgeClass = 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20';
+                                $badgeClass   = 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20';
                                 break;
                             case 'sakit':
                                 $borderAccent = 'border-l-red-500';
-                                $badgeClass = 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20';
+                                $badgeClass   = 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20';
                                 break;
                             case 'alpha':
                             case 'alpa':
                                 $borderAccent = 'border-l-gray-500';
-                                $badgeClass = 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20';
+                                $badgeClass   = 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20';
                                 break;
                         }
 
                         $imgSrc = in_array($keterangan, ['sakit', 'izin', 'alpha', 'alpa'])
                             ? match ($keterangan) {
                                 'sakit' => asset('default-sakit.png'),
-                                'izin' => asset('default-izin.png'),
+                                'izin'  => asset('default-izin.png'),
                                 default => asset('default-alpha.png'),
                             }
                             : ($absen->foto
@@ -701,7 +823,8 @@
                     </div>
                 @empty
                     <div class="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-200">
-                        <div class="bg-slate-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <div
+                            class="bg-slate-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-300" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -718,7 +841,7 @@
     </div>
 
     {{-- ══════════════════════════════════════════
-     MODALS — semua di luar konten utama
+     MODALS
 ══════════════════════════════════════════ --}}
 
     {{-- Modal: Jamkos --}}
@@ -738,8 +861,8 @@
             </div>
             <div class="text-center">
                 <h2 class="text-base font-bold text-slate-800 mb-1">Laporkan Jam Kosong</h2>
-                <p class="text-sm text-slate-500 leading-relaxed">Notifikasi akan dikirim ke admin bahwa kelas kamu sedang
-                    tidak ada guru.</p>
+                <p class="text-sm text-slate-500 leading-relaxed">Notifikasi akan dikirim ke admin bahwa kelas kamu
+                    sedang tidak ada guru.</p>
             </div>
             <div class="bg-slate-50 rounded-xl px-4 py-3 flex flex-col gap-1.5 text-sm">
                 <div class="flex justify-between">
@@ -843,13 +966,14 @@
                 <button type="button" onclick="document.getElementById('izinModal').classList.add('hidden')"
                     class="text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full p-1.5">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
             <div class="overflow-y-auto flex-1 px-6 py-4">
-                <form id="izinForm" method="POST" action="{{ route('absensi.izin') }}" enctype="multipart/form-data"
-                    class="space-y-4">
+                <form id="izinForm" method="POST" action="{{ route('absensi.izin') }}"
+                    enctype="multipart/form-data" class="space-y-4">
                     @csrf
                     <input type="hidden" name="tipe" value="izin">
                     <div>
@@ -866,13 +990,13 @@
                             class="relative flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer">
                             <input type="file" name="surat" id="suratIzin" accept="image/*,application/pdf"
                                 class="hidden">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-slate-400 mb-1.5" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-slate-400 mb-1.5"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
-                            <p id="izinFileName" class="text-xs text-slate-500 font-medium">Click to upload or drag and
-                                drop</p>
+                            <p id="izinFileName" class="text-xs text-slate-500 font-medium">Click to upload or drag
+                                and drop</p>
                             <p class="text-xs text-slate-400 mt-0.5">PNG, JPG, PDF up to 10MB</p>
                         </label>
                         <div id="previewIzinWrap" class="mt-3 hidden">
@@ -929,33 +1053,37 @@
                 <button type="button" onclick="document.getElementById('sakitModal').classList.add('hidden')"
                     class="text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full p-1.5">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
             <div class="overflow-y-auto flex-1 px-6 py-4">
-                <form id="sakitForm" method="POST" action="{{ route('absensi.izin') }}" enctype="multipart/form-data">
+                <form id="sakitForm" method="POST" action="{{ route('absensi.izin') }}"
+                    enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="tipe" value="sakit">
                     <div class="mb-4">
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Symptoms / Description</label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Symptoms /
+                            Description</label>
                         <textarea name="alasan" rows="3"
                             class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent resize-none transition-all duration-200 text-sm"
                             placeholder="Describe your symptoms or condition..." required></textarea>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Medical Certificate</label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Medical
+                            Certificate</label>
                         <label for="suratDokter"
                             class="relative flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:border-red-400 hover:bg-red-50/30 transition-all cursor-pointer">
                             <input type="file" name="surat" id="suratDokter" accept="image/*,application/pdf"
                                 class="hidden" required>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-slate-400 mb-1.5" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-slate-400 mb-1.5"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
-                            <p id="sakitFileName" class="text-xs text-slate-500 font-medium">Click to upload or drag and
-                                drop</p>
+                            <p id="sakitFileName" class="text-xs text-slate-500 font-medium">Click to upload or drag
+                                and drop</p>
                             <p class="text-xs text-slate-400 mt-0.5">PNG, JPG, PDF up to 10MB</p>
                         </label>
                         <div id="previewSakitWrap" class="mt-3 hidden">
@@ -1013,7 +1141,8 @@
                 <button onclick="closeJadwalModal()"
                     class="flex-shrink-0 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -1076,16 +1205,26 @@
                 responsive: false,
                 cutout: '72%',
                 plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        enabled: false
-                    }
+                    legend: { display: false },
+                    tooltip: { enabled: false }
                 },
-                animation: {
-                    duration: 800
-                }
+                animation: { duration: 800 }
+            }
+        });
+
+        // ── Notif Bell (vanilla JS, tanpa Alpine) ──
+        const notifDropdown = document.getElementById('notifDropdown');
+
+        function toggleNotif() {
+            notifDropdown.classList.toggle('open');
+        }
+
+        // Tutup dropdown kalau klik di luar
+        document.addEventListener('click', function(e) {
+            const bell = e.target.closest('[onclick="toggleNotif()"]');
+            const dropdown = e.target.closest('#notifDropdown');
+            if (!bell && !dropdown) {
+                notifDropdown.classList.remove('open');
             }
         });
 
@@ -1117,10 +1256,8 @@
             }
 
             try {
-                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
-                    inputSize: 224,
-                    scoreThreshold: 0.5
-                }));
+                const detection = await faceapi.detectSingleFace(video,
+                    new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }));
                 if (detection) {
                     isFaceDetected = true;
                     badge.className =
@@ -1174,13 +1311,7 @@
                     fillOpacity: 0.1
                 }).addTo(map);
 
-                navigator.mediaDevices.getUserMedia({
-                        video: {
-                            facingMode: 'user',
-                            width: 640,
-                            height: 480
-                        }
-                    })
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 } })
                     .then(stream => {
                         const video = document.getElementById('video');
                         video.srcObject = stream;
@@ -1204,10 +1335,7 @@
             setTimeout(() => modal.classList.add('hidden'), 300);
 
             if (faceDetectionInterval) clearInterval(faceDetectionInterval);
-            if (map) {
-                map.remove();
-                map = null;
-            }
+            if (map) { map.remove(); map = null; }
 
             const video = document.getElementById('video');
             if (video.srcObject) {
@@ -1244,11 +1372,7 @@
                 return;
             }
 
-            Swal.fire({
-                title: 'Processing...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
+            Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
             fetch('/siswa/absen', {
                     method: 'POST',
@@ -1256,22 +1380,34 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        photo: dataURL,
-                        lat: latlng.lat,
-                        lng: latlng.lng
-                    })
+                    body: JSON.stringify({ photo: dataURL, lat: latlng.lat, lng: latlng.lng })
                 })
                 .then(async res => {
                     if (!res.ok) throw new Error(await res.text());
                     return res.json();
                 })
                 .then(data => {
-                    Swal.fire('Success', data.message || 'Check-in successful!', 'success');
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Check-in Berhasil!',
+                        html: `${data.message || 'Absensi tercatat.'}<br>
+                               <span class="text-blue-600 font-bold">+${data.points_earned ?? 0} poin</span>
+                               &nbsp;·&nbsp; Total: <strong>${data.points ?? 0} pts</strong>`,
+                    });
                     closeModal();
-                    setTimeout(() => location.reload(), 1500);
+                    setTimeout(() => location.reload(), 2000);
                 })
-                .catch(() => Swal.fire('Error', 'Failed to submit attendance.', 'error'));
+                .catch(async err => {
+                    let msg = 'Failed to submit attendance.';
+                    try {
+                        const parsed = JSON.parse(err.message);
+                        msg = parsed.message || parsed.error || JSON.stringify(parsed);
+                    } catch (e) {
+                        msg = err.message || msg;
+                    }
+                    Swal.fire('Error', msg, 'error');
+                    closeModal();
+                });
         }
 
         // ── Jadwal Modal ──
@@ -1300,16 +1436,11 @@
             document.body.style.overflow = '';
         }
 
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') closeJadwalModal();
-        });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeJadwalModal(); });
 
         // ── Jamkos Modal ──
         function openJamkosModal() {
-            // Cek jam, disable jika >= 15:00
-            const now = new Date();
-            const hour = now.getHours();
-
+            const hour = new Date().getHours();
             if (hour >= 23) {
                 Swal.fire({
                     icon: 'info',
@@ -1320,7 +1451,6 @@
                 });
                 return;
             }
-
             document.getElementById('jamkosModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
@@ -1339,8 +1469,8 @@
         }
 
         function kirimJamkos() {
-            const btn = document.getElementById('jamkosSubmitBtn');
-            const label = document.getElementById('jamkosSubmitLabel');
+            const btn     = document.getElementById('jamkosSubmitBtn');
+            const label   = document.getElementById('jamkosSubmitLabel');
             const spinner = document.getElementById('jamkosSpinner');
 
             btn.disabled = true;
@@ -1352,7 +1482,6 @@
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         'Content-Type': 'application/json',
-                        
                     },
                     body: JSON.stringify({})
                 })
@@ -1406,21 +1535,15 @@
 
         document.getElementById('suratIzin').addEventListener('change', function(e) {
             handleFilePreview(e.target, {
-                wrap: 'previewIzinWrap',
-                img: 'previewIzinImg',
-                pdfWrap: 'previewIzinPdf',
-                pdfName: 'previewIzinPdfName',
-                label: 'izinFileName'
+                wrap: 'previewIzinWrap', img: 'previewIzinImg',
+                pdfWrap: 'previewIzinPdf', pdfName: 'previewIzinPdfName', label: 'izinFileName'
             });
         });
 
         document.getElementById('suratDokter').addEventListener('change', function(e) {
             handleFilePreview(e.target, {
-                wrap: 'previewSakitWrap',
-                img: 'previewSakitImg',
-                pdfWrap: 'previewSakitPdf',
-                pdfName: 'previewSakitPdfName',
-                label: 'sakitFileName'
+                wrap: 'previewSakitWrap', img: 'previewSakitImg',
+                pdfWrap: 'previewSakitPdf', pdfName: 'previewSakitPdfName', label: 'sakitFileName'
             });
         });
 
@@ -1442,139 +1565,99 @@
 
         // ── Submit Izin ──
         function submitIzin() {
-            const form = document.getElementById('izinForm');
+            const form   = document.getElementById('izinForm');
             const alasan = form.querySelector('[name="alasan"]').value.trim();
 
             if (!alasan) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Oops!',
-                    text: 'Please fill in the reason.'
-                });
+                Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Please fill in the reason.' });
                 return;
             }
 
             Swal.fire({
-                    title: 'Submit Permission?',
-                    text: 'Make sure your reason is correct.',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, submit',
-                    cancelButtonText: 'Cancel',
-                    confirmButtonColor: '#2563eb'
-                })
-                .then(result => {
-                    if (!result.isConfirmed) return;
-                    Swal.fire({
-                        title: 'Submitting...',
-                        allowOutsideClick: false,
-                        didOpen: () => Swal.showLoading()
-                    });
+                title: 'Submit Permission?',
+                text: 'Make sure your reason is correct.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, submit',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#2563eb'
+            }).then(result => {
+                if (!result.isConfirmed) return;
+                Swal.fire({ title: 'Submitting...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-                    fetch(form.action, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: new FormData(form)
-                        })
-                        .then(async res => {
-                            const data = await res.json();
-                            if (!res.ok) throw new Error(data.message || 'Failed.');
-                            return data;
-                        })
-                        .then(data => {
-                            document.getElementById('izinModal').classList.add('hidden');
-                            form.reset();
-                            clearIzinFile();
-                            Swal.fire({
-                                    icon: 'success',
-                                    title: 'Submitted!',
-                                    text: data.message || 'Permission request submitted successfully.',
-                                    timer: 2500,
-                                    showConfirmButton: false
-                                })
-                                .then(() => location.reload());
-                        })
-                        .catch(err => Swal.fire({
-                            icon: 'error',
-                            title: 'Failed!',
-                            text: err.message || 'Something went wrong.'
-                        }));
-                });
+                fetch(form.action, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                        body: new FormData(form)
+                    })
+                    .then(async res => {
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.message || 'Failed.');
+                        return data;
+                    })
+                    .then(data => {
+                        document.getElementById('izinModal').classList.add('hidden');
+                        form.reset();
+                        clearIzinFile();
+                        Swal.fire({
+                            icon: 'success', title: 'Submitted!',
+                            text: data.message || 'Permission request submitted successfully.',
+                            timer: 2500, showConfirmButton: false
+                        }).then(() => location.reload());
+                    })
+                    .catch(err => Swal.fire({ icon: 'error', title: 'Failed!', text: err.message || 'Something went wrong.' }));
+            });
         }
 
         // ── Submit Sakit ──
         function confirmIzinSakit() {
-            const form = document.getElementById('sakitForm');
+            const form   = document.getElementById('sakitForm');
             const alasan = form.querySelector('[name="alasan"]').value.trim();
-            const surat = document.getElementById('suratDokter').files[0];
+            const surat  = document.getElementById('suratDokter').files[0];
 
             if (!alasan) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Oops!',
-                    text: 'Please describe your symptoms.'
-                });
+                Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Please describe your symptoms.' });
                 return;
             }
             if (!surat) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Oops!',
-                    text: 'Please upload a medical certificate.'
-                });
+                Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Please upload a medical certificate.' });
                 return;
             }
 
             Swal.fire({
-                    title: 'Submit Sick Leave?',
-                    text: 'Ensure the document is correct.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, submit',
-                    cancelButtonText: 'Cancel',
-                    confirmButtonColor: '#ef4444'
-                })
-                .then(result => {
-                    if (!result.isConfirmed) return;
-                    Swal.fire({
-                        title: 'Submitting...',
-                        allowOutsideClick: false,
-                        didOpen: () => Swal.showLoading()
-                    });
+                title: 'Submit Sick Leave?',
+                text: 'Ensure the document is correct.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, submit',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#ef4444'
+            }).then(result => {
+                if (!result.isConfirmed) return;
+                Swal.fire({ title: 'Submitting...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-                    fetch(form.action, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: new FormData(form)
-                        })
-                        .then(async res => {
-                            const data = await res.json();
-                            if (!res.ok) throw new Error(data.message || 'Failed.');
-                            return data;
-                        })
-                        .then(data => {
-                            document.getElementById('sakitModal').classList.add('hidden');
-                            form.reset();
-                            clearSakitFile();
-                            Swal.fire({
-                                    icon: 'success',
-                                    title: 'Submitted!',
-                                    text: data.message || 'Sick leave submitted successfully.',
-                                    timer: 2500,
-                                    showConfirmButton: false
-                                })
-                                .then(() => location.reload());
-                        })
-                        .catch(err => Swal.fire({
-                            icon: 'error',
-                            title: 'Failed!',
-                            text: err.message || 'Something went wrong.'
-                        }));
-                });
+                fetch(form.action, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                        body: new FormData(form)
+                    })
+                    .then(async res => {
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.message || 'Failed.');
+                        return data;
+                    })
+                    .then(data => {
+                        document.getElementById('sakitModal').classList.add('hidden');
+                        form.reset();
+                        clearSakitFile();
+                        Swal.fire({
+                            icon: 'success', title: 'Submitted!',
+                            text: data.message || 'Sick leave submitted successfully.',
+                            timer: 2500, showConfirmButton: false
+                        }).then(() => location.reload());
+                    })
+                    .catch(err => Swal.fire({ icon: 'error', title: 'Failed!', text: err.message || 'Something went wrong.' }));
+            });
         }
     </script>
 

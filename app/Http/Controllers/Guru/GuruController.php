@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Guru;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\SiswaController;
 use App\Models\Absensi;
 use App\Models\User;
 use Carbon\Carbon;
@@ -17,10 +18,12 @@ class GuruController extends Controller
 
         // Query dasar: siswa sekelas & sejurusan dengan guru
         $absensiBase = Absensi::whereDate('tanggal', $tanggal)
-            ->whereHas('user', fn($q) => $q
-                ->where('kelas',   $guru->kelas)
-                ->where('jurusan', $guru->jurusan)
-                ->where('Usertype', 'siswa')
+            ->whereHas(
+                'user',
+                fn($q) => $q
+                    ->where('kelas',   $guru->kelas)
+                    ->where('jurusan', $guru->jurusan)
+                    ->where('Usertype', 'siswa')
             );
 
         // Statistik kartu
@@ -86,11 +89,20 @@ class GuruController extends Controller
         // Pastikan guru hanya bisa approve siswa kelasnya
         abort_if(
             $absen->user->kelas   !== $guru->kelas ||
-            $absen->user->jurusan !== $guru->jurusan,
-            403, 'Tidak berwenang.'
+                $absen->user->jurusan !== $guru->jurusan,
+            403,
+            'Tidak berwenang.'
         );
 
+        // Hanya proses poin jika status sebelumnya masih pending
+        // (hindari poin dobel kalau guru approve berkali-kali)
+        $statusLama = $absen->status;
+
         $absen->update(['status' => 'approved']);
+
+        if ($statusLama === 'pending') {
+            SiswaController::handleIzinSakitPoint($absen);
+        }
 
         $tanggal = $request->input('tanggal', Carbon::today()->format('Y-m-d'));
 
@@ -106,11 +118,19 @@ class GuruController extends Controller
 
         abort_if(
             $absen->user->kelas   !== $guru->kelas ||
-            $absen->user->jurusan !== $guru->jurusan,
-            403, 'Tidak berwenang.'
+                $absen->user->jurusan !== $guru->jurusan,
+            403,
+            'Tidak berwenang.'
         );
 
+        // Hanya kirim notif jika status sebelumnya masih pending
+        $statusLama = $absen->status;
+
         $absen->update(['status' => 'rejected']);
+
+        if ($statusLama === 'pending') {
+            SiswaController::handleIzinSakitPoint($absen);
+        }
 
         $tanggal = $request->input('tanggal', Carbon::today()->format('Y-m-d'));
 

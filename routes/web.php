@@ -69,7 +69,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/admin/users/update/{id}', [UserController::class, 'update'])->name('admin.users.update');
     Route::delete('/admin/users/delete/{id}', [UserController::class, 'destroy'])->name('admin.users.delete');
     Route::post('/admin/users/import', [UserController::class, 'import'])->name('admin.users.import');
-    Route::post('/admin/guru/import',[UserController::class, 'importGuru'])->name('admin.guru.import');
+    Route::post('/admin/guru/import', [UserController::class, 'importGuru'])->name('admin.guru.import');
 });
 
 
@@ -103,6 +103,12 @@ Route::middleware(['auth', 'siswa'])->group(function () {
     Route::get('/siswa/profile', [SiswaController::class, 'profile'])->name('siswa.profile');
     Route::put('siswa/update', [SiswaController::class, 'update'])->name('siswa.update');
     Route::put('/siswa/password', [SiswaController::class, 'updatePassword'])->name('siswa.password.update');
+
+
+    Route::get('/siswa/notif/read-all', function () {
+        auth()->user()->unreadNotifications->markAsRead();
+        return back();
+    })->name('siswa.notif.readAll');
 });
 
 ## Guru Routes
