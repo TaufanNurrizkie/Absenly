@@ -203,7 +203,7 @@ class SiswaController extends Controller
         $user->notify(new PointNotification(
             pointChange: $pointEarned,
             totalPoints: $user->Point,
-            reason:      implode(' | ', $reasons),
+            reason: implode(' | ', $reasons),
         ));
 
         return response()->json([
@@ -254,7 +254,7 @@ class SiswaController extends Controller
         $user->notify(new PointNotification(
             pointChange: $point,
             totalPoints: $user->Point,
-            reason:      $label,
+            reason: $label,
         ));
     }
 
@@ -276,7 +276,7 @@ class SiswaController extends Controller
         $user->notify(new PointNotification(
             pointChange: $point,
             totalPoints: $user->Point,
-            reason:      $label,
+            reason: $label,
         ));
     }
 
@@ -293,6 +293,13 @@ class SiswaController extends Controller
 
         $user  = \App\Models\User::find(Auth::id());
         $today = Carbon::today();
+
+        if ($today->isWeekend()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Tidak ada absensi di hari weekend.',
+            ], 400);
+        }
 
         $sudahAda = Absensi::where('user_id', $user->id)
             ->whereDate('tanggal', $today)
