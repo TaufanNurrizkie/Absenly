@@ -99,12 +99,12 @@ class SiswaController extends Controller
         $now  = Carbon::now();
 
         // Batasi absensi hanya di hari kerja
-        // if ($now->isWeekend()) {
-        //     return response()->json([
-        //         'status'  => 'error',
-        //         'message' => 'Tidak ada absensi di hari weekend.',
-        //     ], 400);
-        // }
+        if ($now->isWeekend()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Tidak ada absensi di hari weekend.',
+            ], 400);
+        }
 
         // Batasi jam
         if ($now->format('H:i') > '23:00') {
