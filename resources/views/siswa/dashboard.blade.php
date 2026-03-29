@@ -216,6 +216,7 @@
                                         </div>
                                     @endforelse
                                 </div>
+
                             </div>
                         </div>
 
@@ -677,6 +678,140 @@
                     </div>
                 @endif
             @endif
+        </div>
+
+        {{-- ── Leaderboard Kelas ── --}}
+        @php
+            $leaderboard = \App\Models\User::where('usertype', 'siswa')
+                ->where('kelas',   $user->kelas)
+                ->where('jurusan', $user->jurusan)
+                ->orderByDesc('Point')
+                ->orderByDesc('absen_streak')
+                ->limit(10)
+                ->get(['id','name','foto','kelas','Point','absen_streak']);
+
+            $myLbRank   = $leaderboard->search(fn($u) => $u->id === $user->id);
+            $myLbRank   = $myLbRank !== false ? $myLbRank + 1 : null;
+            $medalEmoji = ['🥇','🥈','🥉'];
+
+            $podiumOrder = [
+                $leaderboard->get(1),  // kiri  → rank 2
+                $leaderboard->get(0),  // tengah → rank 1
+                $leaderboard->get(2),  // kanan  → rank 3
+            ];
+            $podiumH    = ['h-20', 'h-28', 'h-16'];
+            $podiumBg   = [
+                'bg-gradient-to-t from-slate-300  to-slate-200',
+                'bg-gradient-to-t from-amber-400  to-yellow-300',
+                'bg-gradient-to-t from-amber-700  to-amber-500',
+            ];
+            $podiumRank = [2, 1, 3];
+            $ringClass  = [
+                'border-slate-300',
+                'border-yellow-400 ring-2 ring-yellow-300/60',
+                'border-amber-500',
+            ];
+        @endphp
+
+        <div class="px-6 mb-8">
+            {{-- Header --}}
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg text-slate-800">Leaderboard Kelas</h3>
+                @if($myLbRank)
+                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+                        Kamu #{{ $myLbRank }}
+                    </span>
+                @endif
+            </div>
+
+            {{-- Podium top-3 --}}
+            @if($leaderboard->count() >= 1)
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 pt-5 pb-0 mb-3 overflow-hidden">
+                <div class="flex items-end justify-center gap-4">
+                    @foreach($podiumOrder as $pi => $p)
+                    <div class="flex flex-col items-center flex-1">
+                        @if($p)
+                            @php $isPodiumMe = $p->id === $user->id; @endphp
+                            <div class="relative mb-1.5">
+                                <img src="{{ asset('img/' . $p->foto) }}" alt="{{ $p->name }}"
+                                     class="rounded-full object-cover border-[3px] shadow-md {{ $pi === 1 ? 'w-14 h-14' : 'w-12 h-12' }} {{ $ringClass[$pi] }}">
+                                <span class="absolute -bottom-1 -right-0.5 text-sm leading-none">
+                                    {{ $medalEmoji[$podiumRank[$pi] - 1] ?? '' }}
+                                </span>
+                            </div>
+                            <p class="text-[11px] font-bold text-slate-700 truncate max-w-[72px] text-center leading-tight">
+                                {{ $isPodiumMe ? 'Kamu' : \Str::words($p->name, 1, '') }}
+                            </p>
+                            <p class="text-[10px] font-semibold text-slate-500 mb-2">{{ number_format($p->Point) }}</p>
+                        @else
+                            <div class="w-12 h-12 rounded-full bg-slate-100 border-2 border-dashed border-slate-200 mb-1.5 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                            </div>
+                            <p class="text-[10px] text-slate-300 mb-2">—</p>
+                            <p class="text-[10px] text-slate-200 mb-2">0</p>
+                        @endif
+                        <div class="{{ $podiumH[$pi] }} {{ $podiumBg[$pi] }} w-full rounded-t-lg flex items-center justify-center">
+                            <span class="text-white font-black text-sm opacity-70">#{{ $podiumRank[$pi] }}</span>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            {{-- Rank list --}}
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm divide-y divide-slate-50 overflow-hidden">
+                @forelse($leaderboard as $li => $luser)
+                @php
+                    $lrank   = $li + 1;
+                    $isLbMe  = $luser->id === $user->id;
+                @endphp
+                <div class="flex items-center gap-3 px-4 py-3 transition-colors {{ $isLbMe ? 'bg-blue-50' : 'hover:bg-slate-50' }}">
+                    {{-- rank / medal --}}
+                    <div class="w-7 flex-shrink-0 text-center">
+                        @if($lrank <= 3)
+                            <span class="text-base leading-none">{{ $medalEmoji[$lrank - 1] }}</span>
+                        @else
+                            <span class="text-xs font-bold {{ $isLbMe ? 'text-blue-500' : 'text-slate-400' }}">#{{ $lrank }}</span>
+                        @endif
+                    </div>
+
+                    {{-- avatar --}}
+                    <img src="{{ asset('img/' . $luser->foto) }}" alt="{{ $luser->name }}"
+                         class="w-9 h-9 rounded-full object-cover border-2 flex-shrink-0 {{ $isLbMe ? 'border-blue-400' : 'border-slate-100' }}">
+
+                    {{-- name + streak --}}
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-slate-800 truncate leading-tight">
+                            {{ $luser->name }}
+                            @if($isLbMe)
+                                <span class="text-blue-500 text-[10px] font-bold ml-1">● kamu</span>
+                            @endif
+                        </p>
+                        <p class="text-[10px] text-slate-400 font-medium">
+                            🔥 {{ $luser->absen_streak ?? 0 }} hari streak
+                        </p>
+                    </div>
+
+                    {{-- points --}}
+                    <div class="flex-shrink-0 text-right">
+                        <p class="text-sm font-black {{ $isLbMe ? 'text-blue-600' : 'text-slate-700' }}">
+                            {{ number_format($luser->Point) }}
+                        </p>
+                        <p class="text-[10px] text-slate-400">pts</p>
+                    </div>
+                </div>
+                @empty
+                <div class="px-4 py-10 text-center">
+                    <p class="text-2xl mb-2">🏆</p>
+                    <p class="text-sm text-slate-500 font-medium">Belum ada data leaderboard.</p>
+                    <p class="text-xs text-slate-400 mt-1">Mulai absen untuk masuk peringkat!</p>
+                </div>
+                @endforelse
+            </div>
         </div>
 
         {{-- ── Recent Activity ── --}}
