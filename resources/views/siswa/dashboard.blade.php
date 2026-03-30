@@ -90,14 +90,28 @@
             }
         }
 
-        /* Notif dropdown animasi tanpa Alpine */
+        /* ── Notif Dropdown ── */
         #notifDropdown {
+            position: fixed;
+            z-index: 99999;
             display: none;
             transform-origin: top right;
+            animation: dropdownIn 0.18s ease forwards;
         }
 
         #notifDropdown.open {
             display: block;
+        }
+
+        @keyframes dropdownIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(-6px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
     </style>
 
@@ -145,7 +159,7 @@
 
                         {{-- Bell Notifikasi --}}
                         <div class="relative">
-                            <button onclick="toggleNotif()"
+                            <button id="notifBellBtn" onclick="toggleNotif(event)"
                                 class="relative p-2 bg-white/10 rounded-xl border border-white/20 hover:bg-white/20 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -159,65 +173,6 @@
                                     </span>
                                 @endif
                             </button>
-
-                            {{-- Dropdown Notif --}}
-                            <div id="notifDropdown"
-                                class="absolute right-0 top-12 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50">
-                                <div
-                                    class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                                    <h4 class="text-sm font-bold text-slate-800">Notifikasi Poin</h4>
-                                    @if ($notifCount > 0)
-                                        <a href="{{ route('siswa.notif.readAll') }}"
-                                            class="text-xs text-blue-500 font-semibold hover:underline">
-                                            Tandai semua dibaca
-                                        </a>
-                                    @endif
-                                </div>
-
-                                <div class="divide-y divide-slate-50 max-h-72 overflow-y-auto">
-                                    @forelse($notifUnread as $notif)
-                                        @php
-                                            $d      = $notif->data;
-                                            $change = $d['point_change'] ?? 0;
-                                            $sign   = $change >= 0 ? '+' : '';
-                                            $color  = $change > 0
-                                                ? 'text-green-600'
-                                                : ($change < 0 ? 'text-red-500' : 'text-slate-500');
-                                        @endphp
-                                        <div class="px-4 py-3 hover:bg-slate-50 transition cursor-default">
-                                            <div class="flex items-start gap-3">
-                                                <div
-                                                    class="w-8 h-8 rounded-xl {{ $change > 0 ? 'bg-green-50' : ($change < 0 ? 'bg-red-50' : 'bg-slate-100') }} flex items-center justify-center flex-shrink-0 mt-0.5">
-                                                    <span class="text-base">
-                                                        {{ $change > 0 ? '🎉' : ($change < 0 ? '⚠️' : 'ℹ️') }}
-                                                    </span>
-                                                </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <p class="text-xs font-bold text-slate-700">
-                                                        {{ $d['title'] ?? 'Update Poin' }}
-                                                    </p>
-                                                    <p class="text-[11px] text-slate-500 mt-0.5 leading-snug">
-                                                        {{ $d['reason'] ?? '-' }}
-                                                    </p>
-                                                    <div class="flex items-center justify-between mt-1">
-                                                        <span class="text-[10px] text-slate-400">
-                                                            {{ $notif->created_at->diffForHumans() }}
-                                                        </span>
-                                                        <span class="text-xs font-bold {{ $color }}">
-                                                            {{ $sign }}{{ $change }} poin
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @empty
-                                        <div class="px-4 py-8 text-center">
-                                            <p class="text-xs text-slate-400">Belum ada notifikasi poin.</p>
-                                        </div>
-                                    @endforelse
-                                </div>
-
-                            </div>
                         </div>
 
                         {{-- Avatar --}}
@@ -695,9 +650,9 @@
             $medalEmoji = ['🥇','🥈','🥉'];
 
             $podiumOrder = [
-                $leaderboard->get(1),  // kiri  → rank 2
-                $leaderboard->get(0),  // tengah → rank 1
-                $leaderboard->get(2),  // kanan  → rank 3
+                $leaderboard->get(1),
+                $leaderboard->get(0),
+                $leaderboard->get(2),
             ];
             $podiumH    = ['h-20', 'h-28', 'h-16'];
             $podiumBg   = [
@@ -714,7 +669,6 @@
         @endphp
 
         <div class="px-6 mb-8">
-            {{-- Header --}}
             <div class="flex items-center justify-between mb-4">
                 <h3 class="font-bold text-lg text-slate-800">Leaderboard Kelas</h3>
                 @if($myLbRank)
@@ -724,7 +678,6 @@
                 @endif
             </div>
 
-            {{-- Podium top-3 --}}
             @if($leaderboard->count() >= 1)
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 pt-5 pb-0 mb-3 overflow-hidden">
                 <div class="flex items-end justify-center gap-4">
@@ -762,7 +715,6 @@
             </div>
             @endif
 
-            {{-- Rank list --}}
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm divide-y divide-slate-50 overflow-hidden">
                 @forelse($leaderboard as $li => $luser)
                 @php
@@ -770,7 +722,6 @@
                     $isLbMe  = $luser->id === $user->id;
                 @endphp
                 <div class="flex items-center gap-3 px-4 py-3 transition-colors {{ $isLbMe ? 'bg-blue-50' : 'hover:bg-slate-50' }}">
-                    {{-- rank / medal --}}
                     <div class="w-7 flex-shrink-0 text-center">
                         @if($lrank <= 3)
                             <span class="text-base leading-none">{{ $medalEmoji[$lrank - 1] }}</span>
@@ -778,12 +729,8 @@
                             <span class="text-xs font-bold {{ $isLbMe ? 'text-blue-500' : 'text-slate-400' }}">#{{ $lrank }}</span>
                         @endif
                     </div>
-
-                    {{-- avatar --}}
                     <img src="{{ asset('img/' . $luser->foto) }}" alt="{{ $luser->name }}"
                          class="w-9 h-9 rounded-full object-cover border-2 flex-shrink-0 {{ $isLbMe ? 'border-blue-400' : 'border-slate-100' }}">
-
-                    {{-- name + streak --}}
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-semibold text-slate-800 truncate leading-tight">
                             {{ $luser->name }}
@@ -795,8 +742,6 @@
                             🔥 {{ $luser->absen_streak ?? 0 }} hari streak
                         </p>
                     </div>
-
-                    {{-- points --}}
                     <div class="flex-shrink-0 text-right">
                         <p class="text-sm font-black {{ $isLbMe ? 'text-blue-600' : 'text-slate-700' }}">
                             {{ number_format($luser->Point) }}
@@ -973,6 +918,67 @@
             </div>
         </div>
 
+    </div>
+
+    {{-- ══════════════════════════════════════════
+     NOTIF DROPDOWN — dipasang langsung di body
+     agar tidak terpotong overflow:hidden parent
+    ══════════════════════════════════════════ --}}
+    <div id="notifDropdown"
+         class="w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+
+        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+            <h4 class="text-sm font-bold text-slate-800">Notifikasi Poin</h4>
+            @if ($notifCount > 0)
+                <a href="{{ route('siswa.notif.readAll') }}"
+                    class="text-xs text-blue-500 font-semibold hover:underline">
+                    Tandai semua dibaca
+                </a>
+            @endif
+        </div>
+
+        <div class="divide-y divide-slate-50 max-h-72 overflow-y-auto">
+            @forelse($notifUnread as $notif)
+                @php
+                    $d      = $notif->data;
+                    $change = $d['point_change'] ?? 0;
+                    $sign   = $change >= 0 ? '+' : '';
+                    $color  = $change > 0
+                        ? 'text-green-600'
+                        : ($change < 0 ? 'text-red-500' : 'text-slate-500');
+                @endphp
+                <div class="px-4 py-3 hover:bg-slate-50 transition cursor-default">
+                    <div class="flex items-start gap-3">
+                        <div
+                            class="w-8 h-8 rounded-xl {{ $change > 0 ? 'bg-green-50' : ($change < 0 ? 'bg-red-50' : 'bg-slate-100') }} flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-base">
+                                {{ $change > 0 ? '🎉' : ($change < 0 ? '⚠️' : 'ℹ️') }}
+                            </span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-bold text-slate-700">
+                                {{ $d['title'] ?? 'Update Poin' }}
+                            </p>
+                            <p class="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                                {{ $d['reason'] ?? '-' }}
+                            </p>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-[10px] text-slate-400">
+                                    {{ $notif->created_at->diffForHumans() }}
+                                </span>
+                                <span class="text-xs font-bold {{ $color }}">
+                                    {{ $sign }}{{ $change }} poin
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="px-4 py-8 text-center">
+                    <p class="text-xs text-slate-400">Belum ada notifikasi poin.</p>
+                </div>
+            @endforelse
+        </div>
     </div>
 
     {{-- ══════════════════════════════════════════
@@ -1313,9 +1319,7 @@
     <script>
         // ── Clock ──
         function updateClock() {
-            document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-US', {
-                hour12: false
-            });
+            document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
         }
         updateClock();
         setInterval(updateClock, 1000);
@@ -1339,28 +1343,64 @@
             options: {
                 responsive: false,
                 cutout: '72%',
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: false }
-                },
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
                 animation: { duration: 800 }
             }
         });
 
-        // ── Notif Bell (vanilla JS, tanpa Alpine) ──
+        // ══════════════════════════════════════════
+        // NOTIF DROPDOWN — body-level positioning
+        // Solusi: dropdown di-append ke <body> dan
+        // posisinya dihitung dari getBoundingClientRect
+        // tombol bell, sehingga tidak terpotong oleh
+        // overflow:hidden pada parent manapun.
+        // ══════════════════════════════════════════
         const notifDropdown = document.getElementById('notifDropdown');
 
-        function toggleNotif() {
-            notifDropdown.classList.toggle('open');
+        // Pindahkan dropdown ke body agar bebas dari overflow parent
+        document.body.appendChild(notifDropdown);
+
+        function positionDropdown() {
+            const bell = document.getElementById('notifBellBtn');
+            const rect = bell.getBoundingClientRect();
+            const dropW = 288; // w-72 = 18rem = 288px
+            const gap   = 8;
+
+            // Hitung posisi: preferensi kanan bell, tapi jangan keluar layar
+            let left = rect.right - dropW;
+            if (left < 8) left = 8;
+
+            notifDropdown.style.top  = (rect.bottom + gap + window.scrollY) + 'px';
+            notifDropdown.style.left = left + 'px';
         }
 
-        // Tutup dropdown kalau klik di luar
+        function toggleNotif(event) {
+            event.stopPropagation();
+            const isOpen = notifDropdown.classList.contains('open');
+            if (isOpen) {
+                notifDropdown.classList.remove('open');
+            } else {
+                positionDropdown();
+                notifDropdown.classList.add('open');
+            }
+        }
+
+        // Tutup dropdown jika klik di luar
         document.addEventListener('click', function(e) {
-            const bell = e.target.closest('[onclick="toggleNotif()"]');
-            const dropdown = e.target.closest('#notifDropdown');
-            if (!bell && !dropdown) {
+            const isBell     = e.target.closest('#notifBellBtn');
+            const isDropdown = e.target.closest('#notifDropdown');
+            if (!isBell && !isDropdown) {
                 notifDropdown.classList.remove('open');
             }
+        });
+
+        // Re-posisi saat scroll / resize agar tidak geser
+        window.addEventListener('scroll', function() {
+            if (notifDropdown.classList.contains('open')) positionDropdown();
+        }, { passive: true });
+
+        window.addEventListener('resize', function() {
+            if (notifDropdown.classList.contains('open')) positionDropdown();
         });
 
         // ── Face API ──
@@ -1379,31 +1419,26 @@
         }
 
         async function detectFace() {
-            const video = document.getElementById('video');
-            const badge = document.getElementById('faceBadge');
-            const statusText = document.getElementById('faceStatus');
+            const video     = document.getElementById('video');
+            const badge     = document.getElementById('faceBadge');
+            const statusText= document.getElementById('faceStatus');
             const submitBtn = document.getElementById('submitBtn');
 
             if (!video || !video.videoWidth) return;
-            if (!faceReady) {
-                statusText.textContent = 'Loading AI...';
-                return;
-            }
+            if (!faceReady) { statusText.textContent = 'Loading AI...'; return; }
 
             try {
                 const detection = await faceapi.detectSingleFace(video,
                     new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }));
                 if (detection) {
                     isFaceDetected = true;
-                    badge.className =
-                        'face-badge detected absolute bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-green-500/15 text-green-400 border border-green-500/50';
+                    badge.className = 'face-badge detected absolute bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-green-500/15 text-green-400 border border-green-500/50';
                     statusText.textContent = '✓ Face Detected';
                     submitBtn.disabled = false;
                     submitBtn.style.opacity = '1';
                 } else {
                     isFaceDetected = false;
-                    badge.className =
-                        'face-badge not-detected absolute bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-red-500/15 text-red-400 border border-red-500/40';
+                    badge.className = 'face-badge not-detected absolute bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-red-500/15 text-red-400 border border-red-500/40';
                     statusText.textContent = '✗ No Face';
                     submitBtn.disabled = true;
                     submitBtn.style.opacity = '0.45';
@@ -1416,13 +1451,13 @@
         loadFaceModel();
 
         // ── Check-in Modal ──
-        const allowedLat = -6.949648486282659;
-        const allowedLng = 107.685995;
+        const allowedLat    = -6.949648486282659;
+        const allowedLng    = 107.685995;
         const allowedRadius = 10000;
         let map, marker, circle;
 
         function startAbsensi() {
-            const modal = document.getElementById('absenModal');
+            const modal     = document.getElementById('absenModal');
             const submitBtn = document.getElementById('submitBtn');
 
             modal.classList.remove('hidden');
@@ -1441,9 +1476,7 @@
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
                 marker = L.marker([lat, lng]).addTo(map).bindPopup("Your Location").openPopup();
                 circle = L.circle([allowedLat, allowedLng], {
-                    radius: allowedRadius,
-                    color: '#2563eb',
-                    fillOpacity: 0.1
+                    radius: allowedRadius, color: '#2563eb', fillOpacity: 0.1
                 }).addTo(map);
 
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 } })
@@ -1480,13 +1513,12 @@
 
             isFaceDetected = false;
             const badge = document.getElementById('faceBadge');
-            badge.className =
-                'face-badge waiting absolute bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-slate-700/85 text-slate-200 border border-slate-400/30';
+            badge.className = 'face-badge waiting absolute bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-slate-700/85 text-slate-200 border border-slate-400/30';
             document.getElementById('faceStatus').textContent = 'Waiting...';
         }
 
         async function captureAndSubmit() {
-            const video = document.getElementById('video');
+            const video  = document.getElementById('video');
             const canvas = document.getElementById('canvas');
 
             if (!isFaceDetected) {
@@ -1494,12 +1526,12 @@
                 return;
             }
 
-            canvas.width = video.videoWidth;
+            canvas.width  = video.videoWidth;
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
 
-            const dataURL = canvas.toDataURL('image/png');
-            const latlng = marker.getLatLng();
+            const dataURL  = canvas.toDataURL('image/png');
+            const latlng   = marker.getLatLng();
             const distance = map.distance([latlng.lat, latlng.lng], [allowedLat, allowedLng]);
 
             if (distance > allowedRadius) {
@@ -1510,39 +1542,39 @@
             Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
             fetch('/siswa/absen', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ photo: dataURL, lat: latlng.lat, lng: latlng.lng })
-                })
-                .then(async res => {
-                    if (!res.ok) throw new Error(await res.text());
-                    return res.json();
-                })
-                .then(data => {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Check-in Berhasil!',
-                        html: `${data.message || 'Absensi tercatat.'}<br>
-                               <span class="text-blue-600 font-bold">+${data.points_earned ?? 0} poin</span>
-                               &nbsp;·&nbsp; Total: <strong>${data.points ?? 0} pts</strong>`,
-                    });
-                    closeModal();
-                    setTimeout(() => location.reload(), 2000);
-                })
-                .catch(async err => {
-                    let msg = 'Failed to submit attendance.';
-                    try {
-                        const parsed = JSON.parse(err.message);
-                        msg = parsed.message || parsed.error || JSON.stringify(parsed);
-                    } catch (e) {
-                        msg = err.message || msg;
-                    }
-                    Swal.fire('Error', msg, 'error');
-                    closeModal();
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ photo: dataURL, lat: latlng.lat, lng: latlng.lng })
+            })
+            .then(async res => {
+                if (!res.ok) throw new Error(await res.text());
+                return res.json();
+            })
+            .then(data => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Check-in Berhasil!',
+                    html: `${data.message || 'Absensi tercatat.'}<br>
+                           <span class="text-blue-600 font-bold">+${data.points_earned ?? 0} poin</span>
+                           &nbsp;·&nbsp; Total: <strong>${data.points ?? 0} pts</strong>`,
                 });
+                closeModal();
+                setTimeout(() => location.reload(), 2000);
+            })
+            .catch(async err => {
+                let msg = 'Failed to submit attendance.';
+                try {
+                    const parsed = JSON.parse(err.message);
+                    msg = parsed.message || parsed.error || JSON.stringify(parsed);
+                } catch (e) {
+                    msg = err.message || msg;
+                }
+                Swal.fire('Error', msg, 'error');
+                closeModal();
+            });
         }
 
         // ── Jadwal Modal ──
@@ -1613,37 +1645,37 @@
             spinner.classList.remove('hidden');
 
             fetch('{{ route('siswa.jamkos.kirim') }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({})
-                })
-                .then(async res => {
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.message || 'Server error ' + res.status);
-                    return data;
-                })
-                .then(() => {
-                    _closeJamkosModal();
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Notifikasi Terkirim!',
-                        text: 'Admin sudah diberitahu bahwa kelasmu sedang jam kosong.',
-                        confirmButtonColor: '#2563EB',
-                        confirmButtonText: 'Oke',
-                    });
-                })
-                .catch(err => {
-                    _closeJamkosModal();
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Gagal',
-                        text: err.message || 'Terjadi kesalahan, coba lagi.',
-                        confirmButtonColor: '#2563EB',
-                    });
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Server error ' + res.status);
+                return data;
+            })
+            .then(() => {
+                _closeJamkosModal();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Notifikasi Terkirim!',
+                    text: 'Admin sudah diberitahu bahwa kelasmu sedang jam kosong.',
+                    confirmButtonColor: '#2563EB',
+                    confirmButtonText: 'Oke',
                 });
+            })
+            .catch(err => {
+                _closeJamkosModal();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: err.message || 'Terjadi kesalahan, coba lagi.',
+                    confirmButtonColor: '#2563EB',
+                });
+            });
         }
 
         // ── File Preview Helpers ──
@@ -1721,26 +1753,26 @@
                 Swal.fire({ title: 'Submitting...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
                 fetch(form.action, {
-                        method: 'POST',
-                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                        body: new FormData(form)
-                    })
-                    .then(async res => {
-                        const data = await res.json();
-                        if (!res.ok) throw new Error(data.message || 'Failed.');
-                        return data;
-                    })
-                    .then(data => {
-                        document.getElementById('izinModal').classList.add('hidden');
-                        form.reset();
-                        clearIzinFile();
-                        Swal.fire({
-                            icon: 'success', title: 'Submitted!',
-                            text: data.message || 'Permission request submitted successfully.',
-                            timer: 2500, showConfirmButton: false
-                        }).then(() => location.reload());
-                    })
-                    .catch(err => Swal.fire({ icon: 'error', title: 'Failed!', text: err.message || 'Something went wrong.' }));
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: new FormData(form)
+                })
+                .then(async res => {
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.message || 'Failed.');
+                    return data;
+                })
+                .then(data => {
+                    document.getElementById('izinModal').classList.add('hidden');
+                    form.reset();
+                    clearIzinFile();
+                    Swal.fire({
+                        icon: 'success', title: 'Submitted!',
+                        text: data.message || 'Permission request submitted successfully.',
+                        timer: 2500, showConfirmButton: false
+                    }).then(() => location.reload());
+                })
+                .catch(err => Swal.fire({ icon: 'error', title: 'Failed!', text: err.message || 'Something went wrong.' }));
             });
         }
 
@@ -1772,26 +1804,26 @@
                 Swal.fire({ title: 'Submitting...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
                 fetch(form.action, {
-                        method: 'POST',
-                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                        body: new FormData(form)
-                    })
-                    .then(async res => {
-                        const data = await res.json();
-                        if (!res.ok) throw new Error(data.message || 'Failed.');
-                        return data;
-                    })
-                    .then(data => {
-                        document.getElementById('sakitModal').classList.add('hidden');
-                        form.reset();
-                        clearSakitFile();
-                        Swal.fire({
-                            icon: 'success', title: 'Submitted!',
-                            text: data.message || 'Sick leave submitted successfully.',
-                            timer: 2500, showConfirmButton: false
-                        }).then(() => location.reload());
-                    })
-                    .catch(err => Swal.fire({ icon: 'error', title: 'Failed!', text: err.message || 'Something went wrong.' }));
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: new FormData(form)
+                })
+                .then(async res => {
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.message || 'Failed.');
+                    return data;
+                })
+                .then(data => {
+                    document.getElementById('sakitModal').classList.add('hidden');
+                    form.reset();
+                    clearSakitFile();
+                    Swal.fire({
+                        icon: 'success', title: 'Submitted!',
+                        text: data.message || 'Sick leave submitted successfully.',
+                        timer: 2500, showConfirmButton: false
+                    }).then(() => location.reload());
+                })
+                .catch(err => Swal.fire({ icon: 'error', title: 'Failed!', text: err.message || 'Something went wrong.' }));
             });
         }
     </script>
