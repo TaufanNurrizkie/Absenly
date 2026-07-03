@@ -1,4 +1,4 @@
-@extends('layouts.guruNav')
+@extends('layouts.adminNav')
 
 @section('title', 'Rekap Absensi')
 @section('page-title', 'Rekap Absensi')
@@ -13,7 +13,7 @@
                 {{ $start->translatedFormat('d M Y') }} — {{ $end->translatedFormat('d M Y') }}
             </p>
         </div>
-        <a href="{{ route('guru.rekap.export', request()->all()) }}"
+        <a href="{{ route('admin.rekap.export', request()->all()) }}"
             class="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition w-full sm:w-auto shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -87,7 +87,7 @@
         {{-- Reset --}}
         @if(request()->hasAny(['search','kelas','jurusan','minggu','bulan']))
             <div class="mt-3">
-                <a href="{{ route('guru.rekap') }}"
+                <a href="{{ route('admin.rekap') }}"
                     class="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>

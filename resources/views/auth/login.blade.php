@@ -1,5 +1,6 @@
 @vite('resources/css/app.css')
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="{{ asset('img/icb_Logo.png') }}">
 
 <div class="min-h-screen flex items-center justify-center bg-[#EAF4FF] px-4 py-8">
     <div class="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
@@ -10,14 +11,15 @@
             {{-- Dekorasi lingkaran latar --}}
             <div class="absolute -top-16 -left-16 w-64 h-64 bg-white/20 rounded-full"></div>
             <div class="absolute -bottom-20 -right-12 w-72 h-72 bg-white/20 rounded-full"></div>
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/10 rounded-full"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/10 rounded-full">
+            </div>
 
             <div class="relative z-10 flex flex-col items-center text-center gap-4">
-                <img src="{{ asset('img/Shiny Happy - Standing.png') }}" alt="Logo Absenly"
+                <img src="{{ asset('img/icb_Logo.png') }}" alt="Logo SMK ICB Cinta Teknika"
                     class="w-40 h-40 sm:w-52 sm:h-52 object-contain drop-shadow-lg">
-                <h1 class="text-3xl sm:text-4xl font-bold tracking-tight drop-shadow">Absenly</h1>
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight drop-shadow">SMK ICB Cinta Teknika</h1>
                 <p class="text-white/90 text-sm sm:text-base max-w-xs leading-relaxed">
-                    Sistem absensi digital yang mudah, cepat, dan terpercaya untuk sekolah Anda.
+                    Sistem presensi digital sekolah yang mudah, cepat, dan terpercaya.
                 </p>
             </div>
         </div>
@@ -37,8 +39,9 @@
 
                 {{-- NIS --}}
                 <div>
-                    <x-input-label for="nis" :value="__('NIS')" class="text-[#1D4ED8]" />
-                    <x-text-input id="nis" class="block mt-1 w-full border-[#BAE6FD] focus:border-[#3B82F6] focus:ring-[#3B82F6]"
+                    <x-input-label for="nis" :value="__('NIS / ID GURU')" class="text-[#1D4ED8]" />
+                    <x-text-input id="nis"
+                        class="block mt-1 w-full border-[#BAE6FD] focus:border-[#3B82F6] focus:ring-[#3B82F6]"
                         type="text" name="nis" :value="old('nis')" required autofocus />
                     <x-input-error :messages="$errors->get('nis')" class="mt-2" />
                 </div>
@@ -46,7 +49,8 @@
                 {{-- Password --}}
                 <div>
                     <x-input-label for="password" :value="__('Password')" class="text-[#1D4ED8]" />
-                    <x-text-input id="password" class="block mt-1 w-full border-[#BAE6FD] focus:border-[#3B82F6] focus:ring-[#3B82F6]"
+                    <x-text-input id="password"
+                        class="block mt-1 w-full border-[#BAE6FD] focus:border-[#3B82F6] focus:ring-[#3B82F6]"
                         type="password" name="password" required autocomplete="current-password" />
                     <x-input-error :messages="$errors->get('password')" class="mt-2" />
                 </div>

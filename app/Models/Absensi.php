@@ -10,6 +10,7 @@ class Absensi extends Model
         'user_id',
         'tanggal',
         'waktu',
+        'waktu_pulang',
         'latitude',
         'longitude',
         'lokasi_valid',

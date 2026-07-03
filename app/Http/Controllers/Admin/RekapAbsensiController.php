@@ -65,7 +65,9 @@ class RekapAbsensiController extends Controller
         // key: "userId_YYYY-MM-DD" => collection absensi
 
         // ── Susun data matrix ─────────────────────────────────────
-        $matrix = $siswas->map(function ($siswa) use ($tanggals, $absensiRaw) {
+        $today = Carbon::today()->toDateString();
+        
+        $matrix = $siswas->map(function ($siswa) use ($tanggals, $absensiRaw, $today) {
             $row = [
                 'id'      => $siswa->id,
                 'name'    => $siswa->name,
@@ -76,22 +78,61 @@ class RekapAbsensiController extends Controller
                 'izin'    => 0,
                 'sakit'   => 0,
                 'alfa'    => 0,
+                'telat'   => 0,
+                'bolos'   => 0,
                 'days'    => [],
             ];
 
             foreach ($tanggals as $tgl) {
-                $key    = $siswa->id . '_' . $tgl->toDateString();
-                $absen  = $absensiRaw->get($key)?->first();
-                $status = $absen ? $absen->keterangan : null;
+                $key      = $siswa->id . '_' . $tgl->toDateString();
+                $absen    = $absensiRaw->get($key)?->first();
+                $status   = $absen ? $absen->keterangan : null;
+                $isTelat  = false;
+                $isBolos  = false;
 
-                $row['days'][$tgl->toDateString()] = $status;
+                // Logic telat: hadir DAN waktu > 07:00:00
+                if ($status === 'hadir' && $absen && $absen->waktu > '07:00:00') {
+                    $isTelat = true;
+                    $row['telat']++;
+                }
 
-                match ($status) {
-                    'hadir'  => $row['hadir']++,
-                    'izin'   => $row['izin']++,
-                    'sakit'  => $row['sakit']++,
-                    default  => ($tgl->isWeekday() ? $row['alfa']++ : null),
-                };
+                // Logic bolos: hadir DAN waktu_pulang null DAN tanggal sudah lewat (bukan hari ini)
+                // DAN sudah lewat jam 17:00 (deadline bolos)
+                $tglString = $tgl->toDateString();
+                $isPast = $tglString < $today;
+                
+                if ($status === 'hadir' && $absen && !$absen->waktu_pulang) {
+                    // Jika tanggal sudah lewat, langsung bolos
+                    if ($isPast) {
+                        $isBolos = true;
+                        $row['bolos']++;
+                    }
+                    // Jika hari ini, cek apakah sudah lewat jam 17:00
+                    elseif ($tglString === $today && Carbon::now()->format('H:i') >= '17:00') {
+                        $isBolos = true;
+                        $row['bolos']++;
+                    }
+                }
+
+                $row['days'][$tgl->toDateString()] = [
+                    'keterangan' => $status,
+                    'isTelat'    => $isTelat,
+                    'isBolos'    => $isBolos,
+                ];
+
+                // Count summary: Bolos dan Telat tidak dihitung sebagai Hadir
+                if ($isBolos) {
+                    // Sudah dihitung di row['bolos']
+                } elseif ($isTelat) {
+                    // Sudah dihitung di row['telat']
+                } else {
+                    match ($status) {
+                        'hadir'  => $row['hadir']++,
+                        'izin'   => $row['izin']++,
+                        'sakit'  => $row['sakit']++,
+                        default  => ($tgl->isWeekday() ? $row['alfa']++ : null),
+                    };
+                }
             }
 
             return $row;
@@ -136,7 +177,7 @@ class RekapAbsensiController extends Controller
         ));
     }
 
-    // ── Export CSV Matrix ─────────────────────────────────────────
+    // ── Export Excel Matrix ─────────────────────────────────────────
     public function export(Request $request)
     {
         $mode    = $request->get('mode', 'mingguan');
@@ -172,56 +213,279 @@ class RekapAbsensiController extends Controller
             ->get()
             ->groupBy(fn($a) => $a->user_id . '_' . $a->tanggal);
 
-        // Header CSV
-        $header = ['Nama', 'NIS', 'Kelas', 'Jurusan'];
+        // ══ Create Spreadsheet ══
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Set document properties
+        $spreadsheet->getProperties()
+            ->setCreator('Absenly System')
+            ->setTitle('Rekap Absensi')
+            ->setSubject('Laporan Rekap Absensi')
+            ->setDescription('Rekap absensi siswa periode ' . $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y'));
+
+        // ══ HEADER SECTION ══
+        $sheet->mergeCells('A1:D1');
+        $sheet->setCellValue('A1', 'REKAP ABSENSI SISWA');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        $sheet->mergeCells('A2:D2');
+        $sheet->setCellValue('A2', 'Periode: ' . $start->translatedFormat('d F Y') . ' - ' . $end->translatedFormat('d F Y'));
+        $sheet->getStyle('A2')->getFont()->setSize(11);
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        if ($kelas || $jurusan) {
+            $filterText = 'Filter: ';
+            if ($kelas) $filterText .= "Kelas $kelas ";
+            if ($jurusan) $filterText .= "Jurusan $jurusan";
+            $sheet->mergeCells('A3:D3');
+            $sheet->setCellValue('A3', $filterText);
+            $sheet->getStyle('A3')->getFont()->setSize(10)->setItalic(true);
+            $headerRow = 5;
+        } else {
+            $headerRow = 4;
+        }
+
+        // ══ TABLE HEADER ══
+        $col = 1; // Column A = 1
+        $row = $headerRow;
+
+        // Info columns
+        $sheet->setCellValueByColumnAndRow($col++, $row, 'No');
+        $sheet->setCellValueByColumnAndRow($col++, $row, 'Nama');
+        $sheet->setCellValueByColumnAndRow($col++, $row, 'NIS');
+        $sheet->setCellValueByColumnAndRow($col++, $row, 'Kelas');
+        $sheet->setCellValueByColumnAndRow($col++, $row, 'Jurusan');
+
+        // Date columns
         foreach ($tanggals as $tgl) {
-            $header[] = $tgl->format('d/m');
-        }
-        $header = array_merge($header, ['Total Hadir', 'Izin', 'Sakit', 'Alfa']);
-
-        $rows = [];
-        foreach ($siswas as $siswa) {
-            $row    = [$siswa->name, $siswa->nis ?? '-', $siswa->kelas ?? '-', $siswa->jurusan ?? '-'];
-            $hadir  = $izin = $sakit = $alfa = 0;
-
-            foreach ($tanggals as $tgl) {
-                $key    = $siswa->id . '_' . $tgl->toDateString();
-                $absen  = $absensiRaw->get($key)?->first();
-                $status = $absen ? $absen->keterangan : null;
-
-                $row[] = match($status) {
-                    'hadir'  => 'H',
-                    'izin'   => 'I',
-                    'sakit'  => 'S',
-                    default  => ($tgl->isWeekday() ? 'A' : '-'),
-                };
-
-                match ($status) {
-                    'hadir'  => $hadir++,
-                    'izin'   => $izin++,
-                    'sakit'  => $sakit++,
-                    default  => ($tgl->isWeekday() ? $alfa++ : null),
-                };
-            }
-
-            $rows[] = array_merge($row, [$hadir, $izin, $sakit, $alfa]);
+            $sheet->setCellValueByColumnAndRow($col, $row, $tgl->format('d/m'));
+            $sheet->setCellValueByColumnAndRow($col, $row + 1, $tgl->translatedFormat('D'));
+            $col++;
         }
 
-        $filename = 'rekap_' . $mode . '_' . $start->format('Ymd') . '_' . $end->format('Ymd') . '.csv';
+        // Summary columns
+        $summaryStartCol = $col;
+        $sheet->setCellValueByColumnAndRow($col++, $row, 'H');
+        $sheet->setCellValueByColumnAndRow($col++, $row, 'I');
+        $sheet->setCellValueByColumnAndRow($col++, $row, 'S');
+        $sheet->setCellValueByColumnAndRow($col++, $row, 'A');
+        $sheet->setCellValueByColumnAndRow($col++, $row, 'T');
+        $sheet->setCellValueByColumnAndRow($col++, $row, 'B');
 
-        $callback = function () use ($header, $rows) {
-            $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
-            fputcsv($file, $header);
-            foreach ($rows as $row) {
-                fputcsv($file, $row);
-            }
-            fclose($file);
-        };
+        // Merge header rows for date columns
+        $sheet->mergeCells([1, $row, 1, $row + 1]); // No
+        $sheet->mergeCells([2, $row, 2, $row + 1]); // Nama
+        $sheet->mergeCells([3, $row, 3, $row + 1]); // NIS
+        $sheet->mergeCells([4, $row, 4, $row + 1]); // Kelas
+        $sheet->mergeCells([5, $row, 5, $row + 1]); // Jurusan
+        
+        // Merge summary columns
+        for ($i = 0; $i < 6; $i++) {
+            $sheet->mergeCells([$summaryStartCol + $i, $row, $summaryStartCol + $i, $row + 1]);
+        }
 
-        return response()->stream($callback, 200, [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        // Style header
+        $lastCol = $col - 1;
+        $headerRange = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(1) . $row . ':' . 
+                       \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastCol) . ($row + 1);
+        
+        $sheet->getStyle($headerRange)->applyFromArray([
+            'font' => ['bold' => true, 'size' => 10],
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
+            'font' => ['color' => ['rgb' => 'FFFFFF'], 'bold' => true],
+            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, 
+                           'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]]
         ]);
+
+        // ══ DATA ROWS ══
+        $today = Carbon::today()->toDateString();
+        $dataRow = $row + 2;
+        $no = 1;
+
+        foreach ($siswas as $siswa) {
+            $col = 1;
+            $hadir = $izin = $sakit = $alfa = $telat = $bolos = 0;
+
+            // No
+            $sheet->setCellValueByColumnAndRow($col++, $dataRow, $no++);
+            
+            // Info
+            $sheet->setCellValueByColumnAndRow($col++, $dataRow, $siswa->name);
+            $sheet->setCellValueByColumnAndRow($col++, $dataRow, $siswa->nis ?? '-');
+            $sheet->setCellValueByColumnAndRow($col++, $dataRow, $siswa->kelas ?? '-');
+            $sheet->setCellValueByColumnAndRow($col++, $dataRow, $siswa->jurusan ?? '-');
+
+            // Dates
+            foreach ($tanggals as $tgl) {
+                $key      = $siswa->id . '_' . $tgl->toDateString();
+                $absen    = $absensiRaw->get($key)?->first();
+                $status   = $absen ? $absen->keterangan : null;
+                $isTelat  = false;
+                $isBolos  = false;
+
+                // Logic telat
+                if ($status === 'hadir' && $absen && $absen->waktu > '07:00:00') {
+                    $isTelat = true;
+                    $telat++;
+                }
+
+                // Logic bolos
+                $tglString = $tgl->toDateString();
+                $isPast = $tglString < $today;
+                
+                if ($status === 'hadir' && $absen && !$absen->waktu_pulang) {
+                    if ($isPast || ($tglString === $today && Carbon::now()->format('H:i') >= '17:00')) {
+                        $isBolos = true;
+                        $bolos++;
+                    }
+                }
+
+                // Display prioritas: Bolos > Telat > Status normal
+                $cellValue = '';
+                $bgColor = 'FFFFFF';
+                $textColor = '000000';
+
+                if ($isBolos) {
+                    $cellValue = 'B';
+                    $bgColor = 'E9D5FF'; // Purple
+                    $textColor = '7C3AED';
+                } elseif ($isTelat) {
+                    $cellValue = 'T';
+                    $bgColor = 'FED7AA'; // Orange
+                    $textColor = 'EA580C';
+                } elseif ($tgl->isWeekend() && !$status) {
+                    $cellValue = '—';
+                    $bgColor = 'F3F4F6';
+                    $textColor = '9CA3AF';
+                } else {
+                    $cellValue = match($status) {
+                        'hadir'  => 'H',
+                        'izin'   => 'I',
+                        'sakit'  => 'S',
+                        default  => ($tgl->isWeekday() ? 'A' : '—'),
+                    };
+
+                    [$bgColor, $textColor] = match($status) {
+                        'hadir'  => ['D1FAE5', '059669'], // Green
+                        'izin'   => ['FEF3C7', 'D97706'], // Yellow
+                        'sakit'  => ['DBEAFE', '2563EB'], // Blue
+                        default  => ($tgl->isWeekday() ? ['FEE2E2', 'DC2626'] : ['F3F4F6', '9CA3AF']), // Red / Gray
+                    };
+                }
+
+                $sheet->setCellValueByColumnAndRow($col, $dataRow, $cellValue);
+                $sheet->getStyleByColumnAndRow($col, $dataRow)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => $bgColor]],
+                    'font' => ['color' => ['rgb' => $textColor], 'bold' => true],
+                    'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER]
+                ]);
+
+                // Count summary: Bolos dan Telat tidak dihitung sebagai Hadir
+                if ($isBolos) {
+                    // Sudah dihitung di bolos
+                } elseif ($isTelat) {
+                    // Sudah dihitung di telat
+                } else {
+                    match ($status) {
+                        'hadir'  => $hadir++,
+                        'izin'   => $izin++,
+                        'sakit'  => $sakit++,
+                        default  => ($tgl->isWeekday() ? $alfa++ : null),
+                    };
+                }
+
+                $col++;
+            }
+
+            // Summary
+            $summaryData = [$hadir, $izin, $sakit, $alfa, $telat, $bolos];
+            $summaryColors = ['D1FAE5', 'FEF3C7', 'DBEAFE', 'FEE2E2', 'FED7AA', 'E9D5FF'];
+            
+            for ($i = 0; $i < 6; $i++) {
+                $sheet->setCellValueByColumnAndRow($col, $dataRow, $summaryData[$i]);
+                $sheet->getStyleByColumnAndRow($col, $dataRow)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => $summaryColors[$i]]],
+                    'font' => ['bold' => true],
+                    'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER]
+                ]);
+                $col++;
+            }
+
+            // Border for row
+            $rowRange = 'A' . $dataRow . ':' . \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastCol) . $dataRow;
+            $sheet->getStyle($rowRange)->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => 'E5E7EB']]]
+            ]);
+
+            // Zebra striping
+            if ($dataRow % 2 === 0) {
+                $infoRange = 'A' . $dataRow . ':E' . $dataRow;
+                $sheet->getStyle($infoRange)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F9FAFB']]
+                ]);
+            }
+
+            $dataRow++;
+        }
+
+        // ══ LEGEND ══
+        $legendRow = $dataRow + 2;
+        $sheet->setCellValue('A' . $legendRow, 'Keterangan:');
+        $sheet->getStyle('A' . $legendRow)->getFont()->setBold(true);
+
+        $legends = [
+            ['H', 'Hadir', 'D1FAE5'],
+            ['T', 'Telat', 'FED7AA'],
+            ['B', 'Bolos', 'E9D5FF'],
+            ['I', 'Izin', 'FEF3C7'],
+            ['S', 'Sakit', 'DBEAFE'],
+            ['A', 'Alpha', 'FEE2E2'],
+        ];
+
+        $legendRow++;
+        foreach ($legends as $legend) {
+            $sheet->setCellValue('A' . $legendRow, $legend[0]);
+            $sheet->setCellValue('B' . $legendRow, $legend[1]);
+            $sheet->getStyle('A' . $legendRow)->applyFromArray([
+                'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => $legend[2]]],
+                'font' => ['bold' => true],
+                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER]
+            ]);
+            $legendRow++;
+        }
+
+        // ══ AUTO WIDTH ══
+        $sheet->getColumnDimension('A')->setWidth(6);  // No
+        $sheet->getColumnDimension('B')->setWidth(25); // Nama
+        $sheet->getColumnDimension('C')->setWidth(12); // NIS
+        $sheet->getColumnDimension('D')->setWidth(10); // Kelas
+        $sheet->getColumnDimension('E')->setWidth(12); // Jurusan
+
+        // Date columns
+        for ($i = 6; $i <= 6 + $tanggals->count() - 1; $i++) {
+            $sheet->getColumnDimensionByColumn($i)->setWidth(5);
+        }
+
+        // Summary columns
+        for ($i = 0; $i < 6; $i++) {
+            $sheet->getColumnDimensionByColumn($summaryStartCol + $i)->setWidth(5);
+        }
+
+        // Freeze panes
+        $sheet->freezePane('F' . ($headerRow + 2)); // Freeze hingga kolom E dan header
+
+        // ══ GENERATE FILE ══
+        $filename = 'Rekap_Absensi_' . $start->format('Ymd') . '_' . $end->format('Ymd') . '.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
     }
 }

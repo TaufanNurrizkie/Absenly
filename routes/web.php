@@ -90,7 +90,9 @@ Route::middleware(['auth', 'siswa'])->group(function () {
 
     //ROUTE ABSEN
     Route::get('/siswa/dashboard', [SiswaController::class, 'dashboard'])->name('siswa.dashboard');
+    Route::get('/siswa/absensi-status', [SiswaController::class, 'absensiStatus'])->name('siswa.absensi.status');
     Route::post('/siswa/absen', [SiswaController::class, 'store']);
+    Route::post('/siswa/absen-pulang', [SiswaController::class, 'absenPulang'])->name('siswa.absen.pulang');
     Route::post('/absensi/izin', [SiswaController::class, 'izin'])->name('absensi.izin');
 
 

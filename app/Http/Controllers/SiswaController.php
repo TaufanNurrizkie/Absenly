@@ -281,6 +281,98 @@ class SiswaController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────
+    //  STATUS ABSENSI HARI INI - untuk check sudah absen atau belum
+    // ─────────────────────────────────────────────────────────────
+    public function absensiStatus()
+    {
+        $user  = \App\Models\User::find(Auth::id());
+        $today = Carbon::today()->toDateString();
+
+        $absensi = Absensi::where('user_id', $user->id)
+            ->whereDate('tanggal', $today)
+            ->where('keterangan', 'hadir')
+            ->first();
+
+        if ($absensi) {
+            return response()->json([
+                'hasCheckedIn'  => true,
+                'checkInTime'   => Carbon::parse($absensi->waktu)->format('H:i'),
+                'hasCheckedOut' => !is_null($absensi->waktu_pulang),
+                'checkOutTime'  => $absensi->waktu_pulang ? Carbon::parse($absensi->waktu_pulang)->format('H:i') : null,
+            ]);
+        }
+
+        return response()->json([
+            'hasCheckedIn'  => false,
+            'hasCheckedOut' => false,
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  ABSEN PULANG
+    // ─────────────────────────────────────────────────────────────
+    public function absenPulang(Request $request)
+    {
+        $user = \App\Models\User::find(Auth::id());
+        $now  = Carbon::now();
+        $today = Carbon::today()->toDateString();
+
+        // Cek ada absensi masuk hari ini dengan keterangan hadir
+        $absensi = Absensi::where('user_id', $user->id)
+            ->whereDate('tanggal', $today)
+            ->where('keterangan', 'hadir')
+            ->first();
+
+        if (!$absensi) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Kamu belum absen masuk hari ini.',
+            ], 400);
+        }
+
+        // Cek sudah absen pulang
+        if ($absensi->waktu_pulang) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Kamu sudah absen pulang hari ini.',
+            ], 400);
+        }
+
+        // Cek jam minimal boleh pulang (15:00 / jam 3 sore)
+        if ($now->format('H:i') < '00:10') {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Absen pulang hanya tersedia mulai jam 15:00.',
+            ], 400);
+        }
+
+        // Proses foto jika ada
+        if ($request->has('photo')) {
+            $imageData = $request->photo;
+            $imageName = 'absen_pulang_' . time() . '.jpg';
+            $imagePath = 'absen_photos/' . $imageName;
+            $image     = base64_decode(explode(',', $imageData)[1]);
+
+            $manager = new ImageManager(new Driver());
+            $img     = $manager->read($image)->scale(width: 400)->toJpeg(70);
+            Storage::disk('public')->put($imagePath, $img);
+
+            // Simpan path foto pulang (opsional: bisa tambah kolom foto_pulang di migration)
+            // Untuk saat ini kita hanya update waktu_pulang
+        }
+
+        // Update waktu_pulang
+        $absensi->waktu_pulang = $now->toTimeString();
+        $absensi->save();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Berhasil absen pulang!',
+            'waktu_pulang' => $now->format('H:i'),
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
     //  ROUTE HANDLER — POST /siswa/izin
     // ─────────────────────────────────────────────────────────────
     public function izin(Request $request)
