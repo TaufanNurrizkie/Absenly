@@ -96,8 +96,8 @@ class RekapAbsensiController extends Controller
                     $row['telat']++;
                 }
 
-                // Logic bolos: hadir DAN waktu_pulang null DAN tanggal sudah lewat (bukan hari ini)
-                // DAN sudah lewat jam 17:00 (deadline bolos)
+                // Logic bolos: HANYA untuk status 'hadir', waktu_pulang null, DAN tanggal sudah lewat
+                // Izin dan Sakit TIDAK pernah dianggap bolos
                 $tglString = $tgl->toDateString();
                 $isPast = $tglString < $today;
                 
@@ -332,7 +332,8 @@ class RekapAbsensiController extends Controller
                     $telat++;
                 }
 
-                // Logic bolos
+                // Logic bolos: HANYA untuk status 'hadir', waktu_pulang null, DAN tanggal sudah lewat
+                // Izin dan Sakit TIDAK pernah dianggap bolos
                 $tglString = $tgl->toDateString();
                 $isPast = $tglString < $today;
                 

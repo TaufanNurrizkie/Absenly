@@ -1132,62 +1132,108 @@
                     </div>
                 </div>
 
-                {{-- Notes kondisi belum bisa absen pulang --}}
+                {{-- Notes kondisi --}}
                 <div id="pulangNotYetInNote"
                     class="hidden text-center text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 mb-4">
                     Kamu belum absen masuk hari ini.
-                </div>
-                <div id="pulangNotYetTimeNote"
-                    class="hidden text-center text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 mb-4">
-                    Absen pulang tersedia mulai jam 15:00
                 </div>
                 <div id="pulangAlreadyNote"
                     class="hidden text-center text-xs text-green-600 bg-green-50 border border-green-100 rounded-xl px-4 py-3 mb-4">
                     Kamu sudah absen pulang jam <span id="modalCheckOutTime" class="font-semibold"></span>.
                 </div>
+                <div id="pulangPendingNote"
+                    class="hidden text-center text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 mb-4">
+                    Pengajuan izin pulang kamu sedang <span class="font-semibold">menunggu ACC admin</span>.
+                </div>
+                <div id="pulangRejectedNote"
+                    class="hidden text-center text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-4">
+                    Pengajuan izin pulang kamu <span class="font-semibold">ditolak admin</span>. Silakan absen pulang
+                    normal atau ajukan ulang.
+                </div>
 
-                {{-- Camera & Map untuk absen pulang --}}
-                <div id="pulangCameraSection">
-                    <div class="relative w-full aspect-[4/3] bg-[#0f172a] rounded-2xl overflow-hidden mb-[14px]">
-                        <video id="videoPulang" class="w-full h-full object-cover [transform:scaleX(-1)] block" autoplay
-                            playsinline></video>
-                        <div
-                            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[170px] h-[170px] pointer-events-none">
-                            <div
-                                class="absolute top-0 left-0 w-7 h-7 border-[3px] border-purple-500 border-r-transparent border-b-transparent rounded-tl-md opacity-90">
-                            </div>
-                            <div
-                                class="absolute top-0 right-0 w-7 h-7 border-[3px] border-purple-500 border-l-transparent border-b-transparent rounded-tr-md opacity-90">
-                            </div>
-                            <div
-                                class="absolute bottom-0 left-0 w-7 h-7 border-[3px] border-purple-500 border-r-transparent border-t-transparent rounded-bl-md opacity-90">
-                            </div>
-                            <div
-                                class="absolute bottom-0 right-0 w-7 h-7 border-[3px] border-purple-500 border-l-transparent border-t-transparent rounded-br-md opacity-90">
-                            </div>
-                            <div class="sc-line"
-                                style="background: linear-gradient(90deg, transparent, #a855f7, transparent);"></div>
-                        </div>
-                        <div id="faceBadgePulang"
-                            class="face-badge waiting absolute bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-slate-700/85 text-slate-200 border border-slate-400/30">
-                            <div class="face-dot w-[7px] h-[7px] rounded-full bg-current flex-shrink-0"></div>
-                            <span id="faceStatusPulang">Waiting...</span>
-                        </div>
+                {{-- Konten utama: cuma tampil kalau boleh mengajukan (belum pulang & gak pending) --}}
+                <div id="pulangActionArea">
+
+                    {{-- Toggle mode --}}
+                    <div class="flex bg-slate-100 rounded-xl p-1 mb-4 gap-1">
+                        <button type="button" id="modePulangNormalBtn" onclick="setPulangMode('normal')"
+                            class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200 bg-white shadow-sm text-purple-700">
+                            Pulang Normal
+                        </button>
+                        <button type="button" id="modePulangIzinBtn" onclick="setPulangMode('izin')"
+                            class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200 text-slate-500">
+                            Izin / Sakit
+                        </button>
                     </div>
-                    <div id="mapPulang" class="h-32 w-full rounded-xl overflow-hidden border border-slate-100 mb-4"></div>
-                    <canvas id="canvasPulang" class="hidden"></canvas>
 
-                    <button id="submitPulangBtn" onclick="captureAndSubmitPulang()"
-                        class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-3.5 rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-purple-500/30 flex items-center justify-center gap-2 disabled:opacity-45 disabled:cursor-not-allowed"
-                        disabled>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        Capture & Submit Pulang
-                    </button>
+                    {{-- Camera & Map untuk pulang normal --}}
+                    <div id="pulangCameraSection">
+                        <div class="relative w-full aspect-[4/3] bg-[#0f172a] rounded-2xl overflow-hidden mb-[14px]">
+                            <video id="videoPulang" class="w-full h-full object-cover [transform:scaleX(-1)] block"
+                                autoplay playsinline></video>
+                            <div
+                                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[170px] h-[170px] pointer-events-none">
+                                <div
+                                    class="absolute top-0 left-0 w-7 h-7 border-[3px] border-purple-500 border-r-transparent border-b-transparent rounded-tl-md opacity-90">
+                                </div>
+                                <div
+                                    class="absolute top-0 right-0 w-7 h-7 border-[3px] border-purple-500 border-l-transparent border-b-transparent rounded-tr-md opacity-90">
+                                </div>
+                                <div
+                                    class="absolute bottom-0 left-0 w-7 h-7 border-[3px] border-purple-500 border-r-transparent border-t-transparent rounded-bl-md opacity-90">
+                                </div>
+                                <div
+                                    class="absolute bottom-0 right-0 w-7 h-7 border-[3px] border-purple-500 border-l-transparent border-t-transparent rounded-br-md opacity-90">
+                                </div>
+                                <div class="sc-line"
+                                    style="background: linear-gradient(90deg, transparent, #a855f7, transparent);"></div>
+                            </div>
+                            <div id="faceBadgePulang"
+                                class="face-badge waiting absolute bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-slate-700/85 text-slate-200 border border-slate-400/30">
+                                <div class="face-dot w-[7px] h-[7px] rounded-full bg-current flex-shrink-0"></div>
+                                <span id="faceStatusPulang">Waiting...</span>
+                            </div>
+                        </div>
+                        <div id="mapPulang" class="h-32 w-full rounded-xl overflow-hidden border border-slate-100 mb-4">
+                        </div>
+                        <canvas id="canvasPulang" class="hidden"></canvas>
+
+                        <button id="submitPulangBtn" onclick="captureAndSubmitPulang()"
+                            class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-3.5 rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-purple-500/30 flex items-center justify-center gap-2 disabled:opacity-45 disabled:cursor-not-allowed"
+                            disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            Capture & Submit Pulang
+                        </button>
+
+                        <p id="pulangJamNote" class="hidden text-center text-[11px] text-amber-600 mt-2">
+                            Absen pulang normal hanya tersedia mulai jam 15:00.
+                        </p>
+                    </div>
+
+                    {{-- Form izin/sakit --}}
+                    <div id="pulangIzinSection" class="hidden">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Jenis</label>
+                        <select id="tipeIzinPulang"
+                            class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="izin">Izin</option>
+                            <option value="sakit">Sakit</option>
+                        </select>
+
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Alasan</label>
+                        <textarea id="alasanIzinPulang" rows="3" placeholder="Contoh: perut sakit, dijemput orang tua, dll."
+                            class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+
+                        <button id="submitIzinPulangBtn" onclick="submitIzinPulang()"
+                            class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white py-3.5 rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-amber-500/30 flex items-center justify-center gap-2">
+                            Ajukan Izin Pulang
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -1568,6 +1614,14 @@
         loadFaceModel();
 
         // ── Check Status Absensi Hari Ini ──
+        // ── State absensi hari ini (dipakai juga sama startAbsensi) ──
+        let statusHariIni = {
+            hasCheckedIn: false,
+            hasCheckedOut: false,
+            statusPulang: null,
+            alasanPulang: null
+        };
+
         async function checkAbsensiStatus() {
             try {
                 const response = await fetch('/siswa/absensi-status', {
@@ -1576,41 +1630,29 @@
                         'Accept': 'application/json'
                     }
                 });
+                if (!response.ok) return;
 
-                if (response.ok) {
-                    const data = await response.json();
+                const data = await response.json();
+                statusHariIni = data;
 
-                    if (data.hasCheckedIn) {
-                        // Sudah absen masuk
-                        document.getElementById('checkInBtn').style.display = 'none';
-                        document.getElementById('checkOutSection').classList.remove('hidden');
-                        document.getElementById('checkInTime').textContent = `Jam ${data.checkInTime}`;
+                const info = document.getElementById('absensiStatusInfo');
+                const dot = document.getElementById('absensiStatusDot');
+                const text = document.getElementById('absensiStatusText');
+                info.classList.remove('hidden');
+                info.classList.add('flex');
 
-                        if (data.hasCheckedOut) {
-                            // Sudah absen pulang
-                            document.getElementById('checkOutBtn').disabled = true;
-                            document.getElementById('checkOutLabel').textContent = 'Sudah Absen Pulang';
-                            document.getElementById('checkOutInfo').textContent = `Pulang jam ${data.checkOutTime}`;
-                        } else {
-                            // Belum absen pulang
-                            const now = new Date();
-                            const hour = now.getHours();
-                            const minute = now.getMinutes();
-                            const currentTime = hour * 60 + minute;
-                            const minTime = 15 * 60; // 15:00 = 900 menit
-
-                            if (currentTime >= minTime) {
-                                document.getElementById('checkOutBtn').disabled = false;
-                                document.getElementById('checkOutInfo').textContent = 'Klik untuk absen pulang';
-                            } else {
-                                document.getElementById('checkOutBtn').disabled = true;
-                                const hoursLeft = Math.floor((minTime - currentTime) / 60);
-                                const minsLeft = (minTime - currentTime) % 60;
-                                document.getElementById('checkOutInfo').textContent =
-                                    `Tersedia dalam ${hoursLeft}j ${minsLeft}m`;
-                            }
-                        }
-                    }
+                if (!data.hasCheckedIn) {
+                    dot.className = 'w-2 h-2 rounded-full bg-slate-300';
+                    text.textContent = 'Belum absen masuk';
+                } else if (data.hasCheckedOut) {
+                    dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+                    text.textContent = `Sudah pulang jam ${data.checkOutTime}`;
+                } else if (data.statusPulang === 'pending') {
+                    dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+                    text.textContent = 'Izin pulang menunggu ACC';
+                } else {
+                    dot.className = 'w-2 h-2 rounded-full bg-blue-400';
+                    text.textContent = `Masuk jam ${data.checkInTime} · belum pulang`;
                 }
             } catch (error) {
                 console.error('Error checking absensi status:', error);
@@ -1618,22 +1660,82 @@
         }
 
         // ── Absen Pulang Function ──
-        async function absenPulang() {
+        async function captureAndSubmitPulang() {
+            const video = document.getElementById('videoPulang');
+            const canvas = document.getElementById('canvasPulang');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+
             Swal.fire({
-                title: 'Konfirmasi Absen Pulang',
-                text: 'Pastikan kamu benar-benar sudah mau pulang',
+                title: 'Memproses...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const response = await fetch('/siswa/absen-pulang', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tipe_pulang: 'normal',
+                        photo: dataURL
+                    })
+                });
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        html: `${data.message}<br><span class="text-purple-600 font-semibold">Waktu pulang: ${data.waktu_pulang}</span>`,
+                    }).then(() => location.reload());
+                } else {
+                    throw new Error(data.message || 'Gagal absen pulang');
+                }
+            } catch (error) {
+                Swal.fire('Gagal!', error.message || 'Terjadi kesalahan saat absen pulang', 'error');
+            }
+        }
+
+        async function submitIzinPulang() {
+            const tipe = document.getElementById('tipeIzinPulang').value;
+            const alasan = document.getElementById('alasanIzinPulang').value.trim();
+
+            if (!alasan) {
+                Swal.fire('Eits!', 'Alasan wajib diisi ya.', 'warning');
+                return;
+            }
+
+            const tipeLabel = tipe === 'izin' ? 'Izin' : 'Sakit';
+
+            Swal.fire({
+                title: `Ajukan ${tipeLabel} Pulang?`,
+                html: `<div class="text-sm text-slate-600">
+                        <p class="mb-2">Pengajuan kamu akan dikirim ke admin untuk disetujui.</p>
+                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-left">
+                            <p class="font-semibold text-amber-800 mb-1">⚠️ Perhatian:</p>
+                            <p class="text-amber-700 text-xs">Kamu akan dianggap <strong>belum absen pulang</strong> sampai admin meng-ACC pengajuan ini.</p>
+                        </div>
+                    </div>`,
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: 'Ya, Absen Pulang',
+                confirmButtonText: 'Ya, Ajukan',
                 cancelButtonText: 'Batal',
-                confirmButtonColor: '#7c3aed',
+                confirmButtonColor: '#d97706',
+                cancelButtonColor: '#64748b',
             }).then(async (result) => {
                 if (!result.isConfirmed) return;
 
                 Swal.fire({
-                    title: 'Memproses...',
+                    title: 'Mengirim...',
                     allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading()
+                    didOpen: () => Swal.showLoading(),
                 });
 
                 try {
@@ -1644,27 +1746,41 @@
                             'Content-Type': 'application/json',
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify({})
+                        body: JSON.stringify({
+                            tipe_pulang: tipe,
+                            alasan
+                        })
                     });
-
                     const data = await response.json();
 
                     if (response.ok && data.status === 'success') {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Berhasil!',
-                            html: `${data.message}<br><span class="text-purple-600 font-semibold">Waktu pulang: ${data.waktu_pulang}</span>`,
-                            confirmButtonColor: '#7c3aed',
+                            title: 'Pengajuan Terkirim!',
+                            html: `<div class="text-sm">
+                                    <p class="text-slate-600 mb-3">${data.message}</p>
+                                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                        <p class="font-semibold text-blue-800 mb-1">📋 Status Saat Ini</p>
+                                        <div class="flex items-center justify-center gap-2 mt-2">
+                                            <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold">
+                                                🕐 PENDING
+                                            </span>
+                                        </div>
+                                        <p class="text-blue-700 text-xs mt-2">Menunggu persetujuan dari admin</p>
+                                    </div>
+                                </div>`,
+                            confirmButtonText: 'Oke, Mengerti',
+                            confirmButtonColor: '#3b82f6',
                         }).then(() => location.reload());
                     } else {
-                        throw new Error(data.message || 'Gagal absen pulang');
+                        throw new Error(data.message || 'Gagal mengirim pengajuan');
                     }
                 } catch (error) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Gagal!',
-                        text: error.message || 'Terjadi kesalahan saat absen pulang',
-                        confirmButtonColor: '#7c3aed',
+                        title: 'Gagal Mengirim',
+                        text: error.message || 'Terjadi kesalahan saat mengirim pengajuan',
+                        confirmButtonColor: '#ef4444',
                     });
                 }
             });
@@ -1681,13 +1797,26 @@
 
         function startAbsensi() {
             const modal = document.getElementById('absenModal');
-            const submitBtn = document.getElementById('submitBtn');
-
             modal.classList.remove('hidden');
             setTimeout(() => {
                 modal.classList.remove('opacity-0', 'scale-95');
                 modal.classList.add('opacity-100', 'scale-100');
             }, 10);
+
+            if (!statusHariIni.hasCheckedIn) {
+                switchTab('masuk');
+                initMasukCamera();
+            } else if (statusHariIni.hasCheckedOut) {
+                Swal.fire('Info', 'Kamu sudah absen pulang hari ini.', 'info');
+                closeModal();
+            } else {
+                switchTab('pulang');
+                renderPulangPanelState();
+            }
+        }
+
+        function initMasukCamera() {
+            const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.style.opacity = '0.45';
 
@@ -1725,6 +1854,95 @@
             }, function(error) {
                 Swal.fire('Error', 'Location access denied: ' + error.message, 'error');
             });
+        }
+
+        function switchTab(tab) {
+            const tabMasuk = document.getElementById('tabMasukBtn');
+            const tabPulang = document.getElementById('tabPulangBtn');
+            const panelMasuk = document.getElementById('panelMasuk');
+            const panelPulang = document.getElementById('panelPulang');
+            const activeCls = ['bg-white', 'shadow-sm', 'text-blue-700'];
+
+            if (tab === 'masuk') {
+                panelMasuk.classList.remove('hidden');
+                panelPulang.classList.add('hidden');
+                tabMasuk.classList.add(...activeCls);
+                tabPulang.classList.remove(...activeCls);
+            } else {
+                panelPulang.classList.remove('hidden');
+                panelMasuk.classList.add('hidden');
+                tabPulang.classList.add(...activeCls);
+                tabMasuk.classList.remove(...activeCls);
+            }
+        }
+
+        function setPulangMode(mode) {
+            const normalBtn = document.getElementById('modePulangNormalBtn');
+            const izinBtn = document.getElementById('modePulangIzinBtn');
+            const cameraSection = document.getElementById('pulangCameraSection');
+            const izinSection = document.getElementById('pulangIzinSection');
+
+            if (mode === 'normal') {
+                cameraSection.classList.remove('hidden');
+                izinSection.classList.add('hidden');
+                normalBtn.className =
+                    'flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200 bg-white shadow-sm text-purple-700';
+                izinBtn.className =
+                    'flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200 text-slate-500';
+            } else {
+                cameraSection.classList.add('hidden');
+                izinSection.classList.remove('hidden');
+                izinBtn.className =
+                    'flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200 bg-white shadow-sm text-amber-700';
+                normalBtn.className =
+                    'flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200 text-slate-500';
+            }
+        }
+
+        function renderPulangPanelState() {
+            const notYet = document.getElementById('pulangNotYetInNote');
+            const already = document.getElementById('pulangAlreadyNote');
+            const pending = document.getElementById('pulangPendingNote');
+            const rejected = document.getElementById('pulangRejectedNote');
+            const action = document.getElementById('pulangActionArea');
+            const jamNote = document.getElementById('pulangJamNote');
+
+            [notYet, already, pending, rejected].forEach(el => el.classList.add('hidden'));
+            action.classList.remove('hidden');
+
+            if (!statusHariIni.hasCheckedIn) {
+                notYet.classList.remove('hidden');
+                action.classList.add('hidden');
+                return;
+            }
+            if (statusHariIni.hasCheckedOut) {
+                document.getElementById('modalCheckOutTime').textContent = statusHariIni.checkOutTime;
+                already.classList.remove('hidden');
+                action.classList.add('hidden');
+                return;
+            }
+            if (statusHariIni.statusPulang === 'pending') {
+                pending.classList.remove('hidden');
+                action.classList.add('hidden');
+                return;
+            }
+            if (statusHariIni.statusPulang === 'rejected') {
+                rejected.classList.remove('hidden');
+            }
+
+            // cek jam buat tombol pulang normal
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            const submitBtn = document.getElementById('submitPulangBtn');
+            if (currentMinutes < 15 * 60) {
+                submitBtn.disabled = true;
+                jamNote.classList.remove('hidden');
+            } else {
+                jamNote.classList.add('hidden');
+                // submitBtn tetap disabled sampai wajah terdeteksi (lihat detectFace)
+            }
+
+            setPulangMode('normal');
         }
 
         function closeModal() {

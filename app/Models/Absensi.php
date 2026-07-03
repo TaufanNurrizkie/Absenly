@@ -18,12 +18,13 @@ class Absensi extends Model
         'keterangan',
         'status',
         'alasan',
+        'status_pulang',
+        'tipe_pulang',
+        'alasan_pulang'
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-
-    
 }

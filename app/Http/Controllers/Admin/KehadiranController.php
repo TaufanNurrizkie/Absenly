@@ -55,11 +55,30 @@ class KehadiranController extends Controller
             ->whereNotIn('id', $sudahAbsenUserIds)
             ->get();
 
+        $izinPulangRaw = Absensi::with('user')
+            ->whereDate('tanggal', $today)
+            ->where('status_pulang', 'pending')
+            ->whereHas('user', fn($q) => $q->where('usertype', 'siswa'))
+            ->latest()
+            ->get();
+
+        $izinPulang = $izinPulangRaw->map(fn($a) => [
+            'id'          => $a->id,
+            'user'        => $a->user,
+            'waktu'       => $a->waktu ? \Carbon\Carbon::parse($a->waktu)->format('H:i') : '-',
+            'tipe_pulang' => $a->tipe_pulang ?? 'izin', // izin|sakit
+            'alasan'      => $a->alasan_pulang,
+            'status'      => $a->status_pulang,
+        ]);
+
+        // tambahin ke response: 'izin_pulang' => $izinPulang,
+
         return response()->json([
             'hadir' => $hadir,
             'izin' => $izin,
             'sakit' => $sakit,
-            'belum' => $belumAbsen
+            'belum' => $belumAbsen,
+            'izin_pulang' => $izinPulang
         ]);
     }
 
@@ -69,5 +88,95 @@ class KehadiranController extends Controller
         $kehadiran = Absensi::findOrFail($id);
         $kehadiran->update(['status' => $request->status]);
         return response()->json(['message' => 'Status berhasil diperbarui']);
+    }
+
+    public function updateApprovalPulang(Request $request, $id)
+    {
+        $request->validate(['status' => 'required|in:approved,rejected']);
+        $absensi = Absensi::findOrFail($id);
+
+        if ($request->status === 'approved') {
+            $absensi->update([
+                'status_pulang' => 'approved',
+                'waktu_pulang'  => now()->toTimeString(),
+            ]);
+        } else {
+            $absensi->update(['status_pulang' => 'rejected']);
+            // waktu_pulang sengaja dibiarkan null
+        }
+
+        return response()->json(['message' => 'Status pulang berhasil diperbarui']);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  HALAMAN ABSEN PULANG
+    // ═══════════════════════════════════════════════════════════
+    
+    public function absenPulang()
+    {
+        return view('admin.kehadiran.absen-pulang');
+    }
+
+    public function absenPulangData()
+    {
+        $today = Carbon::today();
+
+        // Siswa yang sudah pulang (waktu_pulang terisi)
+        $sudahPulang = Absensi::with('user')
+            ->whereDate('tanggal', $today)
+            ->where('keterangan', 'hadir')
+            ->whereNotNull('waktu_pulang')
+            ->whereHas('user', fn($q) => $q->where('usertype', 'siswa'))
+            ->latest('waktu_pulang')
+            ->get()
+            ->map(fn($a) => [
+                'id'           => $a->id,
+                'user'         => $a->user,
+                'waktu_masuk'  => $a->waktu ? Carbon::parse($a->waktu)->format('H:i') : '-',
+                'waktu_pulang' => $a->waktu_pulang ? Carbon::parse($a->waktu_pulang)->format('H:i') : '-',
+                'tipe_pulang'  => $a->tipe_pulang,
+                'status_pulang'=> $a->status_pulang,
+            ]);
+
+        // Siswa yang belum pulang
+        $belumPulang = Absensi::with('user')
+            ->whereDate('tanggal', $today)
+            ->where('keterangan', 'hadir')
+            ->whereNull('waktu_pulang')
+            ->where(function($q) {
+                $q->whereNull('status_pulang')
+                  ->orWhere('status_pulang', 'rejected');
+            })
+            ->whereHas('user', fn($q) => $q->where('usertype', 'siswa'))
+            ->latest()
+            ->get()
+            ->map(fn($a) => [
+                'id'           => $a->id,
+                'user'         => $a->user,
+                'waktu_masuk'  => $a->waktu ? Carbon::parse($a->waktu)->format('H:i') : '-',
+                'status_pulang'=> $a->status_pulang,
+            ]);
+
+        // Pengajuan izin/sakit pulang (pending)
+        $izinPulang = Absensi::with('user')
+            ->whereDate('tanggal', $today)
+            ->where('status_pulang', 'pending')
+            ->whereHas('user', fn($q) => $q->where('usertype', 'siswa'))
+            ->latest()
+            ->get()
+            ->map(fn($a) => [
+                'id'           => $a->id,
+                'user'         => $a->user,
+                'waktu_masuk'  => $a->waktu ? Carbon::parse($a->waktu)->format('H:i') : '-',
+                'tipe_pulang'  => $a->tipe_pulang ?? 'izin',
+                'alasan'       => $a->alasan_pulang,
+                'status'       => $a->status_pulang,
+            ]);
+
+        return response()->json([
+            'sudah_pulang' => $sudahPulang,
+            'belum_pulang' => $belumPulang,
+            'izin_pulang'  => $izinPulang,
+        ]);
     }
 }

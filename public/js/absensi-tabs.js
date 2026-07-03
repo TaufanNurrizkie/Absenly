@@ -8,6 +8,8 @@ let absensiState = {
     checkInTime: null,
     hasCheckedOut: false,
     checkOutTime: null,
+    statusPulang: null, // pending|approved|rejected
+    alasanPulang: null,
 };
 
 let mapPulang, markerPulang, circlePulang;
@@ -47,6 +49,11 @@ async function fetchAbsensiStatus() {
             absensiState.checkInTime = data.checkInTime || null;
             absensiState.hasCheckedOut = data.hasCheckedOut || false;
             absensiState.checkOutTime = data.checkOutTime || null;
+            absensiState.statusPulang = data.statusPulang || null; // pending|approved|rejected
+            absensiState.alasanPulang = data.alasanPulang || null;
+
+            // Update tab pulang state (disable jika perlu)
+            updateTabPulangState();
 
             // Update status info di bawah tombol
             if (data.hasCheckedIn) {
@@ -62,6 +69,14 @@ async function fetchAbsensiStatus() {
                         statusText.textContent = `Masuk ${data.checkInTime} · Pulang ${data.checkOutTime}`;
                         statusDot.classList.remove("bg-green-400");
                         statusDot.classList.add("bg-purple-400");
+                    } else if (data.statusPulang === 'pending') {
+                        statusText.textContent = `Masuk ${data.checkInTime} · Izin pulang pending`;
+                        statusDot.classList.remove("bg-green-400");
+                        statusDot.classList.add("bg-amber-400");
+                    } else if (data.statusPulang === 'rejected') {
+                        statusText.textContent = `Masuk ${data.checkInTime} · Izin pulang ditolak`;
+                        statusDot.classList.remove("bg-green-400");
+                        statusDot.classList.add("bg-red-400");
                     } else {
                         statusText.textContent = `Sudah absen masuk jam ${data.checkInTime}`;
                     }
@@ -281,31 +296,48 @@ function switchTab(tab) {
         const notYetInNote = document.getElementById("pulangNotYetInNote");
         const notYetTimeNote = document.getElementById("pulangNotYetTimeNote");
         const alreadyNote = document.getElementById("pulangAlreadyNote");
+        const pendingNote = document.getElementById("pulangPendingNote");
+        const rejectedNote = document.getElementById("pulangRejectedNote");
         const cameraSection = document.getElementById("pulangCameraSection");
+        const actionArea = document.getElementById("pulangActionArea");
 
         // Reset all notes
         notYetInNote.classList.add("hidden");
         notYetTimeNote.classList.add("hidden");
         alreadyNote.classList.add("hidden");
+        pendingNote.classList.add("hidden");
+        rejectedNote.classList.add("hidden");
         cameraSection.style.display = "none";
+        actionArea.style.display = "block";
 
         if (!absensiState.hasCheckedIn) {
             // Belum absen masuk
             notYetInNote.classList.remove("hidden");
+            actionArea.style.display = "none";
         } else if (absensiState.hasCheckedOut) {
-            // Sudah absen pulang
+            // Sudah absen pulang (approved)
             alreadyNote.classList.remove("hidden");
             const checkOutTimeEl = document.getElementById("modalCheckOutTime");
             if (checkOutTimeEl) {
                 checkOutTimeEl.textContent = absensiState.checkOutTime;
             }
+            actionArea.style.display = "none";
+        } else if (absensiState.statusPulang === 'pending') {
+            // Pengajuan izin pulang sedang pending
+            pendingNote.classList.remove("hidden");
+            actionArea.style.display = "none";
+        } else if (absensiState.statusPulang === 'rejected') {
+            // Pengajuan izin pulang ditolak - bisa ajukan ulang
+            rejectedNote.classList.remove("hidden");
+            // Tampilkan form lagi supaya bisa ajukan ulang
+            actionArea.style.display = "block";
         } else {
-            // Sudah absen masuk tapi belum pulang
+            // Sudah absen masuk tapi belum pulang & tidak ada pengajuan
             const now = new Date();
             const hour = now.getHours();
             const minute = now.getMinutes();
             const currentTime = hour * 60 + minute;
-            const minTime = 1 * 10; // 15:00
+            const minTime = 15 * 60; // 15:00
 
             if (currentTime >= minTime) {
                 // Boleh absen pulang - tampilkan camera
@@ -319,6 +351,37 @@ function switchTab(tab) {
                 notYetTimeNote.textContent = `Absen pulang tersedia dalam ${hoursLeft}j ${minsLeft}m`;
             }
         }
+    }
+
+    // ── DISABLE TAB PULANG jika kondisi tertentu ──
+    updateTabPulangState();
+}
+
+// ── Function untuk disable/enable tab pulang berdasarkan status ──
+function updateTabPulangState() {
+    const tabPulangBtn = document.getElementById("tabPulangBtn");
+    
+    if (!tabPulangBtn) return;
+
+    // Kondisi disable: belum check in ATAU sudah check out ATAU pending
+    const shouldDisable = 
+        !absensiState.hasCheckedIn || 
+        absensiState.hasCheckedOut || 
+        absensiState.statusPulang === 'pending';
+
+    if (shouldDisable) {
+        tabPulangBtn.disabled = true;
+        tabPulangBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        tabPulangBtn.classList.remove('hover:text-slate-700');
+        
+        // Jika tab pulang sedang aktif dan harus disabled, switch ke masuk
+        if (currentTab === 'pulang') {
+            switchTab('masuk');
+        }
+    } else {
+        tabPulangBtn.disabled = false;
+        tabPulangBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        tabPulangBtn.classList.add('hover:text-slate-700');
     }
 }
 

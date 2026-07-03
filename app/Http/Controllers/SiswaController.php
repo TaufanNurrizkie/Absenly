@@ -107,7 +107,7 @@ class SiswaController extends Controller
         }
 
         // Batasi jam
-        if ($now->format('H:i') > '23:00') {
+        if ($now->format('H:i') > '23:59') {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Absensi sudah ditutup. Maksimal sampai jam 15:00.',
@@ -288,23 +288,44 @@ class SiswaController extends Controller
         $user  = \App\Models\User::find(Auth::id());
         $today = Carbon::today()->toDateString();
 
-        $absensi = Absensi::where('user_id', $user->id)
+        // Cek absensi hadir
+        $absensiHadir = Absensi::where('user_id', $user->id)
             ->whereDate('tanggal', $today)
             ->where('keterangan', 'hadir')
             ->first();
 
-        if ($absensi) {
+        if ($absensiHadir) {
             return response()->json([
                 'hasCheckedIn'  => true,
-                'checkInTime'   => Carbon::parse($absensi->waktu)->format('H:i'),
-                'hasCheckedOut' => !is_null($absensi->waktu_pulang),
-                'checkOutTime'  => $absensi->waktu_pulang ? Carbon::parse($absensi->waktu_pulang)->format('H:i') : null,
+                'checkInTime'   => Carbon::parse($absensiHadir->waktu)->format('H:i'),
+                'hasCheckedOut' => !is_null($absensiHadir->waktu_pulang),
+                'checkOutTime'  => $absensiHadir->waktu_pulang ? Carbon::parse($absensiHadir->waktu_pulang)->format('H:i') : null,
+                'statusPulang'  => $absensiHadir->status_pulang,   // null | pending | approved | rejected
+                'alasanPulang'  => $absensiHadir->alasan_pulang,
+                'isIzinSakit'   => false,
+            ]);
+        }
+
+        // Cek apakah hari ini izin/sakit
+        $absensiIzinSakit = Absensi::where('user_id', $user->id)
+            ->whereDate('tanggal', $today)
+            ->whereIn('keterangan', ['izin', 'sakit'])
+            ->first();
+
+        if ($absensiIzinSakit) {
+            return response()->json([
+                'hasCheckedIn'  => false,
+                'hasCheckedOut' => false,
+                'isIzinSakit'   => true,
+                'izinSakitType' => $absensiIzinSakit->keterangan,
+                'izinSakitStatus' => $absensiIzinSakit->status,
             ]);
         }
 
         return response()->json([
             'hasCheckedIn'  => false,
             'hasCheckedOut' => false,
+            'isIzinSakit'   => false,
         ]);
     }
 
@@ -313,9 +334,14 @@ class SiswaController extends Controller
     // ─────────────────────────────────────────────────────────────
     public function absenPulang(Request $request)
     {
-        $user = \App\Models\User::find(Auth::id());
-        $now  = Carbon::now();
+        $user  = \App\Models\User::find(Auth::id());
+        $now   = Carbon::now();
         $today = Carbon::today()->toDateString();
+
+        $request->validate([
+            'tipe_pulang' => 'required|in:normal,izin,sakit',
+            'alasan'      => 'required_if:tipe_pulang,izin,sakit|nullable|string',
+        ]);
 
         // Cek ada absensi masuk hari ini dengan keterangan hadir
         $absensi = Absensi::where('user_id', $user->id)
@@ -338,8 +364,45 @@ class SiswaController extends Controller
             ], 400);
         }
 
+        // Cek masih ada pengajuan izin pulang yang pending
+        if ($absensi->status_pulang === 'pending') {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Pengajuan izin pulang kamu masih menunggu persetujuan admin.',
+            ], 400);
+        }
+
+        // ── CABANG: IZIN / SAKIT ──────────────────────────────
+        if (in_array($request->tipe_pulang, ['izin', 'sakit'])) {
+            $absensi->update([
+                'status_pulang' => 'pending',
+                'tipe_pulang'   => $request->tipe_pulang,
+                'alasan_pulang' => $request->alasan,
+            ]);
+
+            // Notifikasi ke admin
+            $admins = \App\Models\User::where('usertype', 'admin')->get();
+            if ($admins->isNotEmpty()) {
+                \Illuminate\Support\Facades\Notification::send(
+                    $admins,
+                    new \App\Notifications\IzinSakitNotification(
+                        $user,
+                        $request->tipe_pulang,
+                        $request->alasan,
+                        null
+                    )
+                );
+            }
+
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Pengajuan izin pulang terkirim, menunggu ACC admin.',
+            ]);
+        }
+
+        // ── CABANG: PULANG NORMAL ──────────────────────────────
         // Cek jam minimal boleh pulang (15:00 / jam 3 sore)
-        if ($now->format('H:i') < '00:10') {
+        if ($now->format('H:i') < '15:00') {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Absen pulang hanya tersedia mulai jam 15:00.',
@@ -356,18 +419,15 @@ class SiswaController extends Controller
             $manager = new ImageManager(new Driver());
             $img     = $manager->read($image)->scale(width: 400)->toJpeg(70);
             Storage::disk('public')->put($imagePath, $img);
-
-            // Simpan path foto pulang (opsional: bisa tambah kolom foto_pulang di migration)
-            // Untuk saat ini kita hanya update waktu_pulang
         }
 
-        // Update waktu_pulang
         $absensi->waktu_pulang = $now->toTimeString();
+        $absensi->status_pulang = 'approved'; // Pulang normal langsung approved
         $absensi->save();
 
         return response()->json([
-            'status'  => 'success',
-            'message' => 'Berhasil absen pulang!',
+            'status'       => 'success',
+            'message'      => 'Berhasil absen pulang!',
             'waktu_pulang' => $now->format('H:i'),
         ]);
     }

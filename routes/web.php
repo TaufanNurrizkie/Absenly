@@ -39,6 +39,12 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/kehadiran-hari-ini', [KehadiranController::class, 'kehadiranHariIni'])->name('admin.kehadiran');
     Route::get('/admin/kehadiran-hari-ini/data', [KehadiranController::class, 'kehadiranData'])->name('admin.kehadiran.data');
     Route::patch('admin/kehadiran/{id}/approval', [KehadiranController::class, 'updateApproval'])->name('admin.kehadiran.approval');
+    Route::patch('admin/kehadiran/{id}/approval-pulang', [KehadiranController::class, 'updateApprovalPulang'])
+        ->name('admin.kehadiran.approval-pulang');
+    
+    // Absen Pulang
+    Route::get('/admin/absen-pulang', [KehadiranController::class, 'absenPulang'])->name('admin.absen-pulang');
+    Route::get('/admin/absen-pulang/data', [KehadiranController::class, 'absenPulangData'])->name('admin.absen-pulang.data');
 
     ## Berita Management
     Route::get('/admin/berita', [BeritaController::class, 'index'])
