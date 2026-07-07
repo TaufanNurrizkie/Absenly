@@ -15,6 +15,7 @@ class Absensi extends Model
         'longitude',
         'lokasi_valid',
         'foto',
+        'foto_pulang',
         'keterangan',
         'status',
         'alasan',

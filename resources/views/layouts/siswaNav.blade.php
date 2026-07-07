@@ -3,19 +3,20 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <!-- AOS CSS -->
 <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+<link rel="icon" type="image/png" href="{{ asset('img/icb_Logo.png') }}">
+<title>SISTEM PRESENSI SISWA CT</title>
 
 
 
 <body class="bg-gray-100">
     <!-- Navbar/topbar -->
-    
-    <main >
+
+    <main>
         @yield('content')
     </main>
 
-    
+
 
 
 </body>

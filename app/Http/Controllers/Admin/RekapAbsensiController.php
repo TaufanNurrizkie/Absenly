@@ -66,8 +66,9 @@ class RekapAbsensiController extends Controller
 
         // ── Susun data matrix ─────────────────────────────────────
         $today = Carbon::today()->toDateString();
+        $jamMasuk = \App\Models\Setting::get('jam_masuk', '07:00') . ':00';
         
-        $matrix = $siswas->map(function ($siswa) use ($tanggals, $absensiRaw, $today) {
+        $matrix = $siswas->map(function ($siswa) use ($tanggals, $absensiRaw, $today, $jamMasuk) {
             $row = [
                 'id'      => $siswa->id,
                 'name'    => $siswa->name,
@@ -90,8 +91,8 @@ class RekapAbsensiController extends Controller
                 $isTelat  = false;
                 $isBolos  = false;
 
-                // Logic telat: hadir DAN waktu > 07:00:00
-                if ($status === 'hadir' && $absen && $absen->waktu > '07:00:00') {
+                // Logic telat: hadir DAN waktu > jam_masuk
+                if ($status === 'hadir' && $absen && $absen->waktu > $jamMasuk) {
                     $isTelat = true;
                     $row['telat']++;
                 }
@@ -213,6 +214,9 @@ class RekapAbsensiController extends Controller
             ->get()
             ->groupBy(fn($a) => $a->user_id . '_' . $a->tanggal);
 
+        $today = Carbon::today()->toDateString();
+        $jamMasuk = \App\Models\Setting::get('jam_masuk', '07:00') . ':00';
+
         // ══ Create Spreadsheet ══
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -327,7 +331,7 @@ class RekapAbsensiController extends Controller
                 $isBolos  = false;
 
                 // Logic telat
-                if ($status === 'hadir' && $absen && $absen->waktu > '07:00:00') {
+                if ($status === 'hadir' && $absen && $absen->waktu > $jamMasuk) {
                     $isTelat = true;
                     $telat++;
                 }

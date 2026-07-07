@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\Admin\KehadiranController;
 use App\Http\Controllers\Admin\RekapAbsensiController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Guru\GuruAbsenController;
 use App\Http\Controllers\Guru\GuruController;
@@ -76,6 +77,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('/admin/users/delete/{id}', [UserController::class, 'destroy'])->name('admin.users.delete');
     Route::post('/admin/users/import', [UserController::class, 'import'])->name('admin.users.import');
     Route::post('/admin/guru/import', [UserController::class, 'importGuru'])->name('admin.guru.import');
+
+    ## Settings Management
+    Route::get('/admin/settings', [SettingController::class, 'index'])->name('admin.settings.index');
+    Route::post('/admin/settings', [SettingController::class, 'update'])->name('admin.settings.update');
 });
 
 

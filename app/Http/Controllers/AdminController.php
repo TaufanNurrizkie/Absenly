@@ -12,6 +12,7 @@ class AdminController extends Controller
     public function index()
     {
         $today = Carbon::today();
+        $jamMasuk = \App\Models\Setting::get('jam_masuk', '07:00') . ':00';
 
         // ── Stat Cards ────────────────────────────────────────────
         $jmlhsiswa = User::where('usertype', 'siswa')->count();
@@ -26,7 +27,7 @@ class AdminController extends Controller
 
         $jmlTerlambat = Absensi::whereDate('tanggal', $today)
             ->where('keterangan', 'hadir')
-            ->where('waktu', '>', '07:00:00')
+            ->where('waktu', '>', $jamMasuk)
             ->count();
 
         $sudahAbsenIds = Absensi::whereDate('tanggal', $today)->pluck('user_id');
@@ -57,7 +58,7 @@ class AdminController extends Controller
             ->orderBy('kelas')
             ->pluck('kelas');
 
-        $rekapKelas = $kelasList->map(function ($kelas) use ($today) {
+        $rekapKelas = $kelasList->map(function ($kelas) use ($today, $jamMasuk) {
             $totalSiswa = User::where('usertype', 'siswa')
                 ->where('kelas', $kelas)
                 ->count();
@@ -73,7 +74,7 @@ class AdminController extends Controller
 
             $terlambat = Absensi::whereDate('tanggal', $today)
                 ->where('keterangan', 'hadir')
-                ->where('waktu', '>', '07:00:00')
+                ->where('waktu', '>', $jamMasuk)   // <-- ini $jamMasuk gak ke-capture
                 ->whereIn('user_id', $absensiIds)
                 ->count();
 
@@ -104,14 +105,14 @@ class AdminController extends Controller
             ->orderByDesc('created_at')
             ->limit(8)
             ->get()
-            ->map(function ($absen) {
+            ->map(function ($absen) use ($jamMasuk) {
                 $nama  = $absen->user->name  ?? 'Siswa';
                 $kelas = $absen->user->kelas ?? '';
                 $waktu = Carbon::parse($absen->waktu)->format('H:i') . ' WIB';
 
                 switch ($absen->keterangan) {
                     case 'hadir':
-                        $terlambat = $absen->waktu > '07:00:00';
+                        $terlambat = $absen->waktu > $jamMasuk;
                         return [
                             'warna' => $terlambat ? 'orange' : 'blue',
                             'pesan' => $terlambat

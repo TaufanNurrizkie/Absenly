@@ -231,7 +231,7 @@
 
         {{-- ── Main Action Button ── --}}
         <div class="px-6 -mt-12 relative z-20 flex flex-col items-center gap-3 mb-8">
-            <button onclick="startAbsensi()" class="relative group">
+            <button id="mainAbsensiBtn" onclick="startAbsensi()" class="relative group">
                 <div
                     class="absolute inset-0 bg-blue-400 rounded-full blur-xl opacity-50 group-hover:opacity-80 transition-opacity duration-300 animate-pulse">
                 </div>
@@ -244,7 +244,7 @@
                                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    <span class="text-blue-900 font-bold text-sm tracking-wide">ABSENSI</span>
+                    <span class="text-blue-900 font-bold text-sm tracking-wide">PRESENSI</span>
                     <span id="clock" class="text-xs text-slate-500 font-medium mt-1"></span>
                 </div>
             </button>
@@ -779,7 +779,7 @@
                         $status = strtolower($absen->status ?? 'pending');
                         $waktu = \Carbon\Carbon::parse($absen->waktu);
                         $tanggal = \Carbon\Carbon::parse($absen->created_at);
-                        $isLate = $waktu->hour >= 7;
+                        $isLate = $waktu->format('H:i') >= $jamMasuk;
 
                         $borderAccent = 'border-l-slate-200';
                         $badgeClass = 'bg-slate-100 text-slate-700';
@@ -1041,206 +1041,223 @@
 
     {{-- Modal: Check-in --}}
     <div id="absenModal"
-        class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden px-4 opacity-0 scale-95 transition-all duration-300">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-md relative shadow-2xl">
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden px-4 py-6 opacity-0 scale-95 transition-all duration-300">
+        <div class="bg-white rounded-3xl w-full max-w-md relative shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
             <button onclick="closeModal()"
-                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors duration-300 bg-slate-100 rounded-full p-1.5">
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors duration-300 bg-slate-100 rounded-full p-1.5 z-10">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
 
-            <div class="text-center mb-4">
-                <h2 id="modalTitle" class="text-xl font-bold text-slate-800">Absensi</h2>
-                <p id="modalSubtitle" class="text-sm text-slate-500">Pilih jenis absen</p>
-            </div>
+            {{-- Area scrollable: header, tab, semua panel --}}
+            <div class="overflow-y-auto flex-1 p-6">
 
-            {{-- ── Segmented Tab ── --}}
-            <div class="flex bg-slate-100 rounded-xl p-1 mb-5 gap-1">
-                <button type="button" id="tabMasukBtn" onclick="switchTab('masuk')"
-                    class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200">
-                    Absen Masuk
-                </button>
-                <button type="button" id="tabPulangBtn" onclick="switchTab('pulang')"
-                    class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200">
-                    Absen Pulang
-                </button>
-            </div>
+                <div class="text-center mb-4">
+                    <h2 id="modalTitle" class="text-xl font-bold text-slate-800">Presensi</h2>
+                    <p id="modalSubtitle" class="text-sm text-slate-500">Pilih jenis presensi</p>
+                </div>
 
-            {{-- ══ PANEL: ABSEN MASUK ══ --}}
-            <div id="panelMasuk">
-                <div class="relative w-full aspect-[4/3] bg-[#0f172a] rounded-2xl overflow-hidden mb-[14px]">
-                    <video id="video" class="w-full h-full object-cover [transform:scaleX(-1)] block" autoplay
-                        playsinline></video>
-                    <div
-                        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[170px] h-[170px] pointer-events-none">
+                {{-- ── Segmented Tab ── --}}
+                <div class="flex bg-slate-100 rounded-xl p-1 mb-5 gap-1">
+                    <button type="button" id="tabMasukBtn" onclick="switchTab('masuk')"
+                        class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200">
+                        Presensi Masuk
+                    </button>
+                    <button type="button" id="tabPulangBtn" onclick="switchTab('pulang')"
+                        class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200">
+                        Presensi Pulang
+                    </button>
+                </div>
+
+                {{-- ══ PANEL: ABSEN MASUK ══ --}}
+                <div id="panelMasuk">
+                    <div class="relative w-full aspect-[4/3] bg-[#0f172a] rounded-2xl overflow-hidden mb-3 sm:mb-[14px]">
+                        <video id="video" class="w-full h-full object-cover [transform:scaleX(-1)] block" autoplay
+                            playsinline></video>
                         <div
-                            class="absolute top-0 left-0 w-7 h-7 border-[3px] border-blue-500 border-r-transparent border-b-transparent rounded-tl-md opacity-90">
-                        </div>
-                        <div
-                            class="absolute top-0 right-0 w-7 h-7 border-[3px] border-blue-500 border-l-transparent border-b-transparent rounded-tr-md opacity-90">
-                        </div>
-                        <div
-                            class="absolute bottom-0 left-0 w-7 h-7 border-[3px] border-blue-500 border-r-transparent border-t-transparent rounded-bl-md opacity-90">
-                        </div>
-                        <div
-                            class="absolute bottom-0 right-0 w-7 h-7 border-[3px] border-blue-500 border-l-transparent border-t-transparent rounded-br-md opacity-90">
-                        </div>
-                        <div class="sc-line"></div>
-                    </div>
-                    <div id="faceBadge"
-                        class="face-badge waiting absolute bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-slate-700/85 text-slate-200 border border-slate-400/30">
-                        <div class="face-dot w-[7px] h-[7px] rounded-full bg-current flex-shrink-0"></div>
-                        <span id="faceStatus">Waiting...</span>
-                    </div>
-                </div>
-                <div id="map" class="h-32 w-full rounded-xl overflow-hidden border border-slate-100"></div>
-                <canvas id="canvas" class="hidden"></canvas>
-
-                <button id="submitBtn" onclick="captureAndSubmit()"
-                    class="w-full mt-4 bg-blue-600 text-white py-3.5 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 disabled:opacity-45 disabled:cursor-not-allowed"
-                    disabled>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Capture & Submit
-                </button>
-
-                {{-- ditampilkan kalau user udah absen masuk & buka tab ini lagi --}}
-                <div id="masukAlreadyNote"
-                    class="hidden text-center text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 mt-2">
-                    Kamu sudah absen masuk hari ini jam <span id="masukAlreadyTime" class="font-semibold"></span>.
-                </div>
-            </div>
-
-            {{-- ══ PANEL: ABSEN PULANG ══ --}}
-            <div id="panelPulang" class="hidden">
-                {{-- Info sudah absen masuk --}}
-                <div class="flex items-center gap-3 bg-green-50 border border-green-100 rounded-xl px-4 py-3 mb-4">
-                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
-                            </path>
-                        </svg>
-                    </div>
-                    <div class="flex-1">
-                        <p class="text-xs font-semibold text-slate-700">Sudah Absen Masuk</p>
-                        <p id="modalCheckInTime" class="text-[10px] text-slate-500">Jam --:--</p>
-                    </div>
-                </div>
-
-                {{-- Notes kondisi --}}
-                <div id="pulangNotYetInNote"
-                    class="hidden text-center text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 mb-4">
-                    Kamu belum absen masuk hari ini.
-                </div>
-                <div id="pulangAlreadyNote"
-                    class="hidden text-center text-xs text-green-600 bg-green-50 border border-green-100 rounded-xl px-4 py-3 mb-4">
-                    Kamu sudah absen pulang jam <span id="modalCheckOutTime" class="font-semibold"></span>.
-                </div>
-                <div id="pulangPendingNote"
-                    class="hidden text-center text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 mb-4">
-                    Pengajuan izin pulang kamu sedang <span class="font-semibold">menunggu ACC admin</span>.
-                </div>
-                <div id="pulangRejectedNote"
-                    class="hidden text-center text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-4">
-                    Pengajuan izin pulang kamu <span class="font-semibold">ditolak admin</span>. Silakan absen pulang
-                    normal atau ajukan ulang.
-                </div>
-
-                {{-- Konten utama: cuma tampil kalau boleh mengajukan (belum pulang & gak pending) --}}
-                <div id="pulangActionArea">
-
-                    {{-- Toggle mode --}}
-                    <div class="flex bg-slate-100 rounded-xl p-1 mb-4 gap-1">
-                        <button type="button" id="modePulangNormalBtn" onclick="setPulangMode('normal')"
-                            class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200 bg-white shadow-sm text-purple-700">
-                            Pulang Normal
-                        </button>
-                        <button type="button" id="modePulangIzinBtn" onclick="setPulangMode('izin')"
-                            class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200 text-slate-500">
-                            Izin / Sakit
-                        </button>
-                    </div>
-
-                    {{-- Camera & Map untuk pulang normal --}}
-                    <div id="pulangCameraSection">
-                        <div class="relative w-full aspect-[4/3] bg-[#0f172a] rounded-2xl overflow-hidden mb-[14px]">
-                            <video id="videoPulang" class="w-full h-full object-cover [transform:scaleX(-1)] block"
-                                autoplay playsinline></video>
+                            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[62%] max-w-[210px] aspect-[3/4] pointer-events-none">
                             <div
-                                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[170px] h-[170px] pointer-events-none">
-                                <div
-                                    class="absolute top-0 left-0 w-7 h-7 border-[3px] border-purple-500 border-r-transparent border-b-transparent rounded-tl-md opacity-90">
-                                </div>
-                                <div
-                                    class="absolute top-0 right-0 w-7 h-7 border-[3px] border-purple-500 border-l-transparent border-b-transparent rounded-tr-md opacity-90">
-                                </div>
-                                <div
-                                    class="absolute bottom-0 left-0 w-7 h-7 border-[3px] border-purple-500 border-r-transparent border-t-transparent rounded-bl-md opacity-90">
-                                </div>
-                                <div
-                                    class="absolute bottom-0 right-0 w-7 h-7 border-[3px] border-purple-500 border-l-transparent border-t-transparent rounded-br-md opacity-90">
-                                </div>
-                                <div class="sc-line"
-                                    style="background: linear-gradient(90deg, transparent, #a855f7, transparent);"></div>
+                                class="absolute top-0 left-0 w-6 h-6 sm:w-8 sm:h-8 border-[3px] border-blue-500 border-r-transparent border-b-transparent rounded-tl-md opacity-90">
                             </div>
-                            <div id="faceBadgePulang"
-                                class="face-badge waiting absolute bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-slate-700/85 text-slate-200 border border-slate-400/30">
-                                <div class="face-dot w-[7px] h-[7px] rounded-full bg-current flex-shrink-0"></div>
-                                <span id="faceStatusPulang">Waiting...</span>
+                            <div
+                                class="absolute top-0 right-0 w-6 h-6 sm:w-8 sm:h-8 border-[3px] border-blue-500 border-l-transparent border-b-transparent rounded-tr-md opacity-90">
                             </div>
+                            <div
+                                class="absolute bottom-0 left-0 w-6 h-6 sm:w-8 sm:h-8 border-[3px] border-blue-500 border-r-transparent border-t-transparent rounded-bl-md opacity-90">
+                            </div>
+                            <div
+                                class="absolute bottom-0 right-0 w-6 h-6 sm:w-8 sm:h-8 border-[3px] border-blue-500 border-l-transparent border-t-transparent rounded-br-md opacity-90">
+                            </div>
+                            <div class="sc-line"></div>
                         </div>
-                        <div id="mapPulang" class="h-32 w-full rounded-xl overflow-hidden border border-slate-100 mb-4">
+                        <div id="faceBadge"
+                            class="face-badge waiting absolute bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-slate-700/85 text-slate-200 border border-slate-400/30 max-w-[90%]">
+                            <div
+                                class="face-dot w-[6px] h-[6px] sm:w-[7px] sm:h-[7px] rounded-full bg-current flex-shrink-0">
+                            </div>
+                            <span id="faceStatus" class="truncate">Waiting...</span>
                         </div>
-                        <canvas id="canvasPulang" class="hidden"></canvas>
-
-                        <button id="submitPulangBtn" onclick="captureAndSubmitPulang()"
-                            class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-3.5 rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-purple-500/30 flex items-center justify-center gap-2 disabled:opacity-45 disabled:cursor-not-allowed"
-                            disabled>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            Capture & Submit Pulang
-                        </button>
-
-                        <p id="pulangJamNote" class="hidden text-center text-[11px] text-amber-600 mt-2">
-                            Absen pulang normal hanya tersedia mulai jam 15:00.
-                        </p>
                     </div>
+                    <div id="map"
+                        class="h-28 sm:h-32 md:h-36 w-full rounded-xl overflow-hidden border border-slate-100"></div>
+                    <canvas id="canvas" class="hidden"></canvas>
 
-                    {{-- Form izin/sakit --}}
-                    <div id="pulangIzinSection" class="hidden">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Jenis</label>
-                        <select id="tipeIzinPulang"
-                            class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            <option value="izin">Izin</option>
-                            <option value="sakit">Sakit</option>
-                        </select>
+                    <button id="submitBtn" onclick="captureAndSubmit()"
+                        class="w-full mt-3 sm:mt-4 bg-blue-600 text-white py-3 sm:py-3.5 rounded-xl font-semibold text-sm sm:text-base hover:bg-blue-700 transition-all duration-300 shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 disabled:opacity-45 disabled:cursor-not-allowed"
+                        disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0"
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span class="truncate">Capture &amp; Submit</span>
+                    </button>
 
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Alasan</label>
-                        <textarea id="alasanIzinPulang" rows="3" placeholder="Contoh: perut sakit, dijemput orang tua, dll."
-                            class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
-
-                        <button id="submitIzinPulangBtn" onclick="submitIzinPulang()"
-                            class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white py-3.5 rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-amber-500/30 flex items-center justify-center gap-2">
-                            Ajukan Izin Pulang
-                        </button>
+                    {{-- ditampilkan kalau user udah absen masuk & buka tab ini lagi --}}
+                    <div id="masukAlreadyNote"
+                        class="hidden text-center text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 mt-2">
+                        Kamu sudah absen masuk hari ini jam <span id="masukAlreadyTime" class="font-semibold"></span>.
                     </div>
                 </div>
-            </div>
 
-            <button onclick="closeModal()"
-                class="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-semibold hover:bg-slate-200 transition-all duration-300 mt-3">
-                Cancel
-            </button>
+                {{-- ══ PANEL: ABSEN PULANG ══ --}}
+                <div id="panelPulang" class="hidden">
+                    {{-- Info sudah absen masuk --}}
+                    <div
+                        class="flex items-center gap-2.5 sm:gap-3 bg-green-50 border border-green-100 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4">
+                        <div
+                            class="w-9 h-9 sm:w-10 sm:h-10 bg-green-100 rounded-full flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                                </path>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-semibold text-slate-700">Sudah Absen Masuk</p>
+                            <p id="modalCheckInTime" class="text-[10px] text-slate-500">Jam --:--</p>
+                        </div>
+                    </div>
+
+                    {{-- Notes kondisi --}}
+                    <div id="pulangNotYetInNote"
+                        class="hidden text-center text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4">
+                        Kamu belum absen masuk hari ini.
+                    </div>
+                    <div id="pulangAlreadyNote"
+                        class="hidden text-center text-xs text-green-600 bg-green-50 border border-green-100 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4">
+                        Kamu sudah absen pulang jam <span id="modalCheckOutTime" class="font-semibold"></span>.
+                    </div>
+                    <div id="pulangPendingNote"
+                        class="hidden text-center text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4">
+                        Pengajuan izin pulang kamu sedang <span class="font-semibold">menunggu ACC admin</span>.
+                    </div>
+                    <div id="pulangRejectedNote"
+                        class="hidden text-center text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4">
+                        Pengajuan izin pulang kamu <span class="font-semibold">ditolak admin</span>. Silakan absen pulang
+                        normal atau ajukan ulang.
+                    </div>
+
+                    {{-- Konten utama: cuma tampil kalau boleh mengajukan (belum pulang & gak pending) --}}
+                    <div id="pulangActionArea">
+
+                        {{-- Toggle mode --}}
+                        <div class="flex bg-slate-100 rounded-xl p-1 mb-3 sm:mb-4 gap-1">
+                            <button type="button" id="modePulangNormalBtn" onclick="setPulangMode('normal')"
+                                class="flex-1 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-semibold transition-all duration-200 bg-white shadow-sm text-purple-700 truncate px-1">
+                                Pulang Normal
+                            </button>
+                            <button type="button" id="modePulangIzinBtn" onclick="setPulangMode('izin')"
+                                class="flex-1 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-semibold transition-all duration-200 text-slate-500 truncate px-1">
+                                Izin / Sakit
+                            </button>
+                        </div>
+
+                        {{-- Camera & Map untuk pulang normal --}}
+                        <div id="pulangCameraSection">
+                            <div
+                                class="relative w-full aspect-[4/3] bg-[#0f172a] rounded-2xl overflow-hidden mb-3 sm:mb-[14px]">
+                                <video id="videoPulang" class="w-full h-full object-cover [transform:scaleX(-1)] block"
+                                    autoplay playsinline></video>
+                                <div
+                                    class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[62%] max-w-[210px] aspect-[3/4] pointer-events-none">
+                                    <div
+                                        class="absolute top-0 left-0 w-6 h-6 sm:w-8 sm:h-8 border-[3px] border-purple-500 border-r-transparent border-b-transparent rounded-tl-md opacity-90">
+                                    </div>
+                                    <div
+                                        class="absolute top-0 right-0 w-6 h-6 sm:w-8 sm:h-8 border-[3px] border-purple-500 border-l-transparent border-b-transparent rounded-tr-md opacity-90">
+                                    </div>
+                                    <div
+                                        class="absolute bottom-0 left-0 w-6 h-6 sm:w-8 sm:h-8 border-[3px] border-purple-500 border-r-transparent border-t-transparent rounded-bl-md opacity-90">
+                                    </div>
+                                    <div
+                                        class="absolute bottom-0 right-0 w-6 h-6 sm:w-8 sm:h-8 border-[3px] border-purple-500 border-l-transparent border-t-transparent rounded-br-md opacity-90">
+                                    </div>
+                                    <div class="sc-line"
+                                        style="background: linear-gradient(90deg, transparent, #a855f7, transparent);">
+                                    </div>
+                                </div>
+                                <div id="faceBadgePulang"
+                                    class="face-badge waiting absolute bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-slate-700/85 text-slate-200 border border-slate-400/30 max-w-[90%]">
+                                    <div
+                                        class="face-dot w-[6px] h-[6px] sm:w-[7px] sm:h-[7px] rounded-full bg-current flex-shrink-0">
+                                    </div>
+                                    <span id="faceStatusPulang" class="truncate">Waiting...</span>
+                                </div>
+                            </div>
+                            <div id="mapPulang"
+                                class="h-28 sm:h-32 md:h-36 w-full rounded-xl overflow-hidden border border-slate-100 mb-3 sm:mb-4">
+                            </div>
+                            <canvas id="canvasPulang" class="hidden"></canvas>
+
+                            <button id="submitPulangBtn" onclick="captureAndSubmitPulang()"
+                                class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-3 sm:py-3.5 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 shadow-lg shadow-purple-500/30 flex items-center justify-center gap-2 disabled:opacity-45 disabled:cursor-not-allowed"
+                                disabled>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <span class="truncate">Capture &amp; Submit Pulang</span>
+                            </button>
+
+                            <p id="pulangJamNote"
+                                class="hidden text-center text-[10px] sm:text-[11px] text-amber-600 mt-2 px-2">
+                                Absen pulang normal hanya tersedia mulai jam 15:00.
+                            </p>
+                        </div>
+
+                        {{-- Form izin/sakit --}}
+                        <div id="pulangIzinSection" class="hidden">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Jenis</label>
+                            <select id="tipeIzinPulang"
+                                class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <option value="izin">Izin</option>
+                                <option value="sakit">Sakit</option>
+                            </select>
+
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Alasan</label>
+                            <textarea id="alasanIzinPulang" rows="3" placeholder="Contoh: perut sakit, dijemput orang tua, dll."
+                                class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+
+                            <button id="submitIzinPulangBtn" onclick="submitIzinPulang()"
+                                class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white py-3 sm:py-3.5 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 shadow-lg shadow-amber-500/30 flex items-center justify-center gap-2">
+                                Ajukan Izin Pulang
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="closeModal()"
+                    class="w-full bg-slate-100 text-slate-600 py-2.5 sm:py-3 rounded-xl font-semibold text-sm sm:text-base hover:bg-slate-200 transition-all duration-300 mt-3">
+                    Cancel
+                </button>
+
+            </div>
         </div>
     </div>
 
@@ -1559,15 +1576,14 @@
         });
 
         // ── Face API ──
-        let faceReady = false;
+        window.faceReady = false;
         let faceDetectionInterval = null;
         let isFaceDetected = false;
 
         async function loadFaceModel() {
             try {
-                await faceapi.nets.tinyFaceDetector.loadFromUri(
-                    'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights');
-                faceReady = true;
+                await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
+                window.faceReady = true;
             } catch (e) {
                 console.error('Model load error', e);
             }
@@ -1580,7 +1596,7 @@
             const submitBtn = document.getElementById('submitBtn');
 
             if (!video || !video.videoWidth) return;
-            if (!faceReady) {
+            if (!window.faceReady) {
                 statusText.textContent = 'Loading AI...';
                 return;
             }
@@ -1619,7 +1635,8 @@
             hasCheckedIn: false,
             hasCheckedOut: false,
             statusPulang: null,
-            alasanPulang: null
+            alasanPulang: null,
+            isIzinSakit: false
         };
 
         async function checkAbsensiStatus() {
@@ -1643,7 +1660,9 @@
 
                 if (!data.hasCheckedIn) {
                     dot.className = 'w-2 h-2 rounded-full bg-slate-300';
-                    text.textContent = 'Belum absen masuk';
+                    text.textContent = data.isIzinSakit ?
+                        `Hari ini ${data.izinSakitType || 'izin/sakit'} (${data.izinSakitStatus || 'pending'})` :
+                        'Belum absen masuk';
                 } else if (data.hasCheckedOut) {
                     dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
                     text.textContent = `Sudah pulang jam ${data.checkOutTime}`;
@@ -1653,6 +1672,16 @@
                 } else {
                     dot.className = 'w-2 h-2 rounded-full bg-blue-400';
                     text.textContent = `Masuk jam ${data.checkInTime} · belum pulang`;
+                }
+
+                // Sync ke absensiState supaya updateMainAbsensiButton bisa kerja
+                if (typeof absensiState !== 'undefined') {
+                    absensiState.hasCheckedIn = data.hasCheckedIn || false;
+                    absensiState.hasCheckedOut = data.hasCheckedOut || false;
+                    absensiState.isIzinSakit = data.isIzinSakit || false;
+                    if (typeof updateMainAbsensiButton === 'function') {
+                        updateMainAbsensiButton();
+                    }
                 }
             } catch (error) {
                 console.error('Error checking absensi status:', error);
@@ -1795,7 +1824,21 @@
         const allowedRadius = 10000;
         let map, marker, circle;
 
-        function startAbsensi() {
+        async function startAbsensi() {
+            await fetchAbsensiStatus(); // refresh biar ga pake data basi
+
+            // Jika izin/sakit hari ini, tolak buka modal
+            if (absensiState.isIzinSakit) {
+                Swal.fire('Info', 'Kamu sudah mengajukan izin/sakit hari ini.', 'info');
+                return;
+            }
+
+            // Jika sudah absen masuk DAN sudah absen pulang, tolak buka modal
+            if (absensiState.hasCheckedIn && absensiState.hasCheckedOut) {
+                Swal.fire('Info', 'Kamu sudah absen masuk dan pulang hari ini.', 'info');
+                return;
+            }
+
             const modal = document.getElementById('absenModal');
             modal.classList.remove('hidden');
             setTimeout(() => {
@@ -1803,13 +1846,11 @@
                 modal.classList.add('opacity-100', 'scale-100');
             }, 10);
 
-            if (!statusHariIni.hasCheckedIn) {
+            if (!absensiState.hasCheckedIn) {
                 switchTab('masuk');
                 initMasukCamera();
-            } else if (statusHariIni.hasCheckedOut) {
-                Swal.fire('Info', 'Kamu sudah absen pulang hari ini.', 'info');
-                closeModal();
             } else {
+                // Sudah absen masuk, belum pulang -> langsung ke tab pulang
                 switchTab('pulang');
                 renderPulangPanelState();
             }
@@ -1945,29 +1986,41 @@
             setPulangMode('normal');
         }
 
+        window.cleanupMasukResources = function() {
+            if (faceDetectionInterval) {
+                clearInterval(faceDetectionInterval);
+                faceDetectionInterval = null;
+            }
+            const video = document.getElementById('video');
+            if (video && video.srcObject) {
+                video.srcObject.getTracks().forEach(t => t.stop());
+                video.srcObject = null;
+            }
+            if (map) {
+                map.remove();
+                map = null;
+            }
+            isFaceDetected = false;
+            const badge = document.getElementById('faceBadge');
+            if (badge) {
+                badge.className =
+                    'face-badge waiting absolute bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-slate-700/85 text-slate-200 border border-slate-400/30';
+                document.getElementById('faceStatus').textContent = 'Waiting...';
+            }
+        };
+
         function closeModal() {
             const modal = document.getElementById('absenModal');
             modal.classList.remove('opacity-100', 'scale-100');
             modal.classList.add('opacity-0', 'scale-95');
             setTimeout(() => modal.classList.add('hidden'), 300);
 
-            if (faceDetectionInterval) clearInterval(faceDetectionInterval);
-            if (map) {
-                map.remove();
-                map = null;
+            if (typeof window.cleanupMasukResources === 'function') {
+                window.cleanupMasukResources();
             }
-
-            const video = document.getElementById('video');
-            if (video.srcObject) {
-                video.srcObject.getTracks().forEach(t => t.stop());
-                video.srcObject = null;
+            if (typeof window.cleanupPulangResources === 'function') {
+                window.cleanupPulangResources();
             }
-
-            isFaceDetected = false;
-            const badge = document.getElementById('faceBadge');
-            badge.className =
-                'face-badge waiting absolute bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-slate-700/85 text-slate-200 border border-slate-400/30';
-            document.getElementById('faceStatus').textContent = 'Waiting...';
         }
 
         async function captureAndSubmit() {

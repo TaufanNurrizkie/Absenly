@@ -7,6 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Absenly') — Absenly</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="{{ asset('img/icb_Logo.png') }}">
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap"
         rel="stylesheet">
@@ -258,14 +259,14 @@
                     Dashboard
                 </a>
 
-                <a href="{{ route('guru.absen') }}"
+                {{-- <a href="{{ route('guru.absen') }}"
                     class="nav-link {{ request()->routeIs('guru.absen') ? 'active' : '' }}">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path
                             d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                     </svg>
                     Absen
-                </a>
+                </a> --}}
 
                 <a href="{{ route('guru.rekap') }}"
                     class="nav-link {{ request()->routeIs('guru.rekap') ? 'active' : '' }}">

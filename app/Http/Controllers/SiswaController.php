@@ -27,7 +27,7 @@ class SiswaController extends Controller
     private const POINT_ALPHA        = -10;   // tidak hadir (alpha)
     private const POINT_STREAK_BONUS =  20;   // streak kelipatan 5
     private const POINT_LATE_STREAK  = -15;   // telat 3x beruntun
-    private const LATE_HOUR          =   7;   // jam batas telat (07:00)
+    // private const LATE_HOUR          =   7;   // jam batas telat (07:00) (Sekarang dinamis)
     private const LATE_STREAK_LIMIT  =   3;   // berapa kali telat beruntun
 
     // ─────────────────────────────────────────────────────────────
@@ -80,13 +80,15 @@ class SiswaController extends Controller
 
         $beritaDashboard = Berita::latest()->take(4)->get();
         $jadwals         = Jadwal::latest()->get();
+        $jamMasuk        = \App\Models\Setting::get('jam_masuk', '07:00');
 
         return view('siswa.dashboard', compact(
             'user',
             'absensis',
             'beritaDashboard',
             'statsKehadiran',
-            'jadwals'
+            'jadwals',
+            'jamMasuk'
         ));
     }
 
@@ -106,11 +108,12 @@ class SiswaController extends Controller
             ], 400);
         }
 
-        // Batasi jam
-        if ($now->format('H:i') > '23:59') {
+        // Batasi jam (Misal 23:59 atau bisa diatur)
+        $batasAbsen = \App\Models\Setting::get('batas_absen', '23:59');
+        if ($now->format('H:i') > $batasAbsen) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Absensi sudah ditutup. Maksimal sampai jam 15:00.',
+                'message' => 'Absensi sudah ditutup. Maksimal sampai jam ' . $batasAbsen . '.',
             ], 400);
         }
 
@@ -172,7 +175,8 @@ class SiswaController extends Controller
         ]);
 
         // ── Hitung poin hadir ──────────────────────────────────
-        $isLate      = $now->hour >= self::LATE_HOUR;
+        $jamMasuk = \App\Models\Setting::get('jam_masuk', '07:00');
+        $isLate      = $now->format('H:i') >= $jamMasuk;
         $pointEarned = $isLate ? self::POINT_HADIR_TELAT : self::POINT_HADIR_TEPAT;
         $reasons     = [];
 
@@ -287,6 +291,7 @@ class SiswaController extends Controller
     {
         $user  = \App\Models\User::find(Auth::id());
         $today = Carbon::today()->toDateString();
+        $jamPulang = \App\Models\Setting::get('jam_pulang', '15:00');
 
         // Cek absensi hadir
         $absensiHadir = Absensi::where('user_id', $user->id)
@@ -303,6 +308,7 @@ class SiswaController extends Controller
                 'statusPulang'  => $absensiHadir->status_pulang,   // null | pending | approved | rejected
                 'alasanPulang'  => $absensiHadir->alasan_pulang,
                 'isIzinSakit'   => false,
+                'jamPulang'     => $jamPulang,
             ]);
         }
 
@@ -319,6 +325,7 @@ class SiswaController extends Controller
                 'isIzinSakit'   => true,
                 'izinSakitType' => $absensiIzinSakit->keterangan,
                 'izinSakitStatus' => $absensiIzinSakit->status,
+                'jamPulang'     => $jamPulang,
             ]);
         }
 
@@ -326,6 +333,7 @@ class SiswaController extends Controller
             'hasCheckedIn'  => false,
             'hasCheckedOut' => false,
             'isIzinSakit'   => false,
+            'jamPulang'     => $jamPulang,
         ]);
     }
 
@@ -401,11 +409,12 @@ class SiswaController extends Controller
         }
 
         // ── CABANG: PULANG NORMAL ──────────────────────────────
-        // Cek jam minimal boleh pulang (15:00 / jam 3 sore)
-        if ($now->format('H:i') < '15:00') {
+        // Cek jam minimal boleh pulang
+        $jamPulang = \App\Models\Setting::get('jam_pulang', '15:00');
+        if ($now->format('H:i') < $jamPulang) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Absen pulang hanya tersedia mulai jam 15:00.',
+                'message' => 'Absen pulang hanya tersedia mulai jam ' . $jamPulang . '.',
             ], 400);
         }
 
@@ -423,6 +432,9 @@ class SiswaController extends Controller
 
         $absensi->waktu_pulang = $now->toTimeString();
         $absensi->status_pulang = 'approved'; // Pulang normal langsung approved
+        if (isset($imagePath)) {
+            $absensi->foto_pulang = $imagePath;
+        }
         $absensi->save();
 
         return response()->json([
