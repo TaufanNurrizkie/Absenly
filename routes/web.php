@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\BeritaController;
 use App\Http\Controllers\Admin\JadwalController;
+use App\Http\Controllers\Admin\JurusanController;
+use App\Http\Controllers\Admin\KelasController;
 use App\Http\Controllers\Admin\KehadiranController;
 use App\Http\Controllers\Admin\RekapAbsensiController;
 use App\Http\Controllers\Admin\UserController;
@@ -42,7 +44,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::patch('admin/kehadiran/{id}/approval', [KehadiranController::class, 'updateApproval'])->name('admin.kehadiran.approval');
     Route::patch('admin/kehadiran/{id}/approval-pulang', [KehadiranController::class, 'updateApprovalPulang'])
         ->name('admin.kehadiran.approval-pulang');
-    
+
     // Absen Pulang
     Route::get('/admin/absen-pulang', [KehadiranController::class, 'absenPulang'])->name('admin.absen-pulang');
     Route::get('/admin/absen-pulang/data', [KehadiranController::class, 'absenPulangData'])->name('admin.absen-pulang.data');
@@ -71,7 +73,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     ## User Management
     Route::get('/admin/users/siswa', [UserController::class, 'indexSiswa'])->name('admin.users.siswa');
-    Route::get('/admin/users/guru', [UserController::class, 'indexGuru'])->name('admin.users.guru');
+    // Route::get('/admin/users/guru', [UserController::class, 'indexGuru'])->name('admin.users.guru');
     Route::post('/admin/users/store', [UserController::class, 'store'])->name('admin.users.store');
     Route::post('/admin/users/update/{id}', [UserController::class, 'update'])->name('admin.users.update');
     Route::delete('/admin/users/delete/{id}', [UserController::class, 'destroy'])->name('admin.users.delete');
@@ -81,6 +83,23 @@ Route::middleware(['auth', 'admin'])->group(function () {
     ## Settings Management
     Route::get('/admin/settings', [SettingController::class, 'index'])->name('admin.settings.index');
     Route::post('/admin/settings', [SettingController::class, 'update'])->name('admin.settings.update');
+
+    ## Kelas Management
+    Route::get('/admin/kelas', [KelasController::class, 'index'])->name('admin.kelas.index');
+    Route::post('/admin/kelas', [KelasController::class, 'store'])->name('admin.kelas.store');
+    Route::put('/admin/kelas/{kela}', [KelasController::class, 'update'])->name('admin.kelas.update');
+    Route::delete('/admin/kelas/{kela}', [KelasController::class, 'destroy'])->name('admin.kelas.destroy');
+
+    ## Jurusan Management
+    Route::get('/admin/jurusan', [JurusanController::class, 'index'])->name('admin.jurusan.index');
+    Route::post('/admin/jurusan', [JurusanController::class, 'store'])->name('admin.jurusan.store');
+    Route::put('/admin/jurusan/{jurusan}', [JurusanController::class, 'update'])->name('admin.jurusan.update');
+    Route::delete('/admin/jurusan/{jurusan}', [JurusanController::class, 'destroy'])->name('admin.jurusan.destroy');
+
+    ## Scanner
+    Route::get('/admin/scan', [AdminController::class, 'scan'])->name('admin.scan');
+    Route::post('/admin/scan/info', [AdminController::class, 'scanInfo'])->name('admin.scan.info');
+    Route::post('/admin/scan/process', [AdminController::class, 'processScan'])->name('admin.scan.process');
 });
 
 
@@ -116,6 +135,7 @@ Route::middleware(['auth', 'siswa'])->group(function () {
     Route::get('/siswa/profile', [SiswaController::class, 'profile'])->name('siswa.profile');
     Route::put('siswa/update', [SiswaController::class, 'update'])->name('siswa.update');
     Route::put('/siswa/password', [SiswaController::class, 'updatePassword'])->name('siswa.password.update');
+    Route::get('/siswa/qr/download', [SiswaController::class, 'downloadQr'])->name('siswa.qr.download');
 
 
     Route::get('/siswa/notif/read-all', function () {

@@ -179,6 +179,23 @@
             </div>
         </div>
     </div>
+
+    <!-- QR Code Section -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col md:flex-row gap-6 items-center justify-between mt-6 hover:shadow-md transition-all duration-300">
+        <div class="flex-1 text-center md:text-left">
+            <h3 class="text-xl font-bold text-slate-800 mb-2">QR Code Attendance</h3>
+            <p class="text-sm text-slate-500 mb-4">Show this QR code to the admin to quickly mark your attendance. You can download the image for offline use.</p>
+            <a href="{{ route('siswa.qr.download') }}" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-indigo-500/20 transition-all duration-300 active:scale-95 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download QR Code
+            </a>
+        </div>
+        <div class="flex-shrink-0 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+            {!! SimpleSoftwareIO\QrCode\Facades\QrCode::size(150)->generate((string) $user->id) !!}
+        </div>
+    </div>
     
 </div>
 

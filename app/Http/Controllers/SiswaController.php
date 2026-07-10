@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 
 class SiswaController extends Controller
@@ -505,7 +506,7 @@ class SiswaController extends Controller
         // Notif ke guru
         $suratUrl = $imageData ? asset('storage/' . $imageData) : null;
         $gurus    = \App\Models\User::where('usertype', 'guru')
-            ->where('kelas', $user->kelas)
+            ->where('kelas', $user->kelas->nama)
             ->get();
 
         if ($gurus->isNotEmpty()) {
@@ -580,5 +581,20 @@ class SiswaController extends Controller
         ]);
 
         return back()->with('success', 'Password updated successfully.');
+    }
+
+    public function downloadQr()
+    {
+        $user = Auth::user();
+
+        $image = QrCode::format('svg')
+            ->size(500)
+            ->errorCorrection('H')
+            ->margin(2)
+            ->generate((string) $user->id);
+
+        return response($image)
+            ->header('Content-Type', 'image/svg+xml')
+            ->header('Content-Disposition', 'attachment; filename="qr_absen_' . $user->nis . '.svg"');
     }
 }

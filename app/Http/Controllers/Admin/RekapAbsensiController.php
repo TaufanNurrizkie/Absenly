@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Absensi;
 use App\Models\User;
+use App\Models\Kelas;
+use App\Models\Jurusan;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
@@ -20,7 +22,6 @@ class RekapAbsensiController extends Controller
         $search  = $request->get('search');
 
         // ── Tentukan rentang tanggal ──────────────────────────────
-        // Selalu inisialisasi kedua variabel
         $bulan  = null;
         $minggu = null;
 
@@ -29,31 +30,32 @@ class RekapAbsensiController extends Controller
             $start  = Carbon::parse($bulan . '-01')->startOfMonth();
             $end    = $start->copy()->endOfMonth();
         } else {
-            // Mingguan: Senin s/d Minggu minggu ini
             $minggu = $request->get('minggu', now()->startOfWeek()->format('Y-m-d'));
             $start  = Carbon::parse($minggu)->startOfWeek(Carbon::MONDAY);
             $end    = $start->copy()->endOfWeek(Carbon::SUNDAY);
         }
 
-        // Batasi maksimal 31 hari supaya tabel tidak terlalu lebar
         if ($start->diffInDays($end) > 30) {
             $end = $start->copy()->addDays(30);
         }
 
         // ── Buat array kolom tanggal ──────────────────────────────
-        $period  = CarbonPeriod::create($start, $end);
+        $period   = CarbonPeriod::create($start, $end);
         $tanggals = collect($period)->map(fn($d) => $d->copy());
 
         // ── Query siswa ───────────────────────────────────────────
-        $siswaQuery = User::where('usertype', 'siswa')
-            ->when($kelas,   fn($q) => $q->where('kelas', $kelas))
-            ->when($jurusan, fn($q) => $q->where('jurusan', $jurusan))
+        $siswaQuery = User::with(['kelas', 'jurusan'])
+            ->where('usertype', 'siswa')
+            ->when($kelas,   fn($q) => $q->where('kelas_id', $kelas))
+            ->when($jurusan, fn($q) => $q->where('jurusan_id', $jurusan))
             ->when($search,  fn($q) => $q->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('nis',  'like', "%{$search}%");
+                    ->orWhere('nis',  'like', "%{$search}%");
             }))
-            ->orderBy('kelas')
-            ->orderBy('name');
+            ->join('kelas', 'users.kelas_id', '=', 'kelas.id')
+            ->orderBy('kelas.nama')
+            ->orderBy('users.name')
+            ->select('users.*');
 
         $siswas = $siswaQuery->get();
 
@@ -62,19 +64,18 @@ class RekapAbsensiController extends Controller
             ->whereIn('user_id', $siswas->pluck('id'))
             ->get()
             ->groupBy(fn($a) => $a->user_id . '_' . $a->tanggal);
-        // key: "userId_YYYY-MM-DD" => collection absensi
 
         // ── Susun data matrix ─────────────────────────────────────
-        $today = Carbon::today()->toDateString();
+        $today    = Carbon::today()->toDateString();
         $jamMasuk = \App\Models\Setting::get('jam_masuk', '07:00') . ':00';
-        
+
         $matrix = $siswas->map(function ($siswa) use ($tanggals, $absensiRaw, $today, $jamMasuk) {
             $row = [
                 'id'      => $siswa->id,
                 'name'    => $siswa->name,
                 'nis'     => $siswa->nis ?? '-',
-                'kelas'   => $siswa->kelas ?? '-',
-                'jurusan' => $siswa->jurusan ?? '-',
+                'kelas'   => $siswa->kelas->nama ?? '-',
+                'jurusan' => $siswa->jurusan->nama ?? '-',
                 'hadir'   => 0,
                 'izin'    => 0,
                 'sakit'   => 0,
@@ -85,31 +86,25 @@ class RekapAbsensiController extends Controller
             ];
 
             foreach ($tanggals as $tgl) {
-                $key      = $siswa->id . '_' . $tgl->toDateString();
-                $absen    = $absensiRaw->get($key)?->first();
-                $status   = $absen ? $absen->keterangan : null;
-                $isTelat  = false;
-                $isBolos  = false;
+                $key     = $siswa->id . '_' . $tgl->toDateString();
+                $absen   = $absensiRaw->get($key)?->first();
+                $status  = $absen ? $absen->keterangan : null;
+                $isTelat = false;
+                $isBolos = false;
 
-                // Logic telat: hadir DAN waktu > jam_masuk
                 if ($status === 'hadir' && $absen && $absen->waktu > $jamMasuk) {
                     $isTelat = true;
                     $row['telat']++;
                 }
 
-                // Logic bolos: HANYA untuk status 'hadir', waktu_pulang null, DAN tanggal sudah lewat
-                // Izin dan Sakit TIDAK pernah dianggap bolos
                 $tglString = $tgl->toDateString();
-                $isPast = $tglString < $today;
-                
+                $isPast    = $tglString < $today;
+
                 if ($status === 'hadir' && $absen && !$absen->waktu_pulang) {
-                    // Jika tanggal sudah lewat, langsung bolos
                     if ($isPast) {
                         $isBolos = true;
                         $row['bolos']++;
-                    }
-                    // Jika hari ini, cek apakah sudah lewat jam 17:00
-                    elseif ($tglString === $today && Carbon::now()->format('H:i') >= '17:00') {
+                    } elseif ($tglString === $today && Carbon::now()->format('H:i') >= '17:00') {
                         $isBolos = true;
                         $row['bolos']++;
                     }
@@ -121,11 +116,10 @@ class RekapAbsensiController extends Controller
                     'isBolos'    => $isBolos,
                 ];
 
-                // Count summary: Bolos dan Telat tidak dihitung sebagai Hadir
                 if ($isBolos) {
-                    // Sudah dihitung di row['bolos']
+                    // sudah dihitung
                 } elseif ($isTelat) {
-                    // Sudah dihitung di row['telat']
+                    // sudah dihitung
                 } else {
                     match ($status) {
                         'hadir'  => $row['hadir']++,
@@ -139,7 +133,7 @@ class RekapAbsensiController extends Controller
             return $row;
         });
 
-        // ── Pagination matrix (5 per halaman) ────────────────────
+        // ── Pagination matrix (10 per halaman) ────────────────────
         $perPage     = 10;
         $currentPage = $request->get('page', 1);
         $total       = $matrix->count();
@@ -153,11 +147,9 @@ class RekapAbsensiController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
-        // ── Distinct kelas & jurusan untuk dropdown ───────────────
-        $kelasList   = User::where('usertype', 'siswa')->whereNotNull('kelas')
-                           ->distinct()->orderBy('kelas')->pluck('kelas');
-        $jurusanList = User::where('usertype', 'siswa')->whereNotNull('jurusan')
-                           ->distinct()->orderBy('jurusan')->pluck('jurusan');
+        // ── List kelas & jurusan untuk dropdown (dari tabel master) ──
+        $kelasList   = Kelas::orderBy('nama')->get(['id', 'nama']);
+        $jurusanList = Jurusan::orderBy('nama')->get(['id', 'nama']);
 
         // ── Navigasi minggu/bulan ─────────────────────────────────
         $prevNav = $mode === 'bulanan'
@@ -169,12 +161,20 @@ class RekapAbsensiController extends Controller
             : $start->copy()->addWeek()->format('Y-m-d');
 
         return view('admin.rekap.index', compact(
-            'matrix', 'tanggals', 'mode',
-            'start', 'end',
-            'kelas', 'jurusan', 'search',
-            'kelasList', 'jurusanList',
-            'prevNav', 'nextNav',
-            'bulan', 'minggu'
+            'matrix',
+            'tanggals',
+            'mode',
+            'start',
+            'end',
+            'kelas',
+            'jurusan',
+            'search',
+            'kelasList',
+            'jurusanList',
+            'prevNav',
+            'nextNav',
+            'bulan',
+            'minggu'
         ));
     }
 
@@ -199,14 +199,17 @@ class RekapAbsensiController extends Controller
         $period   = CarbonPeriod::create($start, $end);
         $tanggals = collect($period)->map(fn($d) => $d->copy());
 
-        $siswas = User::where('usertype', 'siswa')
-            ->when($kelas,   fn($q) => $q->where('kelas', $kelas))
-            ->when($jurusan, fn($q) => $q->where('jurusan', $jurusan))
+        $siswas = User::with(['kelas', 'jurusan'])
+            ->where('usertype', 'siswa')
+            ->when($kelas,   fn($q) => $q->where('kelas_id', $kelas))
+            ->when($jurusan, fn($q) => $q->where('jurusan_id', $jurusan))
             ->when($search,  fn($q) => $q->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('nis',  'like', "%{$search}%");
+                    ->orWhere('nis',  'like', "%{$search}%");
             }))
-            ->orderBy('kelas')->orderBy('name')
+            ->join('kelas', 'users.kelas_id', '=', 'kelas.id')
+            ->orderBy('kelas.nama')->orderBy('users.name')
+            ->select('users.*')
             ->get();
 
         $absensiRaw = Absensi::whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])
@@ -214,14 +217,13 @@ class RekapAbsensiController extends Controller
             ->get()
             ->groupBy(fn($a) => $a->user_id . '_' . $a->tanggal);
 
-        $today = Carbon::today()->toDateString();
+        $today    = Carbon::today()->toDateString();
         $jamMasuk = \App\Models\Setting::get('jam_masuk', '07:00') . ':00';
 
         // ══ Create Spreadsheet ══
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        
-        // Set document properties
+
         $spreadsheet->getProperties()
             ->setCreator('Absenly System')
             ->setTitle('Rekap Absensi')
@@ -241,8 +243,8 @@ class RekapAbsensiController extends Controller
 
         if ($kelas || $jurusan) {
             $filterText = 'Filter: ';
-            if ($kelas) $filterText .= "Kelas $kelas ";
-            if ($jurusan) $filterText .= "Jurusan $jurusan";
+            if ($kelas)   $filterText .= 'Kelas ' . (Kelas::find($kelas)->nama ?? $kelas) . ' ';
+            if ($jurusan) $filterText .= 'Jurusan ' . (Jurusan::find($jurusan)->nama ?? $jurusan);
             $sheet->mergeCells('A3:D3');
             $sheet->setCellValue('A3', $filterText);
             $sheet->getStyle('A3')->getFont()->setSize(10)->setItalic(true);
@@ -252,24 +254,21 @@ class RekapAbsensiController extends Controller
         }
 
         // ══ TABLE HEADER ══
-        $col = 1; // Column A = 1
+        $col = 1;
         $row = $headerRow;
 
-        // Info columns
         $sheet->setCellValueByColumnAndRow($col++, $row, 'No');
         $sheet->setCellValueByColumnAndRow($col++, $row, 'Nama');
         $sheet->setCellValueByColumnAndRow($col++, $row, 'NIS');
         $sheet->setCellValueByColumnAndRow($col++, $row, 'Kelas');
         $sheet->setCellValueByColumnAndRow($col++, $row, 'Jurusan');
 
-        // Date columns
         foreach ($tanggals as $tgl) {
             $sheet->setCellValueByColumnAndRow($col, $row, $tgl->format('d/m'));
             $sheet->setCellValueByColumnAndRow($col, $row + 1, $tgl->translatedFormat('D'));
             $col++;
         }
 
-        // Summary columns
         $summaryStartCol = $col;
         $sheet->setCellValueByColumnAndRow($col++, $row, 'H');
         $sheet->setCellValueByColumnAndRow($col++, $row, 'I');
@@ -278,69 +277,60 @@ class RekapAbsensiController extends Controller
         $sheet->setCellValueByColumnAndRow($col++, $row, 'T');
         $sheet->setCellValueByColumnAndRow($col++, $row, 'B');
 
-        // Merge header rows for date columns
-        $sheet->mergeCells([1, $row, 1, $row + 1]); // No
-        $sheet->mergeCells([2, $row, 2, $row + 1]); // Nama
-        $sheet->mergeCells([3, $row, 3, $row + 1]); // NIS
-        $sheet->mergeCells([4, $row, 4, $row + 1]); // Kelas
-        $sheet->mergeCells([5, $row, 5, $row + 1]); // Jurusan
-        
-        // Merge summary columns
+        $sheet->mergeCells([1, $row, 1, $row + 1]);
+        $sheet->mergeCells([2, $row, 2, $row + 1]);
+        $sheet->mergeCells([3, $row, 3, $row + 1]);
+        $sheet->mergeCells([4, $row, 4, $row + 1]);
+        $sheet->mergeCells([5, $row, 5, $row + 1]);
+
         for ($i = 0; $i < 6; $i++) {
             $sheet->mergeCells([$summaryStartCol + $i, $row, $summaryStartCol + $i, $row + 1]);
         }
 
-        // Style header
         $lastCol = $col - 1;
-        $headerRange = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(1) . $row . ':' . 
-                       \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastCol) . ($row + 1);
-        
+        $headerRange = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(1) . $row . ':' .
+            \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastCol) . ($row + 1);
+
         $sheet->getStyle($headerRange)->applyFromArray([
-            'font' => ['bold' => true, 'size' => 10],
+            'font' => ['color' => ['rgb' => 'FFFFFF'], 'bold' => true, 'size' => 10],
             'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
-            'font' => ['color' => ['rgb' => 'FFFFFF'], 'bold' => true],
-            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, 
-                           'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+            ],
             'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]]
         ]);
 
         // ══ DATA ROWS ══
-        $today = Carbon::today()->toDateString();
+        $today   = Carbon::today()->toDateString();
         $dataRow = $row + 2;
-        $no = 1;
+        $no      = 1;
 
         foreach ($siswas as $siswa) {
             $col = 1;
             $hadir = $izin = $sakit = $alfa = $telat = $bolos = 0;
 
-            // No
             $sheet->setCellValueByColumnAndRow($col++, $dataRow, $no++);
-            
-            // Info
             $sheet->setCellValueByColumnAndRow($col++, $dataRow, $siswa->name);
             $sheet->setCellValueByColumnAndRow($col++, $dataRow, $siswa->nis ?? '-');
-            $sheet->setCellValueByColumnAndRow($col++, $dataRow, $siswa->kelas ?? '-');
-            $sheet->setCellValueByColumnAndRow($col++, $dataRow, $siswa->jurusan ?? '-');
+            $sheet->setCellValueByColumnAndRow($col++, $dataRow, $siswa->kelas->nama ?? '-');
+            $sheet->setCellValueByColumnAndRow($col++, $dataRow, $siswa->jurusan->nama ?? '-');
 
-            // Dates
             foreach ($tanggals as $tgl) {
-                $key      = $siswa->id . '_' . $tgl->toDateString();
-                $absen    = $absensiRaw->get($key)?->first();
-                $status   = $absen ? $absen->keterangan : null;
-                $isTelat  = false;
-                $isBolos  = false;
+                $key     = $siswa->id . '_' . $tgl->toDateString();
+                $absen   = $absensiRaw->get($key)?->first();
+                $status  = $absen ? $absen->keterangan : null;
+                $isTelat = false;
+                $isBolos = false;
 
-                // Logic telat
                 if ($status === 'hadir' && $absen && $absen->waktu > $jamMasuk) {
                     $isTelat = true;
                     $telat++;
                 }
 
-                // Logic bolos: HANYA untuk status 'hadir', waktu_pulang null, DAN tanggal sudah lewat
-                // Izin dan Sakit TIDAK pernah dianggap bolos
                 $tglString = $tgl->toDateString();
-                $isPast = $tglString < $today;
-                
+                $isPast    = $tglString < $today;
+
                 if ($status === 'hadir' && $absen && !$absen->waktu_pulang) {
                     if ($isPast || ($tglString === $today && Carbon::now()->format('H:i') >= '17:00')) {
                         $isBolos = true;
@@ -348,36 +338,35 @@ class RekapAbsensiController extends Controller
                     }
                 }
 
-                // Display prioritas: Bolos > Telat > Status normal
                 $cellValue = '';
-                $bgColor = 'FFFFFF';
+                $bgColor   = 'FFFFFF';
                 $textColor = '000000';
 
                 if ($isBolos) {
                     $cellValue = 'B';
-                    $bgColor = 'E9D5FF'; // Purple
+                    $bgColor   = 'E9D5FF';
                     $textColor = '7C3AED';
                 } elseif ($isTelat) {
                     $cellValue = 'T';
-                    $bgColor = 'FED7AA'; // Orange
+                    $bgColor   = 'FED7AA';
                     $textColor = 'EA580C';
                 } elseif ($tgl->isWeekend() && !$status) {
                     $cellValue = '—';
-                    $bgColor = 'F3F4F6';
+                    $bgColor   = 'F3F4F6';
                     $textColor = '9CA3AF';
                 } else {
-                    $cellValue = match($status) {
+                    $cellValue = match ($status) {
                         'hadir'  => 'H',
                         'izin'   => 'I',
                         'sakit'  => 'S',
                         default  => ($tgl->isWeekday() ? 'A' : '—'),
                     };
 
-                    [$bgColor, $textColor] = match($status) {
-                        'hadir'  => ['D1FAE5', '059669'], // Green
-                        'izin'   => ['FEF3C7', 'D97706'], // Yellow
-                        'sakit'  => ['DBEAFE', '2563EB'], // Blue
-                        default  => ($tgl->isWeekday() ? ['FEE2E2', 'DC2626'] : ['F3F4F6', '9CA3AF']), // Red / Gray
+                    [$bgColor, $textColor] = match ($status) {
+                        'hadir'  => ['D1FAE5', '059669'],
+                        'izin'   => ['FEF3C7', 'D97706'],
+                        'sakit'  => ['DBEAFE', '2563EB'],
+                        default  => ($tgl->isWeekday() ? ['FEE2E2', 'DC2626'] : ['F3F4F6', '9CA3AF']),
                     };
                 }
 
@@ -388,11 +377,10 @@ class RekapAbsensiController extends Controller
                     'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER]
                 ]);
 
-                // Count summary: Bolos dan Telat tidak dihitung sebagai Hadir
                 if ($isBolos) {
-                    // Sudah dihitung di bolos
+                    // sudah dihitung
                 } elseif ($isTelat) {
-                    // Sudah dihitung di telat
+                    // sudah dihitung
                 } else {
                     match ($status) {
                         'hadir'  => $hadir++,
@@ -405,10 +393,9 @@ class RekapAbsensiController extends Controller
                 $col++;
             }
 
-            // Summary
-            $summaryData = [$hadir, $izin, $sakit, $alfa, $telat, $bolos];
+            $summaryData   = [$hadir, $izin, $sakit, $alfa, $telat, $bolos];
             $summaryColors = ['D1FAE5', 'FEF3C7', 'DBEAFE', 'FEE2E2', 'FED7AA', 'E9D5FF'];
-            
+
             for ($i = 0; $i < 6; $i++) {
                 $sheet->setCellValueByColumnAndRow($col, $dataRow, $summaryData[$i]);
                 $sheet->getStyleByColumnAndRow($col, $dataRow)->applyFromArray([
@@ -419,13 +406,11 @@ class RekapAbsensiController extends Controller
                 $col++;
             }
 
-            // Border for row
             $rowRange = 'A' . $dataRow . ':' . \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastCol) . $dataRow;
             $sheet->getStyle($rowRange)->applyFromArray([
                 'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => 'E5E7EB']]]
             ]);
 
-            // Zebra striping
             if ($dataRow % 2 === 0) {
                 $infoRange = 'A' . $dataRow . ':E' . $dataRow;
                 $sheet->getStyle($infoRange)->applyFromArray([
@@ -463,24 +448,21 @@ class RekapAbsensiController extends Controller
         }
 
         // ══ AUTO WIDTH ══
-        $sheet->getColumnDimension('A')->setWidth(6);  // No
-        $sheet->getColumnDimension('B')->setWidth(25); // Nama
-        $sheet->getColumnDimension('C')->setWidth(12); // NIS
-        $sheet->getColumnDimension('D')->setWidth(10); // Kelas
-        $sheet->getColumnDimension('E')->setWidth(12); // Jurusan
+        $sheet->getColumnDimension('A')->setWidth(6);
+        $sheet->getColumnDimension('B')->setWidth(25);
+        $sheet->getColumnDimension('C')->setWidth(12);
+        $sheet->getColumnDimension('D')->setWidth(10);
+        $sheet->getColumnDimension('E')->setWidth(12);
 
-        // Date columns
         for ($i = 6; $i <= 6 + $tanggals->count() - 1; $i++) {
             $sheet->getColumnDimensionByColumn($i)->setWidth(5);
         }
 
-        // Summary columns
         for ($i = 0; $i < 6; $i++) {
             $sheet->getColumnDimensionByColumn($summaryStartCol + $i)->setWidth(5);
         }
 
-        // Freeze panes
-        $sheet->freezePane('F' . ($headerRow + 2)); // Freeze hingga kolom E dan header
+        $sheet->freezePane('F' . ($headerRow + 2));
 
         // ══ GENERATE FILE ══
         $filename = 'Rekap_Absensi_' . $start->format('Ymd') . '_' . $end->format('Ymd') . '.xlsx';

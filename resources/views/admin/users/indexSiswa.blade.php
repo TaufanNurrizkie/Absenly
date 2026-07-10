@@ -6,7 +6,6 @@
     <div class="p-4 md:p-6">
 
         <!-- Header -->
-        <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
             <h1 class="text-2xl font-bold">Manajemen User</h1>
             <div class="flex flex-wrap gap-2">
@@ -71,6 +70,8 @@
                         <th class="p-3 text-left">Nama</th>
                         <th class="p-3 text-left">Email</th>
                         <th class="p-3 text-left">NIS</th>
+                        <th class="p-3 text-left">Kelas</th>
+                        <th class="p-3 text-left">Jurusan</th>
                         <th class="p-3 text-left">Role</th>
                         <th class="p-3 text-left">Point</th>
                         <th class="p-3 text-left">Aksi</th>
@@ -79,10 +80,12 @@
                 <tbody>
                     @foreach ($users as $user)
                         <tr class="border-t hover:bg-gray-50 transition"
-                            data-search="{{ strtolower($user->name . ' ' . $user->email . ' ' . $user->nis . ' ' . $user->kelas . ' ' . $user->usertype) }}">
+                            data-search="{{ strtolower($user->name . ' ' . $user->email . ' ' . $user->nis . ' ' . ($user->kelas->nama ?? '') . ' ' . ($user->jurusan->nama ?? '') . ' ' . $user->usertype) }}">
                             <td class="p-3 font-medium">{{ $user->name }}</td>
                             <td class="p-3 text-gray-600">{{ $user->email }}</td>
                             <td class="p-3">{{ $user->nis }}</td>
+                            <td class="p-3">{{ $user->kelas->nama ?? '-' }}</td>
+                            <td class="p-3">{{ $user->jurusan->nama ?? '-' }}</td>
                             <td class="p-3">
                                 <span class="px-2 py-1 text-xs rounded-lg bg-blue-100 text-blue-700">
                                     {{ $user->usertype }}
@@ -112,7 +115,7 @@
         <div class="md:hidden space-y-3">
             @foreach ($users as $user)
                 <div class="bg-white rounded-2xl shadow p-4"
-                    data-search="{{ strtolower($user->name . ' ' . $user->email . ' ' . $user->nis . ' ' . $user->kelas . ' ' . $user->usertype) }}">
+                    data-search="{{ strtolower($user->name . ' ' . $user->email . ' ' . $user->nis . ' ' . ($user->kelas->nama ?? '') . ' ' . ($user->jurusan->nama ?? '') . ' ' . $user->usertype) }}">
                     <div class="flex justify-between items-start mb-2">
                         <div>
                             <p class="font-semibold text-gray-800">{{ $user->name }}</p>
@@ -126,6 +129,8 @@
                     <div class="grid grid-cols-2 gap-1 text-sm text-gray-600 mb-3">
                         <div><span class="text-gray-400 text-xs">NIS:</span> {{ $user->nis ?? '-' }}</div>
                         <div><span class="text-gray-400 text-xs">Point:</span> {{ $user->Point ?? 0 }}</div>
+                        <div><span class="text-gray-400 text-xs">Kelas:</span> {{ $user->kelas->nama ?? '-' }}</div>
+                        <div><span class="text-gray-400 text-xs">Jurusan:</span> {{ $user->jurusan->nama ?? '-' }}</div>
                     </div>
 
                     <div class="flex gap-2">
@@ -216,14 +221,24 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
-                                <input type="text" name="kelas" id="kelas"
+                                <select name="kelas_id" id="kelas_id"
                                     class="w-full border rounded-xl p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                    <option value="">— Pilih Kelas —</option>
+                                    @foreach ($kelasList as $k)
+                                        <option value="{{ $k->id }}">{{ $k->nama }}</option>
+                                    @endforeach
+                                </select>
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Jurusan</label>
-                                <input type="text" name="jurusan" id="jurusan"
+                                <select name="jurusan_id" id="jurusan_id"
                                     class="w-full border rounded-xl p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                    <option value="">— Pilih Jurusan —</option>
+                                    @foreach ($jurusanList as $j)
+                                        <option value="{{ $j->id }}">{{ $j->nama }}</option>
+                                    @endforeach
+                                </select>
                             </div>
 
                             <div>
@@ -231,8 +246,7 @@
                                 <select name="usertype" id="usertype"
                                     class="w-full border rounded-xl p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
                                     <option value="siswa">Siswa</option>
-                                    <option value="guru">Guru</option>
-                                    <option value="admin">Admin</option>
+
                                 </select>
                             </div>
 
@@ -308,8 +322,8 @@
             document.getElementById('tempat_lahir').value = user.tempat_lahir ?? '';
             document.getElementById('tanggal_lahir').value = user.tanggal_lahir ?? '';
             document.getElementById('jenis_kelamin').value = user.jenis_kelamin ?? 'L';
-            document.getElementById('kelas').value = user.kelas ?? '';
-            document.getElementById('jurusan').value = user.jurusan ?? '';
+            document.getElementById('kelas_id').value = user.kelas_id ?? '';
+            document.getElementById('jurusan_id').value = user.jurusan_id ?? '';
             document.getElementById('usertype').value = user.usertype ?? 'siswa';
             document.getElementById('point').value = user.point ?? 0;
             document.getElementById('alamat').value = user.alamat ?? '';
@@ -356,7 +370,7 @@
                 emptyMsg = document.createElement('tr');
                 emptyMsg.id = 'emptySearch';
                 emptyMsg.innerHTML =
-                    '<td colspan="6" class="text-center text-gray-400 py-6 text-sm">Tidak ada user yang cocok.</td>';
+                    '<td colspan="8" class="text-center text-gray-400 py-6 text-sm">Tidak ada user yang cocok.</td>';
                 document.querySelector('table tbody').appendChild(emptyMsg);
             }
             emptyMsg.style.display = visibleRows.length === 0 ? '' : 'none';

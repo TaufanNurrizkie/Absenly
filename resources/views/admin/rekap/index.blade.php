@@ -73,7 +73,7 @@
         <input type="hidden" name="mode" id="modeInput" value="{{ $mode }}">
 
         {{-- Filter row --}}
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div class="relative">
                 <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
@@ -81,6 +81,30 @@
                 <input type="text" name="search" value="{{ $search }}"
                     placeholder="Cari Nama / NIS..."
                     class="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+            </div>
+            
+            <div>
+                <select name="kelas" onchange="this.form.submit()" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+                    <option value="">-- Semua Kelas --</option>
+                    @foreach($kelasList as $k)
+                        <option value="{{ $k }}" {{ $kelas == $k ? 'selected' : '' }}>{{ $k }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <select name="jurusan" onchange="this.form.submit()" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+                    <option value="">-- Semua Jurusan --</option>
+                    @foreach($jurusanList as $j)
+                        <option value="{{ $j }}" {{ $jurusan == $j ? 'selected' : '' }}>{{ $j }}</option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div>
+                <button type="submit" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-xl transition-all shadow-sm">
+                    Cari
+                </button>
             </div>
         </div>
 

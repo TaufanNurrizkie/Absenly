@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Jurusan;
+use App\Models\Kelas;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -12,8 +14,10 @@ class UserController extends Controller
 {
     public function indexSiswa()
     {
-        $users = User::where('usertype', 'siswa')->latest()->get();
-        return view('admin.users.indexSiswa', compact('users'));
+        $users = User::with(['kelas', 'jurusan'])->where('usertype', 'siswa')->latest()->get();
+        $kelasList = Kelas::orderBy('nama')->get();
+        $jurusanList = Jurusan::orderBy('nama')->get();
+        return view('admin.users.indexSiswa', compact('users', 'kelasList', 'jurusanList'));
     }
 
     public function indexGuru()
@@ -29,7 +33,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'nis' => 'required|unique:users',
             'nohp' => 'required|unique:users',
-            'password' => 'required|min:6'
+            'password' => 'required|min:8'
         ]);
 
         $fotoPath = null;
@@ -47,8 +51,8 @@ class UserController extends Controller
             'tempat_lahir' => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
             'jenis_kelamin' => $request->jenis_kelamin,
-            'kelas' => $request->kelas,
-            'jurusan' => $request->jurusan,
+            'kelas_id' => $request->kelas_id,
+            'jurusan_id' => $request->jurusan_id,
             'usertype' => $request->usertype,
             'point' => $request->point ?? 0,
             'foto' => $fotoPath,
@@ -77,8 +81,8 @@ class UserController extends Controller
             'tempat_lahir' => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
             'jenis_kelamin' => $request->jenis_kelamin,
-            'kelas' => $request->kelas,
-            'jurusan' => $request->jurusan,
+            'kelas_id' => $request->kelas_id,
+            'jurusan_id' => $request->jurusan_id,
             'usertype' => $request->usertype,
             'point' => $request->point
         ]);
@@ -97,6 +101,7 @@ class UserController extends Controller
         User::findOrFail($id)->delete();
         return back()->with('success', 'User deleted successfully');
     }
+
     public function import(Request $request)
     {
         $request->validate([
@@ -133,26 +138,31 @@ class UserController extends Controller
             }
 
             try {
-                \App\Models\User::create([
-                    'name'          => $name,
-                    'email'         => $email,
-                    'nis'           => $nis,
-                    'nohp'          => $row['D'] ?? null,
-                    'tempat_lahir'  => $row['E'] ?? null,
-                    'tanggal_lahir' => $row['F'] ?? null,
-                    'jenis_kelamin' => $row['G'] ?? 'L',
-                    'kelas'         => $row['H'] ?? null,
-                    'jurusan'       => $row['I'] ?? null,
-                    'usertype'      => $row['J'] ?? 'siswa',
-                    'Point'         => $row['K'] ?? 0,
-                    'alamat'        => $row['L'] ?? null,
-                    'password'      => Hash::make($nis), // password = NIS, di-hash
+
+
+                User::create([
+                    'name'          => $row['A'],
+                    'email'         => $row['B'],
+                    'nis'           => $row['C'],
+                    'nohp'          => $row['D'],
+                    'alamat'        => $row['E'],
+                    'tempat_lahir'  => $row['F'],
+                    'tanggal_lahir' => $row['G'],
+                    'jenis_kelamin' => strtoupper($row['H']),
+                    'foto'          => $row['I'] ?: null,
+                    'kelas_id'      => $row['J'],
+                    'jurusan_id'    => $row['K'],
+                    'Point'         => $row['L'] ?: 100,
+                    'usertype'      => $row['M'] ?: 'siswa',
+                    'password'      => Hash::make($nis),
                 ]);
                 $imported++;
             } catch (\Exception $e) {
                 $errors[] = "Baris $i: " . $e->getMessage();
             }
         }
+
+
 
         $msg = "Berhasil import $imported user.";
         if ($skipped) $msg .= " $skipped dilewati.";

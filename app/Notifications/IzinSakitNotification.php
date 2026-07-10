@@ -30,7 +30,8 @@ class IzinSakitNotification extends Notification
         return [
             'siswa_id'   => $this->siswa->id,
             'siswa_nama' => $this->siswa->name,
-            'kelas'      => $this->siswa->kelas,
+            'kelas'      => $this->siswa->kelas?->nama,
+            'jurusan'    => $this->siswa->jurusan?->nama,
             'tipe'       => $this->tipe,
             'alasan'     => $this->alasan,
             'surat_url'  => $this->suratUrl,
@@ -42,11 +43,12 @@ class IzinSakitNotification extends Notification
     {
         $tipeCap  = ucfirst($this->tipe);
         $mail = (new MailMessage)
-            ->subject("Pengajuan {$tipeCap} - {$this->siswa->name} ({$this->siswa->kelas})")
+            ->subject("Pengajuan {$tipeCap} - {$this->siswa->name} ({$this->siswa->kelas?->nama}) - {$this->siswa->jurusan?->nama}")
             ->greeting("Halo, {$notifiable->name}")
             ->line("Siswa berikut mengajukan **{$tipeCap}**:")
             ->line("**Nama:** {$this->siswa->name}")
-            ->line("**Kelas:** {$this->siswa->kelas}")
+            ->line("**Kelas:** {$this->siswa->kelas?->nama}")
+            ->line("**Jurusan:** {$this->siswa->jurusan?->nama}")
             ->line("**Alasan:** {$this->alasan}");
 
         if ($this->suratUrl) {

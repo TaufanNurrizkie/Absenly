@@ -151,7 +151,7 @@
                         <h1 class="text-2xl font-bold text-white tracking-tight">{{ $user->name }}</h1>
                         <div class="flex items-center gap-2 mt-1">
                             <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                            <p class="text-xs text-blue-200 font-medium">{{ $user->kelas }}</p>
+                            <p class="text-xs text-blue-200 font-medium">{{ $user->kelas->nama }}</p>
                         </div>
                     </div>
 
@@ -646,12 +646,11 @@
         {{-- ── Leaderboard Kelas ── --}}
         @php
             $leaderboard = \App\Models\User::where('usertype', 'siswa')
-                ->where('kelas', $user->kelas)
-                ->where('jurusan', $user->jurusan)
+                ->where('kelas_id', $user->kelas_id)
                 ->orderByDesc('Point')
                 ->orderByDesc('absen_streak')
                 ->limit(10)
-                ->get(['id', 'name', 'foto', 'kelas', 'Point', 'absen_streak']);
+                ->get(['id', 'name', 'foto', 'Point', 'absen_streak']);
 
             $myLbRank = $leaderboard->search(fn($u) => $u->id === $user->id);
             $myLbRank = $myLbRank !== false ? $myLbRank + 1 : null;
@@ -1014,11 +1013,11 @@
                 </div>
                 <div class="flex justify-between">
                     <span class="text-slate-400 font-medium">Kelas</span>
-                    <span class="text-slate-700 font-semibold">{{ auth()->user()->kelas ?? '-' }}</span>
+                    <span class="text-slate-700 font-semibold">{{ auth()->user()->kelas->nama ?? '-' }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-slate-400 font-medium">Jurusan</span>
-                    <span class="text-slate-700 font-semibold">{{ auth()->user()->jurusan ?? '-' }}</span>
+                    <span class="text-slate-700 font-semibold">{{ auth()->user()->jurusan->nama ?? '-' }}</span>
                 </div>
             </div>
             <div class="flex gap-3">

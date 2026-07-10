@@ -2,16 +2,23 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
+use App\Models\Kelas;
+use App\Models\Jurusan;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use App\Models\User;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // Siswa
+        $rpl = Jurusan::where('nama', 'Rekayasa Perangkat Lunak')->first();
+        $kelas = Kelas::where('nama', 'XII RPL 1')->first();
+
+        // ======================
+        // SISWA
+        // ======================
         User::create([
             'name' => 'Siswa Contoh',
             'email' => 'siswa@example.com',
@@ -22,15 +29,19 @@ class UserSeeder extends Seeder
             'tanggal_lahir' => '2006-08-15',
             'jenis_kelamin' => 'L',
             'foto' => 'hutao.png',
-            'kelas' => 'XII RPL 1',
-            'jurusan' => 'Rekayasa Perangkat Lunak',
+
+            'jurusan_id' => $rpl?->id,
+            'kelas_id'   => $kelas?->id,
+
             'usertype' => 'siswa',
             'email_verified_at' => now(),
             'password' => Hash::make('12345678'),
             'remember_token' => Str::random(10),
         ]);
 
-        // Guru
+        // ======================
+        // GURU
+        // ======================
         User::create([
             'name' => 'Guru Contoh',
             'email' => 'guru@example.com',
@@ -41,15 +52,19 @@ class UserSeeder extends Seeder
             'tanggal_lahir' => '1985-04-20',
             'jenis_kelamin' => 'P',
             'foto' => null,
-            'kelas' => null,
-            'jurusan' => null,
+
+            'jurusan_id' => null,
+            'kelas_id'   => null,
+
             'usertype' => 'guru',
             'email_verified_at' => now(),
             'password' => Hash::make('guru123'),
             'remember_token' => Str::random(10),
         ]);
 
-        // Admin
+        // ======================
+        // ADMIN
+        // ======================
         User::create([
             'name' => 'Admin Contoh',
             'email' => 'admin@example.com',
@@ -60,8 +75,10 @@ class UserSeeder extends Seeder
             'tanggal_lahir' => '1990-01-01',
             'jenis_kelamin' => 'L',
             'foto' => null,
-            'kelas' => null,
-            'jurusan' => null,
+
+            'jurusan_id' => null,
+            'kelas_id'   => null,
+
             'usertype' => 'admin',
             'email_verified_at' => now(),
             'password' => Hash::make('admin123'),

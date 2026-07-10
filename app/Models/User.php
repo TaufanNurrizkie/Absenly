@@ -27,8 +27,8 @@ class User extends Authenticatable
         'tanggal_lahir',
         'jenis_kelamin',
         'foto',
-        'kelas',
-        'jurusan',
+        'kelas_id',
+        'jurusan_id',
         'usertype',
         'password',
         'point'
@@ -56,6 +56,16 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function kelas()
+    {
+        return $this->belongsTo(Kelas::class);
+    }
+
+    public function jurusan()
+    {
+        return $this->belongsTo(Jurusan::class);
     }
 
     public function absensis()
