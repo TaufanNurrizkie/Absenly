@@ -42,25 +42,25 @@ class UserSeeder extends Seeder
         // ======================
         // GURU
         // ======================
-        User::create([
-            'name' => 'Guru Contoh',
-            'email' => 'guru@example.com',
-            'nis' => '0001',
-            'nohp' => '081298765432',
-            'alamat' => 'Jl. Guru No. 2',
-            'tempat_lahir' => 'Jakarta',
-            'tanggal_lahir' => '1985-04-20',
-            'jenis_kelamin' => 'P',
-            'foto' => null,
+        // User::create([
+        //     'name' => 'Guru Contoh',
+        //     'email' => 'guru@example.com',
+        //     'nis' => '0001',
+        //     'nohp' => '081298765432',
+        //     'alamat' => 'Jl. Guru No. 2',
+        //     'tempat_lahir' => 'Jakarta',
+        //     'tanggal_lahir' => '1985-04-20',
+        //     'jenis_kelamin' => 'P',
+        //     'foto' => null,
 
-            'jurusan_id' => null,
-            'kelas_id'   => null,
+        //     'jurusan_id' => null,
+        //     'kelas_id'   => null,
 
-            'usertype' => 'guru',
-            'email_verified_at' => now(),
-            'password' => Hash::make('guru123'),
-            'remember_token' => Str::random(10),
-        ]);
+        //     'usertype' => 'guru',
+        //     'email_verified_at' => now(),
+        //     'password' => Hash::make('guru123'),
+        //     'remember_token' => Str::random(10),
+        // ]);
 
         // ======================
         // ADMIN
@@ -68,7 +68,7 @@ class UserSeeder extends Seeder
         User::create([
             'name' => 'Admin Contoh',
             'email' => 'admin@example.com',
-            'nis' => '0002',
+            'nis' => '20219292',
             'nohp' => '081299999999',
             'alamat' => 'Jl. Admin No. 3',
             'tempat_lahir' => 'Surabaya',
@@ -81,7 +81,7 @@ class UserSeeder extends Seeder
 
             'usertype' => 'admin',
             'email_verified_at' => now(),
-            'password' => Hash::make('admin123'),
+            'password' => Hash::make('piketICB1989'),
             'remember_token' => Str::random(10),
         ]);
     }
