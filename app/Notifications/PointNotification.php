@@ -5,8 +5,9 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\DatabaseMessage;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class PointNotification extends Notification
+class PointNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

@@ -33,7 +33,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'nis' => 'required|unique:users',
             'nohp' => 'required|unique:users',
-            'password' => 'required|min:8'
+            'password' => ['required', \Illuminate\Validation\Rules\Password::min(8)->letters()->numbers()]
         ]);
 
         $fotoPath = null;
@@ -88,6 +88,9 @@ class UserController extends Controller
         ]);
 
         if ($request->password) {
+            $request->validate([
+                'password' => [\Illuminate\Validation\Rules\Password::min(8)->letters()->numbers()]
+            ]);
             $user->update([
                 'password' => Hash::make($request->password)
             ]);

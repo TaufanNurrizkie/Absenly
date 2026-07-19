@@ -348,32 +348,32 @@
         function buildAllData(data) {
             const hadir = (data.hadir ?? []).map(r => ({
                 nama: r.user?.name ?? '-',
-                kelas: r.user?.kelas ?? '-',
-                jurusan: r.user?.jurusan ?? '-',
+                kelas: r.user?.kelas?.nama ?? '-',
+                jurusan: r.user?.jurusan?.nama ?? '-',
                 status: 'hadir',
                 waktu: r.waktu ?? '-',
                 keterangan: r.keterangan ?? '',
             }));
             const izin = (data.izin ?? []).map(r => ({
                 nama: r.user?.name ?? '-',
-                kelas: r.user?.kelas ?? '-',
-                jurusan: r.user?.jurusan ?? '-',
+                kelas: r.user?.kelas?.nama ?? '-',
+                jurusan: r.user?.jurusan?.nama ?? '-',
                 status: 'izin',
                 waktu: r.waktu ?? '-',
                 keterangan: r.keterangan ?? '',
             }));
             const sakit = (data.sakit ?? []).map(r => ({
                 nama: r.user?.name ?? '-',
-                kelas: r.user?.kelas ?? '-',
-                jurusan: r.user?.jurusan ?? '-',
+                kelas: r.user?.kelas?.nama ?? '-',
+                jurusan: r.user?.jurusan?.nama ?? '-',
                 status: 'sakit',
                 waktu: r.waktu ?? '-',
                 keterangan: r.keterangan ?? '',
             }));
             const belum = (data.belum ?? []).map(u => ({
                 nama: u.name ?? '-',
-                kelas: u.kelas ?? '-',
-                jurusan: u.jurusan ?? '-',
+                kelas: u.kelas?.nama ?? '-',
+                jurusan: u.jurusan?.nama ?? '-',
                 status: 'alfa',
                 waktu: '-',
                 keterangan: '',
@@ -826,7 +826,7 @@
                  class="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-white shadow-sm cursor-pointer hover:scale-105 transition-transform ring-2 ring-slate-100">
             <div class="min-w-0 flex-1">
                 <p class="text-sm font-semibold text-slate-800 truncate">${item.user?.name ?? '-'}</p>
-                <p class="text-xs text-slate-500">${item.user?.kelas ?? ''} ${item.user?.jurusan ?? ''}</p>
+                <p class="text-xs text-slate-500">${item.user?.kelas?.nama ?? ''} ${item.user?.jurusan?.nama ?? ''}</p>
                 <p class="text-xs text-slate-400 num mt-1 flex items-center gap-1">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -900,7 +900,7 @@
             </div>
             <div class="min-w-0 flex-1">
                 <p class="text-sm font-semibold text-slate-800 truncate">${item.user?.name ?? '-'}</p>
-                <p class="text-xs text-slate-500">${item.user?.kelas ?? ''} ${item.user?.jurusan ?? ''}</p>
+                <p class="text-xs text-slate-500">${item.user?.kelas?.nama ?? ''} ${item.user?.jurusan?.nama ?? ''}</p>
                 <div class="mt-1">${approvalBadge}</div>
             </div>
             <button onclick='openDetailModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'
@@ -934,7 +934,7 @@
             </div>
             <div class="min-w-0 flex-1">
                 <p class="text-sm font-semibold text-slate-800 truncate">${user.name ?? '-'}</p>
-                ${user.kelas ? `<p class="text-xs text-slate-500">${user.kelas} ${user.jurusan ?? ''}</p>` : ''}
+                ${user.kelas?.nama ? `<p class="text-xs text-slate-500">${user.kelas.nama} ${user.jurusan?.nama ?? ''}</p>` : ''}
             </div>
             <span class="shrink-0 text-[10px] font-semibold text-red-500 bg-red-50 px-2 py-1 rounded-full border border-red-100">Belum Absen</span>
         </div>
@@ -1034,7 +1034,7 @@
                 </div>
                 <div class="flex-1 pt-1">
                     <p class="text-xs text-slate-400 mb-0.5">Kelas & Jurusan</p>
-                    <p class="text-sm font-semibold text-slate-800">${item.user?.kelas ?? item.kelas ?? '-'} ${item.user?.jurusan ?? item.jurusan ?? ''}</p>
+                    <p class="text-sm font-semibold text-slate-800">${item.user?.kelas?.nama ?? item.kelas ?? '-'} ${item.user?.jurusan?.nama ?? item.jurusan ?? ''}</p>
                 </div>
             </div>
 
@@ -1180,20 +1180,20 @@
             <div class="flex items-center gap-3 w-full">
                 <span class="text-[10px] text-slate-300 mr-auto font-mono">#${item.id ?? '-'}</span>
                 ${isPending ? `
-                                    <button onclick="handleApproval(${item.id}, 'approved')"
-                                        class="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                        </svg>
-                                        Terima
-                                    </button>
-                                    <button onclick="handleApproval(${item.id}, 'rejected')"
-                                        class="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5 bg-white hover:bg-red-50 text-red-600 border border-red-200">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                        </svg>
-                                        Tolak
-                                    </button>` : ''}
+                                                            <button onclick="handleApproval(${item.id}, 'approved')"
+                                                                class="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                                </svg>
+                                                                Terima
+                                                            </button>
+                                                            <button onclick="handleApproval(${item.id}, 'rejected')"
+                                                                class="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5 bg-white hover:bg-red-50 text-red-600 border border-red-200">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                </svg>
+                                                                Tolak
+                                                            </button>` : ''}
                 <button onclick="closeDetailModal()"
                     class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition">
                     Tutup

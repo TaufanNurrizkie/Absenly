@@ -18,7 +18,7 @@ class Admin
     {
 
         if(Auth::user()->usertype != 'admin') {
-            return redirect('admin.dashboard')->with('error', 'You do not have admin access');
+            return redirect()->route('dashboard')->with('error', 'You do not have admin access');
         }
 
         return $next($request);

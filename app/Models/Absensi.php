@@ -21,7 +21,8 @@ class Absensi extends Model
         'alasan',
         'status_pulang',
         'tipe_pulang',
-        'alasan_pulang'
+        'alasan_pulang',
+        'terlambat'
     ];
 
     public function user()

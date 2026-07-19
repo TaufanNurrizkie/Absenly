@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Guru;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\SiswaController;
 use App\Models\Absensi;
+use App\Models\HariLibur;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -71,13 +72,16 @@ class GuruController extends Controller
             ->paginate(20)
             ->withQueryString(); // agar filter & tanggal ikut di pagination
 
+        $hariLiburHariIni = HariLibur::todayHoliday();
+
         return view('guru.dashboard', compact(
             'totalSiswa',
             'sudahAbsen',
             'izinSakit',
             'belumAbsen',
             'absensiHariIni',
-            'tanggal'
+            'tanggal',
+            'hariLiburHariIni'
         ));
     }
 
@@ -132,10 +136,15 @@ class GuruController extends Controller
             SiswaController::handleIzinSakitPoint($absen);
         }
 
+        // Hapus record agar siswa bisa absen ulang
+        if (in_array($absen->keterangan, ['izin', 'sakit'])) {
+            $absen->delete();
+        }
+
         $tanggal = $request->input('tanggal', Carbon::today()->format('Y-m-d'));
 
         return redirect()
             ->route('guru.dashboard', ['tanggal' => $tanggal])
-            ->with('error', "Absensi {$absen->user->name} ditolak.");
+            ->with('error', "Absensi {$absen->user->name} ditolak. Siswa dapat melakukan absen ulang.");
     }
 }

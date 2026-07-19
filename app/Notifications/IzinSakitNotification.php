@@ -7,8 +7,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 use App\Models\User;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class IzinSakitNotification extends Notification
+class IzinSakitNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

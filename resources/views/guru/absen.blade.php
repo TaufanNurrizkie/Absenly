@@ -62,13 +62,25 @@
             </div>
         </div>
 
+        @if(isset($hariLiburHariIni) && $hariLiburHariIni)
+        <div class="mb-6 bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-4 animate-fade-in-up">
+            <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-sm font-bold text-red-800">Hari Libur Nasional: {{ $hariLiburHariIni->nama }}</h3>
+                <p class="text-xs text-red-600 mt-0.5">Absensi dinonaktifkan hari ini.</p>
+            </div>
+        </div>
+    @endif
 
-
-        {{-- MAIN GRID: CHECKIN & HISTORY --}}
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    {{-- Main Container --}}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 max-w-5xl mx-auto">
             
             {{-- LEFT: CHECKIN ACTION --}}
-            <div class="lg:col-span-1">
+            <div class="lg:col-span-4">
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col items-center">
                     <h2 class="text-lg font-bold text-slate-800 mb-6 uppercase tracking-wide" style="font-family: 'Syne', sans-serif;">Absensi Harian</h2>
                     
@@ -260,6 +272,15 @@
     const gaRadius = 10000;
 
     function gaStartAbsen() {
+        @if(isset($hariLiburHariIni) && $hariLiburHariIni)
+            Swal.fire({
+                icon: 'info',
+                title: 'Libur Nasional',
+                text: 'Hari ini adalah {{ $hariLiburHariIni->nama }}. Absensi dinonaktifkan.',
+            });
+            return;
+        @endif
+
         const modal = document.getElementById('gaModal');
         const modalContent = document.getElementById('gaModalContent');
         

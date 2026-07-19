@@ -18,7 +18,7 @@ class Guru
     {
 
         if(Auth::user()->usertype != 'guru') {
-            return redirect('guru.dashboard')->with('error', 'You do not have Guru access');
+            return redirect()->route('dashboard')->with('error', 'You do not have guru access');
         }
 
         return $next($request);

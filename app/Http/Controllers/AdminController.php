@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Absensi;
 use App\Models\User;
 use App\Models\Kelas;
+use App\Models\HariLibur;
 use App\Notifications\PointNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -53,35 +54,26 @@ class AdminController extends Controller
         }
 
         // ── Rekap Per Kelas ───────────────────────────────────────
-        // Kelas sekarang tabel terpisah, users punya kelas_id
         $kelasList = Kelas::whereHas('users', fn($q) => $q->where('usertype', 'siswa'))
+            ->withCount(['users as total_siswa' => fn($q) => $q->where('usertype', 'siswa')])
             ->orderBy('nama')
-            ->get(['id', 'nama']);
+            ->get();
 
-        $rekapKelas = $kelasList->map(function ($kelasItem) use ($today, $jamMasuk) {
-            $totalSiswa = User::where('usertype', 'siswa')
-                ->where('kelas_id', $kelasItem->id)
-                ->count();
+        // Ambil semua data absensi hari ini sekaligus (Eager Loading untuk menghindari N+1)
+        $absensiHariIni = Absensi::whereDate('tanggal', $today)
+            ->whereHas('user', fn($q) => $q->where('usertype', 'siswa'))
+            ->with('user:id,kelas_id') // hanya ambil kelas_id
+            ->get();
 
-            $absensiIds = User::where('usertype', 'siswa')
-                ->where('kelas_id', $kelasItem->id)
-                ->pluck('id');
+        $rekapKelas = $kelasList->map(function ($kelasItem) use ($absensiHariIni, $jamMasuk) {
+            $totalSiswa = $kelasItem->total_siswa;
 
-            $hadir = Absensi::whereDate('tanggal', $today)
-                ->where('keterangan', 'hadir')
-                ->whereIn('user_id', $absensiIds)
-                ->count();
+            // Filter absensi khusus untuk kelas ini dari koleksi yang sudah diambil
+            $absensiKelas = $absensiHariIni->filter(fn($absen) => $absen->user && $absen->user->kelas_id == $kelasItem->id);
 
-            $terlambat = Absensi::whereDate('tanggal', $today)
-                ->where('keterangan', 'hadir')
-                ->where('waktu', '>', $jamMasuk)
-                ->whereIn('user_id', $absensiIds)
-                ->count();
-
-            $tidakHadir = Absensi::whereDate('tanggal', $today)
-                ->whereIn('keterangan', ['izin', 'sakit'])
-                ->whereIn('user_id', $absensiIds)
-                ->count();
+            $hadir = $absensiKelas->where('keterangan', 'hadir')->count();
+            $terlambat = $absensiKelas->where('keterangan', 'hadir')->filter(fn($absen) => Carbon::parse($absen->waktu)->format('H:i:s') > Carbon::parse($jamMasuk)->format('H:i:s'))->count();
+            $tidakHadir = $absensiKelas->whereIn('keterangan', ['izin', 'sakit'])->count();
 
             $alfa = $totalSiswa - $hadir - $tidakHadir;
 
@@ -112,7 +104,7 @@ class AdminController extends Controller
 
                 switch ($absen->keterangan) {
                     case 'hadir':
-                        $terlambat = $absen->waktu > $jamMasuk;
+                        $terlambat = $absen->terlambat;
                         return [
                             'warna' => $terlambat ? 'orange' : 'blue',
                             'pesan' => $terlambat
@@ -141,6 +133,8 @@ class AdminController extends Controller
                 }
             });
 
+        $hariLiburHariIni = HariLibur::todayHoliday();
+
         return view('admin.dashboard', compact(
             'jmlhsiswa',
             'persenKehadiran',
@@ -149,7 +143,8 @@ class AdminController extends Controller
             'grafikLabels',
             'grafikData',
             'rekapKelas',
-            'aktivitas'
+            'aktivitas',
+            'hariLiburHariIni'
         ));
     }
 
@@ -206,6 +201,13 @@ class AdminController extends Controller
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Tidak ada absensi di hari weekend.',
+            ], 400);
+        }
+
+        if ($holiday = HariLibur::todayHoliday()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Hari ini adalah hari libur nasional: ' . $holiday->nama,
             ], 400);
         }
 
@@ -277,7 +279,7 @@ class AdminController extends Controller
         $lastWorkingDay = Carbon::today();
         do {
             $lastWorkingDay->subDay();
-        } while ($lastWorkingDay->isWeekend());
+        } while ($lastWorkingDay->isWeekend() || HariLibur::isHoliday($lastWorkingDay));
 
         $lastWorkingDayStr = $lastWorkingDay->toDateString();
         $lastAbsenDate = $user->last_absen_date instanceof Carbon
@@ -291,6 +293,10 @@ class AdminController extends Controller
         }
         $user->last_absen_date = $todayStr;
 
+        // Points logic
+        $jamMasuk = \App\Models\Setting::get('jam_masuk', '07:00');
+        $isLate   = $now->format('H:i') >= $jamMasuk;
+
         // Save Attendance
         Absensi::create([
             'user_id'      => $user->id,
@@ -302,11 +308,8 @@ class AdminController extends Controller
             'foto'         => null,
             'keterangan'   => 'hadir',
             'status'       => 'approved',
+            'terlambat'    => $isLate,
         ]);
-
-        // Points logic
-        $jamMasuk = \App\Models\Setting::get('jam_masuk', '07:00');
-        $isLate   = $now->format('H:i') >= $jamMasuk;
         $pointEarned = $isLate ? 5 : 10; // POINT_HADIR_TELAT : POINT_HADIR_TEPAT
         $reasons = [];
 

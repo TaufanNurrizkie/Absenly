@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Absensi;
 use App\Models\Berita;
+use App\Models\HariLibur;
 use App\Models\Jadwal;
 use App\Notifications\PointNotification;
 use Carbon\Carbon;
@@ -43,14 +44,14 @@ class SiswaController extends Controller
             ->limit(5)
             ->get();
 
-        // Hitung hari sekolah aktif (Senin–Jumat) sampai hari ini
+        // Hitung hari sekolah aktif (Senin–Jumat dan bukan libur nasional) sampai hari ini
         $startOfMonth = now()->startOfMonth();
         $today        = now();
 
         $hariSekolah = 0;
         $current = $startOfMonth->copy();
         while ($current->lte($today)) {
-            if ($current->isWeekday()) {
+            if ($current->isWeekday() && !\App\Models\HariLibur::isHoliday($current)) {
                 $hariSekolah++;
             }
             $current->addDay();
@@ -82,6 +83,11 @@ class SiswaController extends Controller
         $beritaDashboard = Berita::latest()->take(4)->get();
         $jadwals         = Jadwal::latest()->get();
         $jamMasuk        = \App\Models\Setting::get('jam_masuk', '07:00');
+        $jamPulang       = \App\Models\Setting::get('jam_pulang', '15:00');
+
+
+        $hariLiburHariIni = \App\Models\HariLibur::todayHoliday();
+        $isHoliday        = now()->isWeekend() || $hariLiburHariIni;
 
         return view('siswa.dashboard', compact(
             'user',
@@ -89,7 +95,10 @@ class SiswaController extends Controller
             'beritaDashboard',
             'statsKehadiran',
             'jadwals',
-            'jamMasuk'
+            'jamMasuk',
+            'jamPulang',
+            'isHoliday',
+            'hariLiburHariIni'
         ));
     }
 
@@ -106,6 +115,13 @@ class SiswaController extends Controller
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Tidak ada absensi di hari weekend.',
+            ], 400);
+        }
+
+        if ($holiday = HariLibur::todayHoliday()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Hari ini adalah hari libur nasional: ' . $holiday->nama,
             ], 400);
         }
 
@@ -134,11 +150,24 @@ class SiswaController extends Controller
             ], 400);
         }
 
-        // ── Streak (skip weekend) ──────────────────────────────
+        // Cek Geofencing Jarak (Server-side Anti-Fake GPS)
+        $allowedLat = \App\Models\Setting::get('latitude', -6.937669);
+        $allowedLng = \App\Models\Setting::get('longitude', 107.65345);
+        $allowedRadius = \App\Models\Setting::get('radius', 500);
+
+        $distance = $this->calculateDistance($request->lat, $request->lng, $allowedLat, $allowedLng);
+        if ($distance > $allowedRadius) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Anda berada di luar area sekolah! Jarak Anda: ' . round($distance) . ' meter (Radius: ' . $allowedRadius . ' meter).',
+            ], 400);
+        }
+
+        // ── Streak (skip weekend & hari libur) ──────────────────────────────
         $lastWorkingDay = Carbon::today();
         do {
             $lastWorkingDay->subDay();
-        } while ($lastWorkingDay->isWeekend());
+        } while ($lastWorkingDay->isWeekend() || \App\Models\HariLibur::isHoliday($lastWorkingDay));
 
         $lastWorkingDayStr = $lastWorkingDay->toDateString();
         $lastAbsenDate = $user->last_absen_date instanceof Carbon
@@ -162,6 +191,10 @@ class SiswaController extends Controller
         $img     = $manager->read($image)->scale(width: 400)->toJpeg(70);
         Storage::disk('public')->put($imagePath, $img);
 
+        // ── Cek Terlambat ──────────────────────────────────────────────
+        $jamMasuk = \App\Models\Setting::get('jam_masuk', '07:00');
+        $isLate      = $now->format('H:i') >= $jamMasuk;
+
         // ── Simpan absensi ─────────────────────────────────────
         Absensi::create([
             'user_id'      => $user->id,
@@ -173,11 +206,10 @@ class SiswaController extends Controller
             'foto'         => $imagePath,
             'keterangan'   => 'hadir',
             'status'       => 'approved',
+            'terlambat'    => $isLate,
         ]);
 
         // ── Hitung poin hadir ──────────────────────────────────
-        $jamMasuk = \App\Models\Setting::get('jam_masuk', '07:00');
-        $isLate      = $now->format('H:i') >= $jamMasuk;
         $pointEarned = $isLate ? self::POINT_HADIR_TELAT : self::POINT_HADIR_TEPAT;
         $reasons     = [];
 
@@ -327,14 +359,19 @@ class SiswaController extends Controller
                 'izinSakitType' => $absensiIzinSakit->keterangan,
                 'izinSakitStatus' => $absensiIzinSakit->status,
                 'jamPulang'     => $jamPulang,
+                'isHoliday'     => false,
             ]);
         }
+
+        $holiday = HariLibur::todayHoliday();
 
         return response()->json([
             'hasCheckedIn'  => false,
             'hasCheckedOut' => false,
             'isIzinSakit'   => false,
             'jamPulang'     => $jamPulang,
+            'isHoliday'     => $holiday ? true : false,
+            'holidayName'   => $holiday ? $holiday->nama : null,
         ]);
     }
 
@@ -381,6 +418,13 @@ class SiswaController extends Controller
             ], 400);
         }
 
+        if ($holiday = HariLibur::todayHoliday()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Hari ini adalah hari libur nasional: ' . $holiday->nama,
+            ], 400);
+        }
+
         // ── CABANG: IZIN / SAKIT ──────────────────────────────
         if (in_array($request->tipe_pulang, ['izin', 'sakit'])) {
             $absensi->update([
@@ -416,6 +460,19 @@ class SiswaController extends Controller
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Absen pulang hanya tersedia mulai jam ' . $jamPulang . '.',
+            ], 400);
+        }
+
+        // Cek Geofencing Jarak (Server-side Anti-Fake GPS)
+        $allowedLat = \App\Models\Setting::get('latitude', -6.937669);
+        $allowedLng = \App\Models\Setting::get('longitude', 107.65345);
+        $allowedRadius = \App\Models\Setting::get('radius', 500);
+
+        $distance = $this->calculateDistance($request->lat, $request->lng, $allowedLat, $allowedLng);
+        if ($distance > $allowedRadius) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Anda berada di luar area sekolah! Jarak Anda: ' . round($distance) . ' meter (Radius: ' . $allowedRadius . ' meter).',
             ], 400);
         }
 
@@ -466,6 +523,13 @@ class SiswaController extends Controller
             ], 400);
         }
 
+        if ($holiday = HariLibur::todayHoliday()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Hari ini adalah hari libur nasional: ' . $holiday->nama,
+            ], 400);
+        }
+
         $sudahAda = Absensi::where('user_id', $user->id)
             ->whereDate('tanggal', $today)
             ->whereIn('keterangan', ['izin', 'sakit', 'hadir'])
@@ -506,7 +570,7 @@ class SiswaController extends Controller
         // Notif ke guru
         $suratUrl = $imageData ? asset('storage/' . $imageData) : null;
         $gurus    = \App\Models\User::where('usertype', 'guru')
-            ->where('kelas', $user->kelas->nama)
+            ->where('kelas_id', $user->kelas_id)
             ->get();
 
         if ($gurus->isNotEmpty()) {

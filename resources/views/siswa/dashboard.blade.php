@@ -778,9 +778,7 @@
                         $status = strtolower($absen->status ?? 'pending');
                         $waktu = \Carbon\Carbon::parse($absen->waktu);
                         $tanggal = \Carbon\Carbon::parse($absen->created_at);
-                        $isLate = $waktu->format('H:i') >= $jamMasuk;
-
-                        $borderAccent = 'border-l-slate-200';
+                        $isLate = $absen->terlambat ? true : false;
                         $badgeClass = 'bg-slate-100 text-slate-700';
                         switch ($keterangan) {
                             case 'hadir':
@@ -1657,7 +1655,10 @@
                 info.classList.remove('hidden');
                 info.classList.add('flex');
 
-                if (!data.hasCheckedIn) {
+                if (data.isHoliday) {
+                    dot.className = 'w-2 h-2 rounded-full bg-red-400';
+                    text.textContent = 'Libur Nasional: ' + (data.holidayName || '');
+                } else if (!data.hasCheckedIn) {
                     dot.className = 'w-2 h-2 rounded-full bg-slate-300';
                     text.textContent = data.isIzinSakit ?
                         `Hari ini ${data.izinSakitType || 'izin/sakit'} (${data.izinSakitStatus || 'pending'})` :
@@ -1678,6 +1679,7 @@
                     absensiState.hasCheckedIn = data.hasCheckedIn || false;
                     absensiState.hasCheckedOut = data.hasCheckedOut || false;
                     absensiState.isIzinSakit = data.isIzinSakit || false;
+                    absensiState.isHoliday = data.isHoliday || false;
                     if (typeof updateMainAbsensiButton === 'function') {
                         updateMainAbsensiButton();
                     }
@@ -1712,7 +1714,9 @@
                     },
                     body: JSON.stringify({
                         tipe_pulang: 'normal',
-                        photo: dataURL
+                        photo: dataURL,
+                        lat: currentPulangLat,
+                        lng: currentPulangLng
                     })
                 });
                 const data = await response.json();
@@ -1818,13 +1822,19 @@
         checkAbsensiStatus();
 
         // ── Check-in Modal ──
-        const allowedLat = -6.949648486282659;
-        const allowedLng = 107.685995;
-        const allowedRadius = 10000;
+        const allowedLat = -6.914192; // -6.914192, 107.645793
+        const allowedLng = 107.645793;
+        const allowedRadius = 50;
         let map, marker, circle;
 
         async function startAbsensi() {
             await fetchAbsensiStatus(); // refresh biar ga pake data basi
+
+            // Jika hari ini libur nasional, tolak buka modal
+            if (absensiState.isHoliday) {
+                Swal.fire('Info', 'Hari ini adalah hari libur nasional, absen tidak dapat dilakukan.', 'info');
+                return;
+            }
 
             // Jika izin/sakit hari ini, tolak buka modal
             if (absensiState.isIzinSakit) {
@@ -1863,6 +1873,9 @@
             navigator.geolocation.getCurrentPosition(function(position) {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
+                const accuracy = position.coords.accuracy;
+
+
 
                 map = L.map('map').setView([lat, lng], 15);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -1893,6 +1906,10 @@
                     }).catch(err => Swal.fire('Error', 'Could not access camera: ' + err.message, 'error'));
             }, function(error) {
                 Swal.fire('Error', 'Location access denied: ' + error.message, 'error');
+            }, {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 10000
             });
         }
 
@@ -2122,17 +2139,38 @@
 
         // ── Jamkos Modal ──
         function openJamkosModal() {
-            const hour = new Date().getHours();
-            if (hour >= 23) {
+            const isHoliday = {{ $isHoliday ? 'true' : 'false' }};
+            const jamMasuk = '{{ $jamMasuk }}';
+            const jamPulang = '{{ $jamPulang }}';
+
+            if (isHoliday) {
                 Swal.fire({
                     icon: 'info',
                     title: 'Tidak Bisa Lapor',
-                    text: 'Laporan jam kosong hanya bisa dikirim sebelum pukul 15:00.',
+                    text: 'Hari ini adalah hari libur, laporan jam kosong tidak tersedia.',
                     confirmButtonColor: '#2563EB',
                     confirmButtonText: 'Mengerti',
                 });
                 return;
             }
+
+            const now = new Date();
+            const currentHour = now.getHours().toString().padStart(2, '0');
+            const currentMinute = now.getMinutes().toString().padStart(2, '0');
+            const currentTime = currentHour + ':' + currentMinute;
+
+            if (currentTime < jamMasuk || currentTime > jamPulang) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Tidak Bisa Lapor',
+                    text: 'Laporan jam kosong hanya bisa dikirim pada jam sekolah (' + jamMasuk + ' - ' +
+                        jamPulang + ').',
+                    confirmButtonColor: '#2563EB',
+                    confirmButtonText: 'Mengerti',
+                });
+                return;
+            }
+
             document.getElementById('jamkosModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }

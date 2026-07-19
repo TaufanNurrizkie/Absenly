@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'guru' => App\Http\Middleware\Guru::class,
             'siswa' => App\Http\Middleware\Siswa::class,
         ]);
+        
+        $middleware->web(append: [
+            App\Http\Middleware\SessionTimeout::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

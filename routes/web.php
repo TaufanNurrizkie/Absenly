@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\BeritaController;
 use App\Http\Controllers\Admin\JadwalController;
+use App\Http\Controllers\Admin\HariLiburController;
 use App\Http\Controllers\Admin\JurusanController;
 use App\Http\Controllers\Admin\KelasController;
 use App\Http\Controllers\Admin\KehadiranController;
@@ -17,6 +18,8 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiswaController;
 use App\Models\User;
+use App\Http\Controllers\NotifikasiController;
+use App\Http\Controllers\JamKosongController;
 use App\Notifications\JamkosNotification;
 use Illuminate\Support\Facades\Route;
 
@@ -69,6 +72,13 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('admin/jadwal', [JadwalController::class, 'store'])->name('admin.jadwal.store');
     Route::put('admin/jadwal/{jadwal}', [JadwalController::class, 'update'])->name('admin.jadwal.update');
     Route::delete('admin/jadwal/{jadwal}', [JadwalController::class, 'destroy'])->name('admin.jadwal.delete');
+
+    ## Hari Libur Management
+    Route::get('/admin/hari-libur', [HariLiburController::class, 'index'])->name('admin.hari-libur.index');
+    Route::post('/admin/hari-libur', [HariLiburController::class, 'store'])->name('admin.hari-libur.store');
+    Route::put('/admin/hari-libur/{hariLibur}', [HariLiburController::class, 'update'])->name('admin.hari-libur.update');
+    Route::delete('/admin/hari-libur/{hariLibur}', [HariLiburController::class, 'destroy'])->name('admin.hari-libur.destroy');
+    Route::post('/admin/hari-libur/sync', [HariLiburController::class, 'syncApi'])->name('admin.hari-libur.sync');
 
 
     ## User Management
@@ -138,10 +148,7 @@ Route::middleware(['auth', 'siswa'])->group(function () {
     Route::get('/siswa/qr/download', [SiswaController::class, 'downloadQr'])->name('siswa.qr.download');
 
 
-    Route::get('/siswa/notif/read-all', function () {
-        auth()->user()->unreadNotifications->markAsRead();
-        return back();
-    })->name('siswa.notif.readAll');
+    Route::get('/siswa/notif/read-all', [NotifikasiController::class, 'readAll'])->name('siswa.notif.readAll');
 });
 
 ## Guru Routes
@@ -165,44 +172,14 @@ Route::middleware(['auth', 'guru'])->group(function () {
 
 
 
-// Mark single notifikasi sebagai dibaca → langsung hapus
-Route::post('/notifikasi/{id}/read', function ($id) {
-    auth()->user()->notifications()->findOrFail($id)->delete();
-    return response()->json(['ok' => true]);
-})->middleware('auth')->name('notifikasi.read');
+// Mark single notifikasi sebagai dibaca -> langsung hapus
+Route::post('/notifikasi/{id}/read', [NotifikasiController::class, 'read'])->middleware('auth')->name('notifikasi.read');
 
 // Mark semua dibaca
-Route::post('/notifikasi/read-all', function () {
-    auth()->user()->unreadNotifications->markAsRead();
-    return back();
-})->middleware('auth')->name('notifikasi.readAll');
+Route::post('/notifikasi/read-all', [NotifikasiController::class, 'readAll'])->middleware('auth')->name('notifikasi.readAll');
 
-// routes/web.php
-Route::delete('/notifikasi/{id}', function ($id) {
-    auth()->user()->notifications()->findOrFail($id)->delete();
-    return response()->json(['ok' => true]);
-})->middleware('auth')->name('notifikasi.delete');
+// Hapus Notifikasi
+Route::delete('/notifikasi/{id}', [NotifikasiController::class, 'destroy'])->middleware('auth')->name('notifikasi.delete');
 
-Route::post('/siswa/jamkos/kirim', function () {
-    $siswa = request()->user();
-
-    if (!$siswa) {
-        return response()->json(['message' => 'Unauthorized'], 401);
-    }
-
-    try {
-        User::where('usertype', 'admin')->each(function ($admin) use ($siswa) {
-            $admin->notify(new JamkosNotification(
-                siswa_nama: $siswa->name ?? 'Unknown',
-                kelas: $siswa->kelas ?? '-',
-                jurusan: $siswa->jurusan ?? '-',
-            ));
-        });
-
-        return response()->json(['ok' => true]);
-    } catch (\Throwable $e) {
-        return response()->json([
-            'message' => $e->getMessage()
-        ], 500);
-    }
-})->middleware('auth')->name('siswa.jamkos.kirim');
+// Kirim Jam Kosong
+Route::post('/siswa/jamkos/kirim', [JamKosongController::class, 'kirim'])->middleware('auth')->name('siswa.jamkos.kirim');

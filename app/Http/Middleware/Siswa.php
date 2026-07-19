@@ -18,7 +18,7 @@ class Siswa
     {
 
         if(Auth::user()->usertype != 'siswa') {
-            return redirect('siswa.dashboard')->with('error', 'You do not have Siswa access');
+            return redirect()->route('dashboard')->with('error', 'You do not have siswa access');
         }
         
         return $next($request);

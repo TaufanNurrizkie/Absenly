@@ -5,6 +5,20 @@
 
 @section('content')
 
+@if(isset($hariLiburHariIni) && $hariLiburHariIni)
+    <div class="mb-8 bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-4 animate-fade-in-up">
+        <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+        </div>
+        <div>
+            <h3 class="text-sm font-bold text-red-800">Hari Libur Nasional: {{ $hariLiburHariIni->nama }}</h3>
+            <p class="text-xs text-red-600 mt-0.5">Seluruh kegiatan absensi dinonaktifkan hari ini.</p>
+        </div>
+    </div>
+@endif
+
 {{-- STAT CARDS --}}
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
 

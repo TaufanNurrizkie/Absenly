@@ -92,7 +92,7 @@ class RekapAbsensiController extends Controller
                 $isTelat = false;
                 $isBolos = false;
 
-                if ($status === 'hadir' && $absen && $absen->waktu > $jamMasuk) {
+                if ($status === 'hadir' && $absen && $absen->terlambat) {
                     $isTelat = true;
                     $row['telat']++;
                 }
@@ -125,7 +125,7 @@ class RekapAbsensiController extends Controller
                         'hadir'  => $row['hadir']++,
                         'izin'   => $row['izin']++,
                         'sakit'  => $row['sakit']++,
-                        default  => ($tgl->isWeekday() ? $row['alfa']++ : null),
+                        default  => ($tgl->isWeekday() && $tglString <= $today ? $row['alfa']++ : null),
                     };
                 }
             }
@@ -323,7 +323,7 @@ class RekapAbsensiController extends Controller
                 $isTelat = false;
                 $isBolos = false;
 
-                if ($status === 'hadir' && $absen && $absen->waktu > $jamMasuk) {
+                if ($status === 'hadir' && $absen && $absen->terlambat) {
                     $isTelat = true;
                     $telat++;
                 }
@@ -354,6 +354,10 @@ class RekapAbsensiController extends Controller
                     $cellValue = '—';
                     $bgColor   = 'F3F4F6';
                     $textColor = '9CA3AF';
+                } elseif (!$status && $tglString > $today) {
+                    $cellValue = '';
+                    $bgColor   = 'FFFFFF';
+                    $textColor = '000000';
                 } else {
                     $cellValue = match ($status) {
                         'hadir'  => 'H',
@@ -386,7 +390,7 @@ class RekapAbsensiController extends Controller
                         'hadir'  => $hadir++,
                         'izin'   => $izin++,
                         'sakit'  => $sakit++,
-                        default  => ($tgl->isWeekday() ? $alfa++ : null),
+                        default  => ($tgl->isWeekday() && $tglString <= $today ? $alfa++ : null),
                     };
                 }
 

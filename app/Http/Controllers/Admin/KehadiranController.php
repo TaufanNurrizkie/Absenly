@@ -20,7 +20,7 @@ class KehadiranController extends Controller
     {
         $today = Carbon::today();
 
-        $hadir = Absensi::with('user')
+        $hadir = Absensi::with('user.kelas', 'user.jurusan')
             ->whereDate('tanggal', $today)
             ->where('keterangan', 'hadir')
             ->whereHas('user', function ($q) {
@@ -28,7 +28,7 @@ class KehadiranController extends Controller
             })
             ->get();
 
-        $izin = Absensi::with('user')
+        $izin = Absensi::with('user.kelas', 'user.jurusan')
             ->whereDate('tanggal', $today)
             ->where('keterangan', 'izin')
             ->whereHas('user', function ($q) {
@@ -37,7 +37,7 @@ class KehadiranController extends Controller
             ->latest()
             ->get();
 
-        $sakit = Absensi::with('user')
+        $sakit = Absensi::with('user.kelas', 'user.jurusan')
             ->whereDate('tanggal', $today)
             ->where('keterangan', 'sakit')
             ->whereHas('user', function ($q) {
@@ -53,9 +53,10 @@ class KehadiranController extends Controller
 
         $belumAbsen = User::where('usertype', 'siswa')
             ->whereNotIn('id', $sudahAbsenUserIds)
+            ->with(['kelas', 'jurusan'])
             ->get();
 
-        $izinPulangRaw = Absensi::with('user')
+        $izinPulangRaw = Absensi::with('user.kelas', 'user.jurusan')
             ->whereDate('tanggal', $today)
             ->where('status_pulang', 'pending')
             ->whereHas('user', fn($q) => $q->where('usertype', 'siswa'))
@@ -87,6 +88,13 @@ class KehadiranController extends Controller
         $request->validate(['status' => 'required|in:approved,rejected']);
         $kehadiran = Absensi::findOrFail($id);
         $kehadiran->update(['status' => $request->status]);
+
+        // Jika izin/sakit ditolak, hapus record agar siswa bisa absen ulang
+        if ($request->status === 'rejected' && in_array($kehadiran->keterangan, ['izin', 'sakit'])) {
+            $kehadiran->delete();
+            return response()->json(['message' => 'Pengajuan ditolak. Siswa dapat melakukan absen ulang.']);
+        }
+
         return response()->json(['message' => 'Status berhasil diperbarui']);
     }
 
@@ -101,7 +109,11 @@ class KehadiranController extends Controller
                 'waktu_pulang'  => now()->toTimeString(),
             ]);
         } else {
-            $absensi->update(['status_pulang' => 'rejected']);
+            $absensi->update([
+                'status_pulang' => 'rejected',
+                'tipe_pulang'   => null,
+                'alasan_pulang' => null,
+            ]);
             // waktu_pulang sengaja dibiarkan null
         }
 
@@ -111,7 +123,7 @@ class KehadiranController extends Controller
     // ═══════════════════════════════════════════════════════════
     //  HALAMAN ABSEN PULANG
     // ═══════════════════════════════════════════════════════════
-    
+
     public function absenPulang()
     {
         return view('admin.kehadiran.absen-pulang');
@@ -135,7 +147,7 @@ class KehadiranController extends Controller
                 'waktu_masuk'  => $a->waktu ? Carbon::parse($a->waktu)->format('H:i') : '-',
                 'waktu_pulang' => $a->waktu_pulang ? Carbon::parse($a->waktu_pulang)->format('H:i') : '-',
                 'tipe_pulang'  => $a->tipe_pulang,
-                'status_pulang'=> $a->status_pulang,
+                'status_pulang' => $a->status_pulang,
             ]);
 
         // Siswa yang belum pulang
@@ -143,9 +155,9 @@ class KehadiranController extends Controller
             ->whereDate('tanggal', $today)
             ->where('keterangan', 'hadir')
             ->whereNull('waktu_pulang')
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('status_pulang')
-                  ->orWhere('status_pulang', 'rejected');
+                    ->orWhere('status_pulang', 'rejected');
             })
             ->whereHas('user', fn($q) => $q->where('usertype', 'siswa'))
             ->latest()
@@ -154,7 +166,7 @@ class KehadiranController extends Controller
                 'id'           => $a->id,
                 'user'         => $a->user,
                 'waktu_masuk'  => $a->waktu ? Carbon::parse($a->waktu)->format('H:i') : '-',
-                'status_pulang'=> $a->status_pulang,
+                'status_pulang' => $a->status_pulang,
             ]);
 
         // Pengajuan izin/sakit pulang (pending)
