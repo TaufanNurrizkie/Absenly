@@ -5,10 +5,24 @@
 
     RewriteEngine On
 
-    # Security: Block sensitive files at root
-    RewriteRule ^(\.env|\.git|composer\.(json|lock)|package(-lock)?\.json|artisan) - [F,L,NC]
+    # Security: Block sensitive files
+    RewriteRule ^(\.env|\.git|composer\.(json|lock)|package(-lock)?\.json|artisan|bootstrap|config|database|resources|storage|vendor|app) - [F,L,NC]
 
-    # Redirect all requests to public/ directory
-    RewriteCond %{REQUEST_URI} !^/public/
-    RewriteRule ^(.*)$ public/$1 [L]
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # If the file/directory exists at root, serve it directly
+    # (build/, img/, manifest.json, sw.js, favicon.ico, etc.)
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Send everything else to index.php (Laravel)
+    RewriteRule ^ index.php [L]
 </IfModule>

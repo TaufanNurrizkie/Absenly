@@ -196,6 +196,25 @@
             {!! SimpleSoftwareIO\QrCode\Facades\QrCode::size(150)->generate((string) $user->id) !!}
         </div>
     </div>
+
+    <!-- Install PWA App Card -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-md p-5 text-white flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+        <div class="flex items-center gap-3.5 text-center sm:text-left">
+            <div class="bg-white/20 p-2.5 rounded-xl flex-shrink-0">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-base leading-tight">Install Aplikasi Presensi di HP</h4>
+                <p class="text-xs text-blue-100 mt-0.5">Pasang aplikasi agar bisa dibuka cepat langsung dari layar utama tanpa browser.</p>
+            </div>
+        </div>
+        <button type="button" class="btn-trigger-pwa-install bg-white text-blue-700 hover:bg-blue-50 active:scale-95 px-4 py-2 rounded-xl text-xs font-bold shadow-md transition flex items-center gap-2 flex-shrink-0">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <span>Pasang Sekarang</span>
+        </button>
+    </div>
     
 </div>
 
