@@ -13,7 +13,7 @@ class KehadiranController extends Controller
 {
     public function kehadiranHariIni()
     {
-        return view('admin.kehadiran.kehadiran-hari-ini');
+        return view('admin.Kehadiran.kehadiran-hari-ini');
     }
 
     public function kehadiranData()
@@ -126,7 +126,7 @@ class KehadiranController extends Controller
 
     public function absenPulang()
     {
-        return view('admin.kehadiran.absen-pulang');
+        return view('admin.Kehadiran.absen-pulang');
     }
 
     public function absenPulangData()
@@ -148,6 +148,7 @@ class KehadiranController extends Controller
                 'waktu_pulang' => $a->waktu_pulang ? Carbon::parse($a->waktu_pulang)->format('H:i') : '-',
                 'tipe_pulang'  => $a->tipe_pulang,
                 'status_pulang' => $a->status_pulang,
+                'foto_pulang'   => $a->foto_pulang,
             ]);
 
         // Siswa yang belum pulang

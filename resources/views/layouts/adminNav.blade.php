@@ -8,6 +8,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'SMK ICB Cinta Teknika') — SMK ICB Cinta Teknika</title>
     <link rel="icon" type="image/png" href="{{ asset('img/icb_Logo.png') }}">
+    @include('partials.pwa-head')
     <script src="https://cdn.tailwindcss.com"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap"

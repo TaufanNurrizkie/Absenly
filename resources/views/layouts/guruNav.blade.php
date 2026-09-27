@@ -8,6 +8,7 @@
     <title>@yield('title', 'Absenly') — Absenly</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/png" href="{{ asset('img/icb_Logo.png') }}">
+    @include('partials.pwa-head')
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap"
         rel="stylesheet">

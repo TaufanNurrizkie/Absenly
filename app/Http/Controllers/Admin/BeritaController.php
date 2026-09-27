@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Http\Controllers\Admin;
-
 use App\Http\Controllers\Controller;
 use App\Models\Berita;
 use Illuminate\Http\Request;
@@ -22,18 +20,14 @@ class BeritaController extends Controller
             'konten' => 'required',
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-
         $data = $request->only(['judul', 'penulis', 'konten']);
-
         if ($request->hasFile('gambar')) {
             $file = $request->file('gambar');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('img'), $filename);
+            $file->move(env('BERITA_IMG_PATH', public_path('img')), $filename);
             $data['gambar'] = $filename;
         }
-
         Berita::create($data);
-
         return response()->json([
             'success' => true,
             'message' => 'Berita berhasil ditambahkan!'
@@ -53,23 +47,18 @@ class BeritaController extends Controller
             'konten' => 'required',
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-
         $data = $request->only(['judul', 'penulis', 'konten']);
-
         if ($request->hasFile('gambar')) {
-            // Hapus gambar lama
-            if ($berita->gambar && file_exists(public_path('img/' . $berita->gambar))) {
-                unlink(public_path('img/' . $berita->gambar));
+            $imgPath = env('BERITA_IMG_PATH', public_path('img'));
+            if ($berita->gambar && file_exists($imgPath . '/' . $berita->gambar)) {
+                unlink($imgPath . '/' . $berita->gambar);
             }
-
             $file = $request->file('gambar');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('img'), $filename);
+            $file->move($imgPath, $filename);
             $data['gambar'] = $filename;
         }
-
         $berita->update($data);
-
         return response()->json([
             'success' => true,
             'message' => 'Berita berhasil diperbarui!'
@@ -78,13 +67,11 @@ class BeritaController extends Controller
 
     public function destroy(Berita $berita)
     {
-        // Hapus gambar
-        if ($berita->gambar && file_exists(public_path('img/' . $berita->gambar))) {
-            unlink(public_path('img/' . $berita->gambar));
+        $imgPath = env('BERITA_IMG_PATH', public_path('img'));
+        if ($berita->gambar && file_exists($imgPath . '/' . $berita->gambar)) {
+            unlink($imgPath . '/' . $berita->gambar);
         }
-
         $berita->delete();
-
         return response()->json([
             'success' => true,
             'message' => 'Berita berhasil dihapus!'

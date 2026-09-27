@@ -22,12 +22,15 @@ class SettingController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'jam_masuk'  => 'required|date_format:H:i',
-            'jam_pulang' => 'required|date_format:H:i',
+            'jam_masuk'  => 'required',
+            'jam_pulang' => 'required',
         ]);
 
-        Setting::updateOrCreate(['key' => 'jam_masuk'], ['value' => $request->jam_masuk]);
-        Setting::updateOrCreate(['key' => 'jam_pulang'], ['value' => $request->jam_pulang]);
+        $jamMasuk  = \Carbon\Carbon::parse($request->jam_masuk)->format('H:i');
+        $jamPulang = \Carbon\Carbon::parse($request->jam_pulang)->format('H:i');
+
+        Setting::set('jam_masuk', $jamMasuk);
+        Setting::set('jam_pulang', $jamPulang);
 
         return redirect()->route('admin.settings.index')->with('success', 'Pengaturan berhasil diperbarui!');
     }

@@ -646,7 +646,6 @@
         {{-- ── Leaderboard Kelas ── --}}
         @php
             $leaderboard = \App\Models\User::where('usertype', 'siswa')
-                ->where('kelas_id', $user->kelas_id)
                 ->orderByDesc('Point')
                 ->orderByDesc('absen_streak')
                 ->limit(10)
@@ -669,7 +668,7 @@
 
         <div class="px-6 mb-8">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-lg text-slate-800">Leaderboard Kelas</h3>
+                <h3 class="font-bold text-lg text-slate-800">Leaderboard Sekolah</h3>
                 @if ($myLbRank)
                     <span class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
                         Kamu #{{ $myLbRank }}

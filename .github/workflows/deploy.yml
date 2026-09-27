@@ -1,0 +1,76 @@
+name: Deploy to cPanel via FTP
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  web-deploy:
+    name: Build & Deploy to cPanel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, bcmath, fileinfo, gd, zip
+          coverage: none
+
+      - name: 📦 Install PHP Composer Dependencies
+        run: |
+          composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 🎨 Build Frontend Assets (Vite)
+        run: |
+          npm ci
+          npm run build
+
+      - name: 🧹 Cleanup build files before upload
+        run: |
+          rm -rf node_modules
+          rm -rf tests
+          rm -f public/hot hot
+
+      - name: 🚀 Sync Files via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT || 21 }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR || '/' }}
+          protocol: ftp
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.env*
+            **/.vscode/**
+            **/node_modules/**
+            **/tests/**
+            **/storage/app/public/**
+            **/storage/framework/cache/**
+            **/storage/framework/sessions/**
+            **/storage/framework/views/**
+            **/storage/logs/**
+            **/public/storage/**
+            README.md
+            phpunit.xml
+
+      - name: ⚡ Trigger Remote Cache Clear & Optimize (Optional)
+        if: ${{ env.DEPLOY_URL != '' && env.DEPLOY_TOKEN != '' }}
+        env:
+          DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_SECRET_KEY }}
+        run: |
+          echo "Clearing and caching configuration on cPanel..."
+          curl -s "${DEPLOY_URL}?action=optimize&token=${DEPLOY_TOKEN}" || true

@@ -28,8 +28,7 @@ return [
     |
     */
 
-    'disks' => [
-
+'disks' => [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
@@ -37,11 +36,19 @@ return [
             'throw' => false,
             'report' => false,
         ],
-
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
             'url' => env('APP_URL').'/storage',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'absen_public' => [
+            'driver' => 'local',
+            'root' => env('ABSEN_PUBLIC_PATH', storage_path('app/public')),
+            'url' => env('ABSEN_PUBLIC_URL', env('APP_URL').'/storage'),
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
@@ -59,7 +66,6 @@ return [
             'throw' => false,
             'report' => false,
         ],
-
     ],
 
     /*

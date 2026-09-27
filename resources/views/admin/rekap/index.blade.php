@@ -279,10 +279,17 @@
                                             };
                                         }
                                     @endphp
-                                    <td class="py-2 text-center border-r border-gray-100 {{ $weekend && !$status ? 'bg-gray-50' : '' }}"
-                                        style="width:36px; min-width:36px;">
+                                    <td class="py-2 text-center border-r border-gray-100 cursor-pointer hover:bg-blue-50/70 transition-colors group/cell {{ $weekend && !$status ? 'bg-gray-50' : '' }}"
+                                        style="width:36px; min-width:36px;"
+                                        data-user-id="{{ $row['id'] }}"
+                                        data-user-name="{{ e($row['name']) }}"
+                                        data-tanggal="{{ $tgl->toDateString() }}"
+                                        data-tanggal-fmt="{{ $tgl->translatedFormat('d M Y') }}"
+                                        data-current-code="{{ $icon }}"
+                                        title="Klik untuk ubah: {{ $row['name'] }} ({{ $tgl->format('d/m') }})"
+                                        onclick="openEditMatrixModal(this)">
                                         <span
-                                            class="inline-flex items-center justify-center w-6 h-6 rounded-md font-bold text-[11px] {{ $cellCls }}">
+                                            class="inline-flex items-center justify-center w-6 h-6 rounded-md font-bold text-[11px] {{ $cellCls }} group-hover/cell:scale-110 transition-transform">
                                             {{ $icon }}
                                         </span>
                                     </td>
@@ -314,6 +321,89 @@
             </div>
 
         @endif
+    </div>
+
+    {{-- Modal Edit Status Absensi Matriks --}}
+    <div id="editMatrixModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            {{-- Backdrop --}}
+            <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onclick="closeEditMatrixModal()"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full border border-gray-100">
+                <div class="bg-white px-5 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+                                ✎
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-900" id="modalSiswaName">Ubah Status Absensi</h3>
+                                <p class="text-xs text-gray-400" id="modalTanggalFmt">-</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="closeEditMatrixModal()" class="w-7 h-7 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 flex items-center justify-center transition">
+                            ✕
+                        </button>
+                    </div>
+
+                    <p class="text-xs text-gray-500 mb-3 font-medium">Pilih status absensi baru untuk siswa ini:</p>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5" id="matrixStatusOptions">
+                        <button type="button" onclick="submitMatrixUpdate('hadir')"
+                            class="flex items-center gap-2 p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100 text-emerald-700 font-medium text-xs transition">
+                            <span class="w-6 h-6 rounded-md bg-emerald-500 text-white flex items-center justify-center font-bold text-xs">✓</span>
+                            <span>Hadir (H)</span>
+                        </button>
+
+                        <button type="button" onclick="submitMatrixUpdate('telat')"
+                            class="flex items-center gap-2 p-2.5 rounded-xl border border-orange-200 bg-orange-50/50 hover:bg-orange-100 text-orange-700 font-medium text-xs transition">
+                            <span class="w-6 h-6 rounded-md bg-orange-500 text-white flex items-center justify-center font-bold text-xs">T</span>
+                            <span>Telat (T)</span>
+                        </button>
+
+                        <button type="button" onclick="submitMatrixUpdate('bolos')"
+                            class="flex items-center gap-2 p-2.5 rounded-xl border border-purple-200 bg-purple-50/50 hover:bg-purple-100 text-purple-700 font-medium text-xs transition">
+                            <span class="w-6 h-6 rounded-md bg-purple-500 text-white flex items-center justify-center font-bold text-xs">B</span>
+                            <span>Bolos (B)</span>
+                        </button>
+
+                        <button type="button" onclick="submitMatrixUpdate('izin')"
+                            class="flex items-center gap-2 p-2.5 rounded-xl border border-yellow-200 bg-yellow-50/50 hover:bg-yellow-100 text-yellow-700 font-medium text-xs transition">
+                            <span class="w-6 h-6 rounded-md bg-yellow-500 text-white flex items-center justify-center font-bold text-xs">I</span>
+                            <span>Izin (I)</span>
+                        </button>
+
+                        <button type="button" onclick="submitMatrixUpdate('sakit')"
+                            class="flex items-center gap-2 p-2.5 rounded-xl border border-blue-200 bg-blue-50/50 hover:bg-blue-100 text-blue-700 font-medium text-xs transition">
+                            <span class="w-6 h-6 rounded-md bg-blue-500 text-white flex items-center justify-center font-bold text-xs">S</span>
+                            <span>Sakit (S)</span>
+                        </button>
+
+                        <button type="button" onclick="submitMatrixUpdate('alpha')"
+                            class="flex items-center gap-2 p-2.5 rounded-xl border border-red-200 bg-red-50/50 hover:bg-red-100 text-red-700 font-medium text-xs transition">
+                            <span class="w-6 h-6 rounded-md bg-red-500 text-white flex items-center justify-center font-bold text-xs">✗</span>
+                            <span>Alfa (A)</span>
+                        </button>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-t border-gray-100">
+                        <button type="button" onclick="submitMatrixUpdate('reset')"
+                            class="w-full flex items-center justify-center gap-2 p-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-600 font-medium text-xs transition">
+                            <span>🗑</span>
+                            <span>Reset / Hapus Record Absensi</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 flex justify-end">
+                    <button type="button" onclick="closeEditMatrixModal()" class="px-4 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50 transition">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
 @endsection
@@ -362,6 +452,62 @@
             scroll.addEventListener('scroll', () => {
                 const hint = document.querySelector('.sm\\:hidden.flex');
                 if (hint) hint.style.opacity = scroll.scrollLeft > 10 ? '0' : '1';
+            });
+        }
+
+        // Matrix inline edit modal handlers
+        let activeUserId = null;
+        let activeTanggal = null;
+
+        function openEditMatrixModal(el) {
+            activeUserId = el.getAttribute('data-user-id');
+            activeTanggal = el.getAttribute('data-tanggal');
+            const userName = el.getAttribute('data-user-name');
+            const tanggalFmt = el.getAttribute('data-tanggal-fmt');
+
+            document.getElementById('modalSiswaName').innerText = userName;
+            document.getElementById('modalTanggalFmt').innerText = tanggalFmt;
+            document.getElementById('editMatrixModal').classList.remove('hidden');
+        }
+
+        function closeEditMatrixModal() {
+            document.getElementById('editMatrixModal').classList.add('hidden');
+            activeUserId = null;
+            activeTanggal = null;
+        }
+
+        function submitMatrixUpdate(status) {
+            if (!activeUserId || !activeTanggal) return;
+
+            const modal = document.getElementById('editMatrixModal');
+            const buttons = modal.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+
+            fetch("{{ route('admin.rekap.update-matrix') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                },
+                body: JSON.stringify({
+                    user_id: activeUserId,
+                    tanggal: activeTanggal,
+                    status: status
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Gagal mengupdate status absensi.');
+                    buttons.forEach(b => b.disabled = false);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Terjadi kesalahan koneksi.');
+                buttons.forEach(b => b.disabled = false);
             });
         }
     </script>

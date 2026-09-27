@@ -20,10 +20,11 @@ use App\Http\Controllers\SiswaController;
 use App\Models\User;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\JamKosongController;
+use App\Http\Controllers\DeployController;
 use App\Notifications\JamkosNotification;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [LoginController::class, 'showLogin'])->name('login');
+Route::get('/', [LoginController::class, 'showLogin'])->name('showlogin');
 
 
 
@@ -64,6 +65,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('/admin/berita/{berita}', [BeritaController::class, 'destroy'])
         ->name('admin.berita.destroy');
     Route::get('/admin/rekap', [RekapAbsensiController::class, 'index'])->name('admin.rekap');
+    Route::post('/admin/rekap/update-matrix', [RekapAbsensiController::class, 'updateMatrix'])->name('admin.rekap.update-matrix');
     Route::get('/admin/rekap/export', [RekapAbsensiController::class, 'export'])
         ->name('admin.rekap.export');
 
@@ -183,3 +185,7 @@ Route::delete('/notifikasi/{id}', [NotifikasiController::class, 'destroy'])->mid
 
 // Kirim Jam Kosong
 Route::post('/siswa/jamkos/kirim', [JamKosongController::class, 'kirim'])->middleware('auth')->name('siswa.jamkos.kirim');
+
+// Remote Artisan Deploy Handler (untuk cPanel tanpa SSH/Terminal)
+Route::get('/deploy/artisan', [DeployController::class, 'handle'])->name('deploy.artisan');
+

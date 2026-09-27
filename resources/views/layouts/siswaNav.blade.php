@@ -6,8 +6,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 <link rel="icon" type="image/png" href="{{ asset('img/icb_Logo.png') }}">
 <title>SISTEM PRESENSI SISWA CT</title>
-
-
+@include('partials.pwa-head')
 
 <body class="bg-gray-100">
     <!-- Navbar/topbar -->
@@ -16,9 +15,7 @@
         @yield('content')
     </main>
 
-
-
-
+    @include('partials.pwa-install-banner')
 </body>
 
 

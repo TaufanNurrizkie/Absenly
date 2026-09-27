@@ -1,6 +1,7 @@
 @vite('resources/css/app.css')
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" href="{{ asset('img/icb_Logo.png') }}">
+@include('partials.pwa-head')
 
 <div class="min-h-screen flex items-center justify-center bg-[#EAF4FF] px-4 py-8">
     <div class="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
@@ -82,3 +83,4 @@
 
     </div>
 </div>
+@include('partials.pwa-install-banner')

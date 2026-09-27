@@ -14,9 +14,14 @@ class UserController extends Controller
 {
     public function indexSiswa()
     {
-        $users = User::with(['kelas', 'jurusan'])->where('usertype', 'siswa')->latest()->get();
+        $users = User::with(['kelas', 'jurusan'])
+            ->where('usertype', 'siswa')
+            ->latest()
+            ->paginate(50);
+    
         $kelasList = Kelas::orderBy('nama')->get();
         $jurusanList = Jurusan::orderBy('nama')->get();
+    
         return view('admin.users.indexSiswa', compact('users', 'kelasList', 'jurusanList'));
     }
 
@@ -30,9 +35,9 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:users',
+            'email' => 'nullable|email|unique:users',
             'nis' => 'required|unique:users',
-            'nohp' => 'required|unique:users',
+            'nohp' => 'nullable|unique:users',
             'password' => ['required', \Illuminate\Validation\Rules\Password::min(8)->letters()->numbers()]
         ]);
 
@@ -119,39 +124,40 @@ class UserController extends Controller
         $imported = 0;
         $skipped  = 0;
         $errors   = [];
-
         foreach ($rows as $i => $row) {
             if ($i === 1) continue; // skip header
 
             $name  = trim($row['A'] ?? '');
-            $email = trim($row['B'] ?? '');
+            $email = trim($row['B'] ?? '') ?: null;
             $nis   = trim($row['C'] ?? '');
+            $jk    = trim($row['H'] ?? '');
+            $jk    = $jk ? strtoupper($jk) : null; // <- boleh null
 
-            // Skip baris kosong atau baris contoh
-            if (!$name || !$email || !$nis) {
+            if (!$name || !$nis) {
                 $skipped++;
                 continue;
             }
 
-            // Skip jika email atau NIS sudah ada
-            if (\App\Models\User::where('email', $email)->orWhere('nis', $nis)->exists()) {
+            $query = \App\Models\User::where('nis', $nis);
+            if ($email) {
+                $query->orWhere('email', $email);
+            }
+            if ($query->exists()) {
                 $errors[] = "Baris $i: email/NIS sudah terdaftar ($email / $nis)";
                 $skipped++;
                 continue;
             }
 
             try {
-
-
                 User::create([
                     'name'          => $row['A'],
-                    'email'         => $row['B'],
+                    'email'         => $email,
                     'nis'           => $row['C'],
                     'nohp'          => $row['D'],
                     'alamat'        => $row['E'],
                     'tempat_lahir'  => $row['F'],
                     'tanggal_lahir' => $row['G'],
-                    'jenis_kelamin' => strtoupper($row['H']),
+                    'jenis_kelamin' => $jk,
                     'foto'          => $row['I'] ?: null,
                     'kelas_id'      => $row['J'],
                     'jurusan_id'    => $row['K'],
@@ -164,8 +170,6 @@ class UserController extends Controller
                 $errors[] = "Baris $i: " . $e->getMessage();
             }
         }
-
-
 
         $msg = "Berhasil import $imported user.";
         if ($skipped) $msg .= " $skipped dilewati.";

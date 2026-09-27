@@ -96,6 +96,19 @@
 
         </div>
     </div>
+    
+    {{-- MODAL PREVIEW FOTO --}}
+    <div id="fotoModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="relative bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100">
+            <button onclick="closeFotoModal()"
+                class="absolute top-3 right-3 z-10 w-9 h-9 bg-white hover:bg-slate-50 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 shadow-lg transition border border-slate-100">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <img id="fotoModalImg" src="" class="w-full object-cover max-h-[80vh]">
+        </div>
+    </div>
 
     {{-- MODAL DETAIL PENGAJUAN IZIN/SAKIT --}}
     <div id="detailModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
@@ -228,12 +241,17 @@ function renderSudahPulang(data) {
             : item.tipe_pulang === 'izin'
             ? '<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Izin</span>'
             : '<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Normal</span>';
+
+        const fotoSrc = item.foto_pulang
+            ? `/storage/${item.foto_pulang}`
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(item.user?.name ?? 'U')}&background=E9D5FF&color=7E22CE&size=80`;
         
         return `
         <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors border border-slate-100 bg-white shadow-xs">
-            <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center shrink-0 text-sm font-bold text-purple-700 border border-purple-100">
-                ${(item.user?.name ?? 'U').charAt(0).toUpperCase()}
-            </div>
+            <img src="${fotoSrc}"
+                 onclick="openFotoModal('${fotoSrc}')"
+                 onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(item.user?.name ?? 'U')}&background=E9D5FF&color=7E22CE&size=80'"
+                 class="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-white shadow-sm cursor-pointer hover:scale-105 transition-transform ring-2 ring-purple-100">
             <div class="min-w-0 flex-1">
                 <p class="text-sm font-semibold text-slate-800 truncate">${item.user?.name ?? '-'}</p>
                 <p class="text-xs text-slate-500">${item.user?.kelas ?? ''} ${item.user?.jurusan ?? ''}</p>
@@ -365,11 +383,21 @@ function openDetailModal(item) {
     modal.classList.add('flex');
 }
 
-function closeDetailModal() {
-    const modal = document.getElementById('detailModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-}
+    function closeDetailModal() {
+        const modal = document.getElementById('detailModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    
+    function openFotoModal(src) {
+        document.getElementById('fotoModalImg').src = src;
+        document.getElementById('fotoModal').classList.remove('hidden');
+        document.getElementById('fotoModal').classList.add('flex');
+    }
+    function closeFotoModal() {
+        document.getElementById('fotoModal').classList.add('hidden');
+        document.getElementById('fotoModal').classList.remove('flex');
+    }
 
 // ─── Handle Approval ──────────────────────────────────────
 async function handleApprovalPulang(id, status) {

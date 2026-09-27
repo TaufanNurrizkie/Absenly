@@ -1,0 +1,615 @@
+// ══════════════════════════════════════════════════════════
+// Absensi Tab Switching & Absen Pulang Logic
+// ══════════════════════════════════════════════════════════
+
+let currentTab = "masuk";
+let absensiState = {
+    hasCheckedIn: false,
+    checkInTime: null,
+    hasCheckedOut: false,
+    checkOutTime: null,
+    statusPulang: null, // pending|approved|rejected
+    alasanPulang: null,
+    isIzinSakit: false,
+    jamPulang: "15:00", // default
+};
+
+let mapPulang, markerPulang, circlePulang;
+let faceDetectionIntervalPulang = null;
+let isFaceDetectedPulang = false;
+let pulangMode = "normal";
+
+// ── Initialize modal saat pertama kali dibuka ──
+document.addEventListener("DOMContentLoaded", function () {
+    // Fetch status absensi lebih awal, biar absensiState kebentuk
+    // sebelum user sempat klik tombol Absensi
+    fetchAbsensiStatus();
+});
+
+async function fetchAbsensiStatus() {
+    try {
+        const response = await fetch("/siswa/absensi-status", {
+            headers: {
+                "X-CSRF-TOKEN": document.querySelector(
+                    'meta[name="csrf-token"]',
+                ).content,
+                Accept: "application/json",
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+
+            // Simpan ke state
+            absensiState.hasCheckedIn = data.hasCheckedIn || false;
+            absensiState.checkInTime = data.checkInTime || null;
+            absensiState.hasCheckedOut = data.hasCheckedOut || false;
+            absensiState.checkOutTime = data.checkOutTime || null;
+            absensiState.statusPulang = data.statusPulang || null; // pending|approved|rejected
+            absensiState.alasanPulang = data.alasanPulang || null;
+            absensiState.isIzinSakit = data.isIzinSakit || false;
+            if (data.jamPulang) {
+                absensiState.jamPulang = data.jamPulang;
+            }
+
+            // Update tab states (disable jika perlu)
+            updateTabPulangState();
+            updateTabMasukState();
+            updateMainAbsensiButton();
+
+            // Update status info di bawah tombol
+            if (data.hasCheckedIn) {
+                const statusInfo = document.getElementById("absensiStatusInfo");
+                const statusText = document.getElementById("absensiStatusText");
+                const statusDot = document.getElementById("absensiStatusDot");
+
+                if (statusInfo) {
+                    statusInfo.classList.remove("hidden");
+                    statusInfo.classList.add("flex");
+
+                    if (data.hasCheckedOut) {
+                        statusText.textContent = `Masuk ${data.checkInTime} · Pulang ${data.checkOutTime}`;
+                        statusDot.classList.remove("bg-green-400");
+                        statusDot.classList.add("bg-purple-400");
+                    } else if (data.statusPulang === "pending") {
+                        statusText.textContent = `Masuk ${data.checkInTime} · Izin pulang pending`;
+                        statusDot.classList.remove("bg-green-400");
+                        statusDot.classList.add("bg-amber-400");
+                    } else if (data.statusPulang === "rejected") {
+                        statusText.textContent = `Masuk ${data.checkInTime} · Izin pulang ditolak`;
+                        statusDot.classList.remove("bg-green-400");
+                        statusDot.classList.add("bg-red-400");
+                    } else {
+                        statusText.textContent = `Sudah absen masuk jam ${data.checkInTime}`;
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching absensi status:", error);
+    }
+}
+
+async function detectFacePulang() {
+    const video = document.getElementById("videoPulang");
+    const badge = document.getElementById("faceBadgePulang");
+    const statusText = document.getElementById("faceStatusPulang");
+    const submitBtn = document.getElementById("submitPulangBtn");
+
+    if (!video || !video.videoWidth) return;
+    if (typeof faceapi === "undefined" || !window.faceReady) {
+        statusText.textContent = "Loading AI...";
+        return;
+    }
+
+    try {
+        const detection = await faceapi.detectSingleFace(
+            video,
+            new faceapi.TinyFaceDetectorOptions({
+                inputSize: 224,
+                scoreThreshold: 0.5,
+            }),
+        );
+
+        if (detection) {
+            isFaceDetectedPulang = true;
+            badge.className =
+                "face-badge detected absolute bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-green-500/15 text-green-400 border border-green-500/50";
+            statusText.textContent = "✓ Face Detected";
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = "1";
+        } else {
+            isFaceDetectedPulang = false;
+            badge.className =
+                "face-badge not-detected absolute bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-red-500/15 text-red-400 border border-red-500/40";
+            statusText.textContent = "✗ No Face";
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = "0.45";
+        }
+    } catch (error) {
+        console.error("Detection error", error);
+    }
+}
+
+function initCameraAndMapPulang() {
+    const allowedLat = -6.914192;
+    const allowedLng = 107.645793;
+    const allowedRadius = 50;
+
+    navigator.geolocation.getCurrentPosition(
+        function (position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+
+            // Initialize map
+            mapPulang = L.map("mapPulang").setView([lat, lng], 15);
+            L.tileLayer(
+                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            ).addTo(mapPulang);
+            markerPulang = L.marker([lat, lng])
+                .addTo(mapPulang)
+                .bindPopup("Your Location")
+                .openPopup();
+            circlePulang = L.circle([allowedLat, allowedLng], {
+                radius: allowedRadius,
+                color: "#a855f7",
+                fillOpacity: 0.1,
+            }).addTo(mapPulang);
+
+            // Initialize camera
+            navigator.mediaDevices
+                .getUserMedia({
+                    video: { facingMode: "user", width: 640, height: 480 },
+                })
+                .then((stream) => {
+                    const video = document.getElementById("videoPulang");
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        setTimeout(() => {
+                            faceDetectionIntervalPulang = setInterval(
+                                detectFacePulang,
+                                300,
+                            );
+                            detectFacePulang();
+                        }, 500);
+                    };
+                })
+                .catch((err) => {
+                    if (typeof Swal !== "undefined") {
+                        Swal.fire(
+                            "Error",
+                            "Could not access camera: " + err.message,
+                            "error",
+                        );
+                    }
+                });
+        },
+        function (error) {
+            if (typeof Swal !== "undefined") {
+                Swal.fire(
+                    "Error",
+                    "Location access denied: " + error.message,
+                    "error",
+                );
+            }
+        },
+    );
+}
+
+window.cleanupPulangResources = function () {
+    // Stop face detection
+    if (faceDetectionIntervalPulang) {
+        clearInterval(faceDetectionIntervalPulang);
+        faceDetectionIntervalPulang = null;
+    }
+
+    // Stop camera
+    const video = document.getElementById("videoPulang");
+    if (video && video.srcObject) {
+        video.srcObject.getTracks().forEach((t) => t.stop());
+        video.srcObject = null;
+    }
+
+    // Remove map
+    if (mapPulang) {
+        mapPulang.remove();
+        mapPulang = null;
+        markerPulang = null;
+        circlePulang = null;
+    }
+
+    isFaceDetectedPulang = false;
+    const badge = document.getElementById("faceBadgePulang");
+    if (badge) {
+        badge.className =
+            "face-badge waiting absolute bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.4px] flex items-center gap-1.5 backdrop-blur-[10px] whitespace-nowrap transition-all duration-300 bg-slate-700/85 text-slate-200 border border-slate-400/30";
+        document.getElementById("faceStatusPulang").textContent = "Waiting...";
+    }
+};
+
+function setPulangMode(mode) {
+    pulangMode = mode;
+
+    const cameraSection = document.getElementById("pulangCameraSection");
+    const izinSection = document.getElementById("pulangIzinSection");
+
+    const normalBtn = document.getElementById("modePulangNormalBtn");
+    const izinBtn = document.getElementById("modePulangIzinBtn");
+
+    if (mode === "normal") {
+        cameraSection.classList.remove("hidden");
+        izinSection.classList.add("hidden");
+
+        normalBtn.classList.add("bg-white", "shadow-sm", "text-purple-700");
+        normalBtn.classList.remove("text-slate-500");
+
+        izinBtn.classList.remove("bg-white", "shadow-sm", "text-purple-700");
+        izinBtn.classList.add("text-slate-500");
+
+        const video = document.getElementById("videoPulang");
+
+        if (!video.srcObject) {
+            initCameraAndMapPulang();
+        }
+    } else {
+        cameraSection.classList.add("hidden");
+        izinSection.classList.remove("hidden");
+
+        izinBtn.classList.add("bg-white", "shadow-sm", "text-purple-700");
+        izinBtn.classList.remove("text-slate-500");
+
+        normalBtn.classList.remove("bg-white", "shadow-sm", "text-purple-700");
+        normalBtn.classList.add("text-slate-500");
+
+        cleanupPulangResources();
+    }
+}
+
+function switchTab(tab) {
+    currentTab = tab;
+    const tabMasukBtn = document.getElementById("tabMasukBtn");
+    const tabPulangBtn = document.getElementById("tabPulangBtn");
+    const panelMasuk = document.getElementById("panelMasuk");
+    const panelPulang = document.getElementById("panelPulang");
+
+    if (tab === "masuk") {
+        // Cleanup pulang resources jika sebelumnya ada
+        if (typeof window.cleanupPulangResources === "function") {
+            window.cleanupPulangResources();
+        }
+
+        // Style tab
+        tabMasukBtn.classList.add("bg-white", "text-slate-800", "shadow-sm");
+        tabMasukBtn.classList.remove("text-slate-500");
+        tabPulangBtn.classList.remove(
+            "bg-white",
+            "text-slate-800",
+            "shadow-sm",
+        );
+        tabPulangBtn.classList.add("text-slate-500");
+
+        // Show/hide panel
+        panelMasuk.classList.remove("hidden");
+        panelPulang.classList.add("hidden");
+
+        // Update title
+        document.getElementById("modalTitle").textContent = "Absen Masuk";
+        document.getElementById("modalSubtitle").textContent =
+            "Scan wajah dan lokasi";
+
+        // Start check-in camera if not checked in
+        if (
+            !absensiState.hasCheckedIn &&
+            typeof initMasukCamera === "function"
+        ) {
+            initMasukCamera();
+        }
+
+        // Jika sudah absen masuk, tampilkan note
+        const masukNote = document.getElementById("masukAlreadyNote");
+        const masukTime = document.getElementById("masukAlreadyTime");
+        const submitBtn = document.getElementById("submitBtn");
+
+        if (masukNote && masukTime && absensiState.hasCheckedIn) {
+            masukNote.classList.remove("hidden");
+            masukTime.textContent = absensiState.checkInTime;
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = "0.45";
+        } else if (masukNote) {
+            masukNote.classList.add("hidden");
+        }
+    } else {
+        // TAB PULANG
+
+        // Cleanup masuk resources first to avoid webcam conflict
+        if (typeof window.cleanupMasukResources === "function") {
+            window.cleanupMasukResources();
+        }
+
+        // Style tab
+        tabPulangBtn.classList.add("bg-white", "text-slate-800", "shadow-sm");
+        tabPulangBtn.classList.remove("text-slate-500");
+        tabMasukBtn.classList.remove("bg-white", "text-slate-800", "shadow-sm");
+        tabMasukBtn.classList.add("text-slate-500");
+
+        // Show/hide panel
+        panelPulang.classList.remove("hidden");
+        panelMasuk.classList.add("hidden");
+
+        // Update title
+        document.getElementById("modalTitle").textContent = "Absen Pulang";
+        document.getElementById("modalSubtitle").textContent =
+            "Scan wajah dan lokasi";
+
+        // Update info absen masuk
+        document.getElementById("modalCheckInTime").textContent =
+            absensiState.checkInTime || "--:--";
+
+        // Logic untuk status notes dan button
+        const notYetInNote = document.getElementById("pulangNotYetInNote");
+        const notYetTimeNote = document.getElementById("pulangJamNote");
+        const alreadyNote = document.getElementById("pulangAlreadyNote");
+        const pendingNote = document.getElementById("pulangPendingNote");
+        const rejectedNote = document.getElementById("pulangRejectedNote");
+        const cameraSection = document.getElementById("pulangCameraSection");
+        const actionArea = document.getElementById("pulangActionArea");
+
+        // Reset all notes
+        notYetInNote.classList.add("hidden");
+        notYetTimeNote.classList.add("hidden");
+        alreadyNote.classList.add("hidden");
+        pendingNote.classList.add("hidden");
+        rejectedNote.classList.add("hidden");
+        cameraSection.classList.add("hidden");
+        actionArea.style.display = "block";
+
+        if (!absensiState.hasCheckedIn) {
+            // Belum absen masuk
+            notYetInNote.classList.remove("hidden");
+            actionArea.style.display = "none";
+        } else if (absensiState.hasCheckedOut) {
+            // Sudah absen pulang (approved)
+            alreadyNote.classList.remove("hidden");
+            const checkOutTimeEl = document.getElementById("modalCheckOutTime");
+            if (checkOutTimeEl) {
+                checkOutTimeEl.textContent = absensiState.checkOutTime;
+            }
+            actionArea.style.display = "none";
+        } else if (absensiState.statusPulang === "pending") {
+            // Pengajuan izin pulang sedang pending
+            pendingNote.classList.remove("hidden");
+            actionArea.style.display = "none";
+        } else if (absensiState.statusPulang === "rejected") {
+            // Pengajuan izin pulang ditolak - bisa ajukan ulang
+            rejectedNote.classList.remove("hidden");
+            // Tampilkan form lagi supaya bisa ajukan ulang
+            actionArea.style.display = "block";
+        } else {
+            // Sudah absen masuk tapi belum pulang & tidak ada pengajuan
+            const now = new Date();
+            const hour = now.getHours();
+            const minute = now.getMinutes();
+            const currentTime = hour * 60 + minute;
+
+            // Parse jamPulang (misal "15:00")
+            const parts = absensiState.jamPulang.split(":");
+            const minTime = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+
+            if (currentTime >= minTime) {
+                // Boleh absen pulang - tampilkan camera
+                setPulangMode("normal");
+            } else {
+                // Belum waktunya
+                notYetTimeNote.classList.remove("hidden");
+                const hoursLeft = Math.floor((minTime - currentTime) / 60);
+                const minsLeft = (minTime - currentTime) % 60;
+                notYetTimeNote.textContent = `Absen pulang tersedia dalam ${hoursLeft}j ${minsLeft}m`;
+            }
+        }
+    }
+
+    // ── DISABLE TAB berdasarkan kondisi ──
+    updateTabPulangState();
+    updateTabMasukState();
+    updateMainAbsensiButton();
+}
+
+// ── Function untuk disable/enable tab masuk berdasarkan status ──
+function updateTabMasukState() {
+    const tabMasukBtn = document.getElementById("tabMasukBtn");
+    if (!tabMasukBtn) return;
+
+    // Disable tab masuk jika sudah absen masuk
+    const shouldDisable = absensiState.hasCheckedIn;
+
+    if (shouldDisable) {
+        tabMasukBtn.disabled = true;
+        tabMasukBtn.classList.add("opacity-50", "cursor-not-allowed");
+        tabMasukBtn.classList.remove("hover:text-slate-700");
+    } else {
+        tabMasukBtn.disabled = false;
+        tabMasukBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        tabMasukBtn.classList.add("hover:text-slate-700");
+    }
+}
+
+// ── Function untuk disable/enable tab pulang berdasarkan status ──
+function updateTabPulangState() {
+    const tabPulangBtn = document.getElementById("tabPulangBtn");
+
+    if (!tabPulangBtn) return;
+
+    // Kondisi disable: belum check in ATAU sudah check out ATAU pending
+    const shouldDisable =
+        !absensiState.hasCheckedIn ||
+        absensiState.hasCheckedOut ||
+        absensiState.statusPulang === "pending";
+
+    if (shouldDisable) {
+        tabPulangBtn.disabled = true;
+        tabPulangBtn.classList.add("opacity-50", "cursor-not-allowed");
+        tabPulangBtn.classList.remove("hover:text-slate-700");
+
+        // Jika tab pulang sedang aktif dan harus disabled, switch ke masuk
+        if (currentTab === "pulang") {
+            switchTab("masuk");
+        }
+    } else {
+        tabPulangBtn.disabled = false;
+        tabPulangBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        tabPulangBtn.classList.add("hover:text-slate-700");
+    }
+}
+
+// ── Function untuk disable/enable tombol ABSENSI bulat di dashboard ──
+function updateMainAbsensiButton() {
+    const mainBtn = document.getElementById("mainAbsensiBtn");
+    if (!mainBtn) return;
+
+    // Disable jika sudah absen masuk DAN sudah absen pulang (keduanya selesai)
+    const bothDone = absensiState.hasCheckedIn && absensiState.hasCheckedOut;
+    // Atau jika hari ini izin/sakit
+    const isIzinSakit = absensiState.isIzinSakit || false;
+
+    if (bothDone || isIzinSakit) {
+        mainBtn.disabled = true;
+        mainBtn.style.opacity = "0.45";
+        mainBtn.style.cursor = "not-allowed";
+        mainBtn.classList.remove("hover:scale-105", "active:scale-95");
+        // Update tampilan inner button
+        const innerDiv = mainBtn.querySelector(".ripple-btn");
+        if (innerDiv) {
+            innerDiv.classList.remove(
+                "hover:border-blue-200",
+                "hover:scale-105",
+                "active:scale-95",
+            );
+            innerDiv.style.opacity = "0.6";
+        }
+        // Hentikan animasi pulse glow
+        const glowDiv = mainBtn.querySelector(".animate-pulse");
+        if (glowDiv) {
+            glowDiv.style.animationPlayState = "paused";
+            glowDiv.style.opacity = "0.2";
+        }
+    } else {
+        mainBtn.disabled = false;
+        mainBtn.style.opacity = "1";
+        mainBtn.style.cursor = "pointer";
+        mainBtn.classList.add("hover:scale-105", "active:scale-95");
+        const innerDiv = mainBtn.querySelector(".ripple-btn");
+        if (innerDiv) {
+            innerDiv.classList.add(
+                "hover:border-blue-200",
+                "hover:scale-105",
+                "active:scale-95",
+            );
+            innerDiv.style.opacity = "1";
+        }
+        const glowDiv = mainBtn.querySelector(".animate-pulse");
+        if (glowDiv) {
+            glowDiv.style.animationPlayState = "running";
+            glowDiv.style.opacity = "0.5";
+        }
+    }
+}
+
+async function captureAndSubmitPulang() {
+    const video = document.getElementById("videoPulang");
+    const canvas = document.getElementById("canvasPulang");
+
+    if (!isFaceDetectedPulang) {
+        if (typeof Swal !== "undefined") {
+            Swal.fire(
+                "Warning",
+                "Please position your face correctly.",
+                "warning",
+            );
+        }
+        return;
+    }
+
+    const allowedLat = -6.914192;
+    const allowedLng = 107.645793;
+    const allowedRadius = 50;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+
+    const dataURL = canvas.toDataURL("image/png");
+    const latlng = markerPulang.getLatLng();
+    const distance = mapPulang.distance(
+        [latlng.lat, latlng.lng],
+        [allowedLat, allowedLng],
+    );
+
+    if (distance > allowedRadius) {
+        if (typeof Swal !== "undefined") {
+            Swal.fire(
+                "Out of Range",
+                `You are ${Math.round(distance)}m away from school.`,
+                "error",
+            );
+        }
+        return;
+    }
+
+    if (typeof Swal !== "undefined") {
+        Swal.fire({
+            title: "Processing...",
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading(),
+        });
+    }
+
+    try {
+        const response = await fetch("/siswa/absen-pulang", {
+            method: "POST",
+            headers: {
+                "X-CSRF-TOKEN": document.querySelector(
+                    'meta[name="csrf-token"]',
+                ).content,
+                "Content-Type": "application/json",
+                Accept: "application/json",
+            },
+            body: JSON.stringify({
+                photo: dataURL,
+                lat: latlng.lat,
+                lng: latlng.lng,
+                tipe_pulang: "normal",
+            }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.status === "success") {
+            if (typeof closeModal === "function") {
+                closeModal();
+            }
+            if (typeof Swal !== "undefined") {
+                Swal.fire({
+                    icon: "success",
+                    title: "Berhasil Absen Pulang!",
+                    html: `${data.message}<br><span class="text-purple-600 font-semibold">Waktu pulang: ${data.waktu_pulang}</span>`,
+                    confirmButtonColor: "#7c3aed",
+                }).then(() => location.reload());
+            }
+        } else {
+            throw new Error(data.message || "Gagal absen pulang");
+        }
+    } catch (error) {
+        if (typeof Swal !== "undefined") {
+            Swal.fire({
+                icon: "error",
+                title: "Gagal!",
+                text: error.message || "Terjadi kesalahan saat absen pulang",
+                confirmButtonColor: "#7c3aed",
+            });
+        }
+        if (typeof closeModal === "function") {
+            closeModal();
+        }
+    }
+}

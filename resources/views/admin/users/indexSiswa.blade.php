@@ -67,6 +67,7 @@
             <table class="min-w-full text-sm">
                 <thead class="bg-gray-100">
                     <tr>
+                        <th class="p-3 text-left">No</th>
                         <th class="p-3 text-left">Nama</th>
                         <th class="p-3 text-left">Email</th>
                         <th class="p-3 text-left">NIS</th>
@@ -81,6 +82,7 @@
                     @foreach ($users as $user)
                         <tr class="border-t hover:bg-gray-50 transition"
                             data-search="{{ strtolower($user->name . ' ' . $user->email . ' ' . $user->nis . ' ' . ($user->kelas->nama ?? '') . ' ' . ($user->jurusan->nama ?? '') . ' ' . $user->usertype) }}">
+                            <td class="p-3 text-gray-500">{{ $users->firstItem() + $loop->index }}</td>
                             <td class="p-3 font-medium">{{ $user->name }}</td>
                             <td class="p-3 text-gray-600">{{ $user->email }}</td>
                             <td class="p-3">{{ $user->nis }}</td>
@@ -110,6 +112,7 @@
                 </tbody>
             </table>
         </div>
+        {{ $users->links() }}
 
         <!-- Mobile Card List -->
         <div class="md:hidden space-y-3">
@@ -118,6 +121,7 @@
                     data-search="{{ strtolower($user->name . ' ' . $user->email . ' ' . $user->nis . ' ' . ($user->kelas->nama ?? '') . ' ' . ($user->jurusan->nama ?? '') . ' ' . $user->usertype) }}">
                     <div class="flex justify-between items-start mb-2">
                         <div>
+                            <span class="text-gray-400 font-normal">{{ $users->firstItem() + $loop->index }}.</span>
                             <p class="font-semibold text-gray-800">{{ $user->name }}</p>
                             <p class="text-xs text-gray-500">{{ $user->email }}</p>
                         </div>

@@ -13,6 +13,7 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @include('partials.pwa-head')
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -32,5 +33,6 @@
                 {{ $slot }}
             </main>
         </div>
+        @include('partials.pwa-install-banner')
     </body>
 </html>

@@ -151,9 +151,9 @@ class SiswaController extends Controller
         }
 
         // Cek Geofencing Jarak (Server-side Anti-Fake GPS)
-        $allowedLat = \App\Models\Setting::get('latitude', -6.937669);
-        $allowedLng = \App\Models\Setting::get('longitude', 107.65345);
-        $allowedRadius = \App\Models\Setting::get('radius', 500);
+        $allowedLat = \App\Models\Setting::get('latitude', -6.914192);
+        $allowedLng = \App\Models\Setting::get('longitude', 107.645793);
+        $allowedRadius = \App\Models\Setting::get('radius', 50);
 
         $distance = $this->calculateDistance($request->lat, $request->lng, $allowedLat, $allowedLng);
         if ($distance > $allowedRadius) {
@@ -189,7 +189,7 @@ class SiswaController extends Controller
 
         $manager = new ImageManager(new Driver());
         $img     = $manager->read($image)->scale(width: 400)->toJpeg(70);
-        Storage::disk('public')->put($imagePath, $img);
+        Storage::disk('absen_public')->put($imagePath, $img);
 
         // ── Cek Terlambat ──────────────────────────────────────────────
         $jamMasuk = \App\Models\Setting::get('jam_masuk', '07:00');
@@ -464,8 +464,8 @@ class SiswaController extends Controller
         }
 
         // Cek Geofencing Jarak (Server-side Anti-Fake GPS)
-        $allowedLat = \App\Models\Setting::get('latitude', -6.937669);
-        $allowedLng = \App\Models\Setting::get('longitude', 107.65345);
+        $allowedLat = \App\Models\Setting::get('latitude', -6.914192);
+        $allowedLng = \App\Models\Setting::get('longitude', 107.645793);
         $allowedRadius = \App\Models\Setting::get('radius', 500);
 
         $distance = $this->calculateDistance($request->lat, $request->lng, $allowedLat, $allowedLng);
@@ -485,7 +485,7 @@ class SiswaController extends Controller
 
             $manager = new ImageManager(new Driver());
             $img     = $manager->read($image)->scale(width: 400)->toJpeg(70);
-            Storage::disk('public')->put($imagePath, $img);
+            Storage::disk('absen_public')->put($imagePath, $img);
         }
 
         $absensi->waktu_pulang = $now->toTimeString();
@@ -546,7 +546,7 @@ class SiswaController extends Controller
             $file      = $request->file('surat');
             $imageName = 'surat_' . time() . '.' . $file->getClientOriginalExtension();
             $imagePath = 'surat_sakitIzin/' . $imageName;
-            Storage::disk('public')->putFileAs('surat_sakitIzin', $file, $imageName);
+            Storage::disk('absen_public')->putFileAs('surat_sakitIzin', $file, $imageName);
             $imageData = $imagePath;
         }
 
@@ -660,5 +660,30 @@ class SiswaController extends Controller
         return response($image)
             ->header('Content-Type', 'image/svg+xml')
             ->header('Content-Disposition', 'attachment; filename="qr_absen_' . $user->nis . '.svg"');
+    }
+
+    /**
+     * Hitung jarak antara dua koordinat GPS dalam meter (Haversine formula).
+     */
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        if ($lat1 === null || $lon1 === null || $lat2 === null || $lon2 === null) {
+            return 0;
+        }
+
+        $earthRadius = 6371000; // Radius bumi dalam meter
+
+        $latFrom = deg2rad((float) $lat1);
+        $lonFrom = deg2rad((float) $lon1);
+        $latTo   = deg2rad((float) $lat2);
+        $lonTo   = deg2rad((float) $lon2);
+
+        $latDelta = $latTo - $latFrom;
+        $lonDelta = $lonTo - $lonFrom;
+
+        $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
+            cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
+
+        return $angle * $earthRadius;
     }
 }

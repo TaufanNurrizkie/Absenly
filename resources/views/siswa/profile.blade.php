@@ -79,7 +79,7 @@
                         </div>
                         <div>
                             <p class="text-xs text-slate-500">Class</p>
-                            <p class="text-sm font-bold text-slate-700">{{ $user->kelas }}</p>
+                            <p class="text-sm font-bold text-slate-700">{{ $user->kelas->nama ?? '-' }}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
@@ -90,7 +90,7 @@
                         </div>
                         <div>
                             <p class="text-xs text-slate-500">Major</p>
-                            <p class="text-sm font-bold text-slate-700">{{ $user->jurusan }}</p>
+                            <p class="text-sm font-bold text-slate-700">{{ $user->jurusan->nama ?? '-' }}</p>
                         </div>
                     </div>
                 </div>

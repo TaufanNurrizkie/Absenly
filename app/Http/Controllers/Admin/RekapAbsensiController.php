@@ -479,4 +479,83 @@ class RekapAbsensiController extends Controller
         $writer->save('php://output');
         exit;
     }
+
+    public function updateMatrix(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'tanggal' => 'required|date',
+            'status'  => 'required|in:hadir,telat,bolos,izin,sakit,alpha,reset',
+        ]);
+
+        $userId  = $request->user_id;
+        $tanggal = $request->tanggal;
+        $status  = strtolower($request->status);
+
+        $jamMasuk  = \App\Models\Setting::get('jam_masuk', '07:00') . ':00';
+        $jamPulang = \App\Models\Setting::get('jam_pulang', '15:00') . ':00';
+
+        $absensi = Absensi::where('user_id', $userId)
+            ->whereDate('tanggal', $tanggal)
+            ->first();
+
+        if ($status === 'reset') {
+            if ($absensi) {
+                $absensi->delete();
+            }
+            return response()->json([
+                'success' => true,
+                'message' => 'Record absensi berhasil direset/dihapus.'
+            ]);
+        }
+
+        if (!$absensi) {
+            $absensi = new Absensi();
+            $absensi->user_id = $userId;
+            $absensi->tanggal = $tanggal;
+            $absensi->waktu   = $jamMasuk;
+        }
+
+        $absensi->status = 'approved';
+
+        switch ($status) {
+            case 'hadir':
+                $absensi->keterangan   = 'hadir';
+                $absensi->terlambat    = 0;
+                $absensi->waktu_pulang = $absensi->waktu_pulang ?: $jamPulang;
+                break;
+            case 'telat':
+                $absensi->keterangan   = 'hadir';
+                $absensi->terlambat    = 1;
+                $absensi->waktu_pulang = $absensi->waktu_pulang ?: $jamPulang;
+                break;
+            case 'bolos':
+                $absensi->keterangan   = 'hadir';
+                $absensi->terlambat    = 0;
+                $absensi->waktu_pulang = null;
+                break;
+            case 'izin':
+                $absensi->keterangan   = 'izin';
+                $absensi->terlambat    = 0;
+                $absensi->waktu_pulang = null;
+                break;
+            case 'sakit':
+                $absensi->keterangan   = 'sakit';
+                $absensi->terlambat    = 0;
+                $absensi->waktu_pulang = null;
+                break;
+            case 'alpha':
+                $absensi->keterangan   = 'alpha';
+                $absensi->terlambat    = 0;
+                $absensi->waktu_pulang = null;
+                break;
+        }
+
+        $absensi->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status absensi berhasil diperbarui.'
+        ]);
+    }
 }

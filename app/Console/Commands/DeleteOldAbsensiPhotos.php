@@ -14,20 +14,18 @@ class DeleteOldAbsensiPhotos extends Command
 
     public function handle()
     {
-        $limitDate = Carbon::now()->subDays(1);
+        $limitDate = Carbon::now()->subMonths(7);
 
         $absensis = Absensi::where('created_at', '<', $limitDate)->get();
 
         foreach ($absensis as $absen) {
 
-            // Hapus foto check-in jika ada
-            if ($absen->foto && Storage::disk('public')->exists($absen->foto)) {
-                Storage::disk('public')->delete($absen->foto);
+            if ($absen->foto && Storage::disk('absen_public')->exists($absen->foto)) {
+                Storage::disk('absen_public')->delete($absen->foto);
             }
 
-            // Hapus foto pulang jika ada
-            if ($absen->foto_pulang && Storage::disk('public')->exists($absen->foto_pulang)) {
-                Storage::disk('public')->delete($absen->foto_pulang);
+            if ($absen->foto_pulang && Storage::disk('absen_public')->exists($absen->foto_pulang)) {
+                Storage::disk('absen_public')->delete($absen->foto_pulang);
             }
 
             // Hapus data absensi
