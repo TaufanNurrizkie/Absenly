@@ -1,6 +1,5 @@
 /.phpunit.cache
 /node_modules
-/public/build
 /public/hot
 /public/storage
 /storage/*.key
@@ -21,3 +20,10 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+*.log
+error_log
+.user.ini
+php.ini
+hash.php
+presensi-cpanel-ready.zip
+
