@@ -99,14 +99,20 @@
     
     {{-- MODAL PREVIEW FOTO --}}
     <div id="fotoModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="relative bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100">
-            <button onclick="closeFotoModal()"
-                class="absolute top-3 right-3 z-10 w-9 h-9 bg-white hover:bg-slate-50 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 shadow-lg transition border border-slate-100">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            <img id="fotoModalImg" src="" class="w-full object-cover max-h-[80vh]">
+        <div class="relative bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 flex flex-col">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50">
+                <p id="fotoModalTitle" class="text-sm font-semibold text-slate-800 truncate">Preview Foto Pulang</p>
+                <button onclick="closeFotoModal()"
+                    class="w-8 h-8 bg-white hover:bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 shadow-sm transition border border-slate-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="relative bg-slate-900 flex items-center justify-center min-h-[260px] max-h-[80vh] overflow-hidden">
+                <img id="fotoModalImg" src="" alt="Preview Foto" class="w-full object-contain max-h-[75vh]"
+                     onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Foto+Tidak+Tersedia&background=F1F5F9&color=64748B&size=400';">
+            </div>
         </div>
     </div>
 
@@ -249,7 +255,7 @@ function renderSudahPulang(data) {
         return `
         <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors border border-slate-100 bg-white shadow-xs">
             <img src="${fotoSrc}"
-                 onclick="openFotoModal('${fotoSrc}')"
+                 onclick="openFotoModal('${fotoSrc}', '${encodeURIComponent(item.user?.name ?? 'Siswa')}')"
                  onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(item.user?.name ?? 'U')}&background=E9D5FF&color=7E22CE&size=80'"
                  class="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-white shadow-sm cursor-pointer hover:scale-105 transition-transform ring-2 ring-purple-100">
             <div class="min-w-0 flex-1">
@@ -389,8 +395,17 @@ function openDetailModal(item) {
         modal.classList.remove('flex');
     }
     
-    function openFotoModal(src) {
-        document.getElementById('fotoModalImg').src = src;
+    function openFotoModal(src, name = 'Siswa') {
+        const titleEl = document.getElementById('fotoModalTitle');
+        if (titleEl) titleEl.innerText = 'Foto Pulang: ' + decodeURIComponent(name);
+        const img = document.getElementById('fotoModalImg');
+        if (img) {
+            img.onerror = function() {
+                this.onerror = null;
+                this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=7E22CE&color=FFFFFF&size=400`;
+            };
+            img.src = src;
+        }
         document.getElementById('fotoModal').classList.remove('hidden');
         document.getElementById('fotoModal').classList.add('flex');
     }

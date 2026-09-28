@@ -5,8 +5,11 @@
 
     RewriteEngine On
 
-    # Security: Block sensitive files
-    RewriteRule ^(\.env|\.git|composer\.(json|lock)|package(-lock)?\.json|artisan|bootstrap|config|database|resources|storage|vendor|app) - [F,L,NC]
+    # Security: Block sensitive system files and folders
+    RewriteRule ^(\.env|\.git|composer\.(json|lock)|package(-lock)?\.json|artisan|bootstrap|config|database|resources|vendor|app) - [F,L,NC]
+    
+    # Block internal storage framework/logs/private, but ALLOW public uploads
+    RewriteRule ^storage/(framework|logs|app/private) - [F,L,NC]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
@@ -18,10 +21,14 @@
     RewriteRule ^ %1 [L,R=301]
 
     # If the file/directory exists at root, serve it directly
-    # (build/, img/, manifest.json, sw.js, favicon.ico, etc.)
+    # (build/, img/, storage/, manifest.json, sw.js, favicon.ico, etc.)
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
+
+    # Fallback: If /storage/xxx is requested and file is in storage/app/public/xxx
+    RewriteCond %{DOCUMENT_ROOT}/storage/app/public/$1 -f
+    RewriteRule ^storage/(.+) storage/app/public/$1 [L]
 
     # Send everything else to index.php (Laravel)
     RewriteRule ^ index.php [L]

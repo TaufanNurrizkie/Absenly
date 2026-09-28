@@ -202,14 +202,21 @@
 
     {{-- MODAL PREVIEW FOTO --}}
     <div id="fotoModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="relative bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100">
-            <button onclick="closeFotoModal()"
-                class="absolute top-3 right-3 z-10 w-9 h-9 bg-white hover:bg-slate-50 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 shadow-lg transition border border-slate-100">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            <img id="fotoModalImg" src="" class="w-full object-cover max-h-[80vh]">
+        <div class="relative bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 flex flex-col">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50">
+                <p id="fotoModalTitle" class="text-sm font-semibold text-slate-800 truncate">Preview Foto</p>
+                <button onclick="closeFotoModal()"
+                    class="w-8 h-8 bg-white hover:bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 shadow-sm transition border border-slate-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="relative bg-slate-900 flex items-center justify-center min-h-[260px] max-h-[80vh] overflow-hidden">
+                <img id="fotoModalImg" src="" alt="Preview Foto" class="w-full object-contain max-h-[75vh]"
+                     onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Foto+Tidak+Tersedia&background=F1F5F9&color=64748B&size=400';">
+                <p id="fotoModalSubtitle" class="absolute bottom-2 left-2 right-2 text-center text-xs text-white/90 bg-black/60 py-1.5 px-3 rounded-lg backdrop-blur-xs hidden"></p>
+            </div>
         </div>
     </div>
 
@@ -818,14 +825,33 @@
                 container.innerHTML = emptyState('Belum ada yang hadir');
                 return;
             }
-            container.innerHTML = data.map(item => `
+            container.innerHTML = data.map(item => {
+                const userName = item.user?.name ?? 'Siswa';
+                const avatarFallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=E2E8F0&color=475569&size=160`;
+                
+                let thumbSrc = avatarFallback;
+                let modalSrc = avatarFallback;
+                let hasFoto = false;
+
+                if (item.foto) {
+                    const cleanPath = item.foto.startsWith('/') ? item.foto : `/${item.foto.startsWith('storage/') ? item.foto : 'storage/' + item.foto}`;
+                    thumbSrc = cleanPath;
+                    modalSrc = cleanPath;
+                    hasFoto = true;
+                } else if (item.user?.foto) {
+                    const userFoto = item.user.foto.startsWith('/') ? item.user.foto : `/img/${item.user.foto}`;
+                    thumbSrc = userFoto;
+                    modalSrc = userFoto;
+                }
+
+                return `
         <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors border border-slate-100 bg-white shadow-xs">
-            <img src="/storage/${item.foto}"
-                 onclick="openFotoModal('/storage/${item.foto}')"
-                 onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(item.user?.name ?? 'U')}&background=E2E8F0&color=475569&size=80'"
+            <img src="${thumbSrc}"
+                 onclick="openFotoModal('${modalSrc}', '${encodeURIComponent(userName)}', ${hasFoto})"
+                 onerror="this.onerror=null; this.src='${avatarFallback}'"
                  class="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-white shadow-sm cursor-pointer hover:scale-105 transition-transform ring-2 ring-slate-100">
             <div class="min-w-0 flex-1">
-                <p class="text-sm font-semibold text-slate-800 truncate">${item.user?.name ?? '-'}</p>
+                <p class="text-sm font-semibold text-slate-800 truncate">${userName}</p>
                 <p class="text-xs text-slate-500">${item.user?.kelas?.nama ?? ''} ${item.user?.jurusan?.nama ?? ''}</p>
                 <p class="text-xs text-slate-400 num mt-1 flex items-center gap-1">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -839,7 +865,8 @@
                 Detail
             </button>
         </div>
-    `).join('');
+        `;
+            }).join('');
         }
 
         // ─── Render Izin / Sakit ──────────────────────────────────
@@ -946,8 +973,30 @@
         }
 
         // ─── Modals ───────────────────────────────────────────────
-        function openFotoModal(src) {
-            document.getElementById('fotoModalImg').src = src;
+        function openFotoModal(src, name = 'Siswa', hasFoto = true) {
+            const title = decodeURIComponent(name);
+            const titleEl = document.getElementById('fotoModalTitle');
+            if (titleEl) titleEl.innerText = 'Foto: ' + title;
+
+            const sub = document.getElementById('fotoModalSubtitle');
+            if (sub) {
+                if (!hasFoto) {
+                    sub.innerText = 'Foto absensi tidak diambil (Hadir via QR Code / Manual Admin). Menampilkan foto profil.';
+                    sub.classList.remove('hidden');
+                } else {
+                    sub.classList.add('hidden');
+                }
+            }
+
+            const img = document.getElementById('fotoModalImg');
+            if (img) {
+                img.onerror = function() {
+                    this.onerror = null;
+                    this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=3B82F6&color=FFFFFF&size=400`;
+                };
+                img.src = src;
+            }
+
             document.getElementById('fotoModal').classList.remove('hidden');
             document.getElementById('fotoModal').classList.add('flex');
         }
@@ -1053,7 +1102,13 @@
     `;
 
             // ── Foto kehadiran (hadir) ──
-            if (item.foto) {
+            const detailFoto = item.foto 
+                ? (item.foto.startsWith('/') ? item.foto : `/${item.foto.startsWith('storage/') ? item.foto : 'storage/' + item.foto}`)
+                : (item.user?.foto ? (item.user.foto.startsWith('/') ? item.user.foto : `/img/${item.user.foto}`) : null);
+            const detailUserName = item.user?.name ?? item.nama ?? 'Siswa';
+            const detailAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(detailUserName)}&background=E2E8F0&color=475569&size=200`;
+
+            if (detailFoto) {
                 contentHTML += `
             <div class="flex items-start gap-3">
                 <div class="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center shrink-0 border border-slate-50">
@@ -1063,9 +1118,9 @@
                 </div>
                 <div class="flex-1 pt-1">
                     <p class="text-xs text-slate-400 mb-1.5">Foto Kehadiran</p>
-                    <img src="/storage/${item.foto}"
-                         onclick="openFotoModal('/storage/${item.foto}')"
-                         onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(item.user?.name ?? 'U')}&background=E2E8F0&color=475569&size=200'"
+                    <img src="${detailFoto}"
+                         onclick="openFotoModal('${detailFoto}', '${encodeURIComponent(detailUserName)}', ${!!item.foto})"
+                         onerror="this.onerror=null; this.src='${detailAvatar}'"
                          class="w-32 h-32 rounded-xl object-cover border border-slate-200 cursor-pointer hover:scale-105 transition-transform shadow-sm">
                 </div>
             </div>
@@ -1093,13 +1148,13 @@
             if ((type === 'izin' || type === 'sakit') && item.lampiran) {
                 const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(item.lampiran);
                 const isPdf = /\.pdf$/i.test(item.lampiran);
-                const lampiranUrl = `/storage/${item.lampiran}`;
+                const lampiranUrl = item.lampiran.startsWith('/') ? item.lampiran : `/${item.lampiran.startsWith('storage/') ? item.lampiran : 'storage/' + item.lampiran}`;
 
                 let lampiranContent = '';
                 if (isImage) {
                     lampiranContent = `
                 <img src="${lampiranUrl}"
-                     onclick="openFotoModal('${lampiranUrl}')"
+                     onclick="openFotoModal('${lampiranUrl}', 'Lampiran ${encodeURIComponent(detailUserName)}', true)"
                      onerror="this.parentElement.innerHTML='<p class=\\'text-xs text-red-400\\'>Gagal memuat lampiran.</p>'"
                      class="w-full max-h-48 object-contain rounded-lg border border-slate-200 cursor-pointer hover:opacity-90 transition shadow-sm bg-white p-2">
                 <a href="${lampiranUrl}" target="_blank"
