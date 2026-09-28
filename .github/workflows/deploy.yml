@@ -8,21 +8,11 @@ jobs:
   web-deploy:
     name: Build & Deploy to cPanel
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: 🚚 Get latest code
         uses: actions/checkout@v4
-
-      - name: ⚙️ Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, bcmath, fileinfo, gd, zip
-          coverage: none
-
-      - name: 📦 Install PHP Composer Dependencies
-        run: |
-          composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
@@ -35,7 +25,7 @@ jobs:
           npm ci
           npm run build
 
-      - name: 🧹 Cleanup build files before upload
+      - name: 🧹 Cleanup build files before FTP upload
         run: |
           rm -rf node_modules
           rm -rf tests
@@ -48,7 +38,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           port: ${{ secrets.FTP_PORT || 21 }}
-          server-dir: ${{ secrets.FTP_SERVER_DIR || '/' }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR || 'presensi.smkicb-teknika.sch.id/' }}
           protocol: ftp
           exclude: |
             **/.git*
@@ -56,13 +46,10 @@ jobs:
             **/.env*
             **/.vscode/**
             **/node_modules/**
+            **/vendor/**
             **/tests/**
-            **/storage/app/public/**
-            **/storage/framework/cache/**
-            **/storage/framework/sessions/**
-            **/storage/framework/views/**
-            **/storage/logs/**
-            **/public/storage/**
+            **/storage/**
+            **/presensi-cpanel-ready.zip
             README.md
             phpunit.xml
 
